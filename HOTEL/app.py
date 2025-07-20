@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import time
 
-MENU_FILE = "menu.json"
+MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDER_FILE = "orders.json"
 
 # Utility functions
