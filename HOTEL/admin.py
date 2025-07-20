@@ -3,9 +3,10 @@ import json
 import os
 import time
 
-ORDER_FILE = "orders.json"
+# Absolute path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ORDER_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# Load and save helpers
 def load_orders():
     if not os.path.exists(ORDER_FILE):
         with open(ORDER_FILE, 'w', encoding='utf-8') as f:
@@ -33,13 +34,55 @@ def delete_completed_orders():
     save_orders(remaining)
     st.toast("🗑️ All completed orders deleted.")
 
-# UI
-st.set_page_config(page_title="Admin Panel - Smart Orders", layout="wide")
-st.title("🛠️ Admin Panel - Live Order Manager")
+# UI config
+st.set_page_config(page_title="Admin Panel", layout="wide")
+
+# CSS for mobile responsiveness
+st.markdown("""
+    <style>
+    @media screen and (max-width: 768px) {
+        .order-card {
+            font-size: 14px !important;
+        }
+        .order-controls {
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+        }
+    }
+    .order-card {
+        background-color: #f9f9f9;
+        padding: 1em;
+        border-radius: 10px;
+        margin-bottom: 1em;
+        font-size: 16px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title("🛠️ Admin Panel")
+
+# Top controls
+top_left, top_right = st.columns([4, 1])
+with top_left:
+    st.info("Live orders below. Tap a button to update status.")
+with top_right:
+    if st.button("🗑️ Delete Completed"):
+        delete_completed_orders()
+        st.rerun()
 
 # State tracking
 if "last_order_count" not in st.session_state:
     st.session_state.last_order_count = 0
+
+orders = load_orders()
+order_count = len(orders)
+
+# Sound + toast on new order
+if order_count > st.session_state.last_order_count:
+    st.audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg", autoplay=True)
+    st.toast("🔔 New order received!")
+
+st.session_state.last_order_count = order_count
 
 # Status colors
 STATUS_COLORS = {
@@ -49,60 +92,31 @@ STATUS_COLORS = {
     "Completed": "#F8F9FA"
 }
 
-# Top bar
-colA, colB = st.columns([4, 1])
-with colA:
-    st.info("Live orders below. Use buttons to update status.")
-with colB:
-    if st.button("🗑️ Delete Completed Orders"):
-        delete_completed_orders()
-        st.rerun()
-
-orders = load_orders()
-order_count = len(orders)
-
-# New order sound
-if order_count > st.session_state.last_order_count:
-    st.audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg", autoplay=True)
-    st.toast("🔔 New order received!")
-
-st.session_state.last_order_count = order_count
-
 if not orders:
-    st.info("No orders found.")
+    st.info("No orders yet.")
 else:
     for order in reversed(orders):
-        color = STATUS_COLORS.get(order["status"], "#FFFFFF")
-        with st.container(border=True):
-            st.markdown(
-                f"""<div style="background-color:{color}; padding:1em; border-radius:10px">""",
-                unsafe_allow_html=True
-            )
-            st.subheader(f"🧾 Order #{order['id']} - Table {order['table']}")
-            st.markdown(f"**Status:** `{order['status']}`  \n⏱️ *Placed at:* `{order['timestamp']}`")
+        bg_color = STATUS_COLORS.get(order["status"], "#FFFFFF")
 
+        with st.container():
+            st.markdown(f'<div class="order-card" style="background-color:{bg_color}">', unsafe_allow_html=True)
+
+            st.subheader(f"🧾 Order #{order['id']} - Table {order['table']}")
+            st.markdown(f"**Status:** `{order['status']}`  \n⏱️ *{order['timestamp']}*")
+
+            st.markdown("**Items:**")
             for item in order["cart"]:
                 st.write(f"- {item['name']} x {item['qty']}")
 
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                if st.button("🔄 Set to Pending", key=f"pending_{order['id']}"):
-                    update_order_status(order["id"], "Pending")
-                    st.rerun()
-            with col2:
-                if st.button("👨‍🍳 Set to Preparing", key=f"preparing_{order['id']}"):
-                    update_order_status(order["id"], "Preparing")
-                    st.rerun()
-            with col3:
-                if st.button("✅ Set to Served", key=f"served_{order['id']}"):
-                    update_order_status(order["id"], "Served")
-                    st.rerun()
-            with col4:
-                if st.button("✔️ Set to Completed", key=f"completed_{order['id']}"):
-                    update_order_status(order["id"], "Completed")
-                    st.rerun()
+            # Responsive button group
+            st.markdown('<div class="order-controls" style="display:flex; gap: 1rem; flex-wrap: wrap;">', unsafe_allow_html=True)
 
-            st.markdown("</div>", unsafe_allow_html=True)
+            st.button("🔄 Pending", key=f"pending_{order['id']}", on_click=update_order_status, args=(order["id"], "Pending"))
+            st.button("👨‍🍳 Preparing", key=f"preparing_{order['id']}", on_click=update_order_status, args=(order["id"], "Preparing"))
+            st.button("✅ Served", key=f"served_{order['id']}", on_click=update_order_status, args=(order["id"], "Served"))
+            st.button("✔️ Completed", key=f"completed_{order['id']}", on_click=update_order_status, args=(order["id"], "Completed"))
+
+            st.markdown("</div></div>", unsafe_allow_html=True)
 
 # Auto-refresh every 5 seconds
 time.sleep(5)
