@@ -4,8 +4,11 @@ import os
 from datetime import datetime
 import time
 
+# Get base directory of current script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-ORDER_FILE = "orders.json"
+ORDER_FILE = os.path.join(BASE_DIR, "orders.json")
 
 # Utility functions
 def load_json(file):
