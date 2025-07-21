@@ -34,7 +34,7 @@ def delete_completed_orders():
 if st.button("🗑️ Delete Completed Orders"):
     deleted_count = delete_completed_orders()
     st.success(f"✅ Deleted {deleted_count} completed order(s).")
-    st.experimental_rerun()
+    st.rerun()
 
 # --- LOAD & DISPLAY ORDERS ---
 orders = load_orders()
