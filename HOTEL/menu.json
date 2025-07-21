@@ -1,110 +1,20 @@
 [
   {
-    "id": 1,
-    "name": "Veg Burger",
-    "price": 120,
+    "id": "1",
+    "name": "Margherita Pizza",
     "category": "Main Course",
+    "price": 249,
     "veg": true,
     "spicy": false,
-    "popular": true
+    "description": "Classic cheese and tomato pizza."
   },
   {
-    "id": 2,
+    "id": "2",
     "name": "Paneer Tikka",
-    "price": 180,
     "category": "Appetizers",
+    "price": 199,
     "veg": true,
     "spicy": true,
-    "popular": true
-  },
-  {
-    "id": 3,
-    "name": "Chocolate Brownie",
-    "price": 90,
-    "category": "Desserts",
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": 4,
-    "name": "Lemon Mojito",
-    "price": 60,
-    "category": "Drinks",
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": 5,
-    "name": "Chicken Biryani",
-    "price": 220,
-    "category": "Main Course",
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": 6,
-    "name": "Spring Rolls",
-    "price": 140,
-    "category": "Appetizers",
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": 7,
-    "name": "Gulab Jamun",
-    "price": 80,
-    "category": "Desserts",
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": 8,
-    "name": "Cold Coffee",
-    "price": 70,
-    "category": "Drinks",
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": 9,
-    "name": "Butter Chicken",
-    "price": 250,
-    "category": "Main Course",
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": 10,
-    "name": "Chicken Lollipop",
-    "price": 160,
-    "category": "Appetizers",
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": 11,
-    "name": "Ice Cream Sundae",
-    "price": 110,
-    "category": "Desserts",
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": 12,
-    "name": "Masala Chai",
-    "price": 40,
-    "category": "Drinks",
-    "veg": true,
-    "spicy": true,
-    "popular": false
+    "description": "Spicy grilled cottage cheese cubes."
   }
 ]
