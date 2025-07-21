@@ -3,28 +3,31 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+# Set Streamlit page config
+st.set_page_config(page_title="Admin Panel", layout="wide")
+
 # File paths
-BASE_DIR = Path("/mnt/data")
+BASE_DIR = Path(__file__).parent.parent.resolve()
 ORDER_FILE = BASE_DIR / "orders.json"
 FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
-st.set_page_config(page_title="Admin Panel", layout="wide")
-
-# Load JSON helpers
+# Safely load JSON
 def load_json(file):
+    file.parent.mkdir(parents=True, exist_ok=True)
     if not file.exists():
         file.write_text("[]", encoding="utf-8")
-    with open(file, "r", encoding="utf-8") as f:
-        try:
+    try:
+        with file.open("r", encoding="utf-8") as f:
             return json.load(f)
-        except json.JSONDecodeError:
-            return []
+    except json.JSONDecodeError:
+        return []
 
+# Save JSON
 def save_json(file, data):
     with open(file, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
-# Session init
+# Session state for tracking new orders
 if "last_order_count" not in st.session_state:
     st.session_state.last_order_count = 0
 
@@ -32,15 +35,16 @@ if "last_order_count" not in st.session_state:
 orders = load_json(ORDER_FILE)
 feedbacks = load_json(FEEDBACK_FILE)
 
-# Header
+# UI Title
 st.title("🛠️ Admin Panel – Smart Table Ordering")
 
-# 🔔 New order detection
+# 🔔 Check for new orders
 if len(orders) > st.session_state.last_order_count:
-    st.toast("🔔 New Order Received!", icon="🔔")
+    st.toast("🔔 New Order Received!", icon="🍽️")
+    st.audio("https://www.myinstants.com/media/sounds/bell.mp3", format="audio/mp3")
     st.session_state.last_order_count = len(orders)
 
-# Show orders
+# 📦 Display orders
 st.subheader("📦 Orders")
 if orders:
     for order in reversed(orders):
@@ -54,7 +58,7 @@ if orders:
 
         with st.container():
             st.markdown(
-                f"<div style='background-color: {color}; padding: 1rem; border-radius: 1rem;'>",
+                f"<div style='background-color:{color};padding:1rem;border-radius:1rem;margin-bottom:1rem;'>",
                 unsafe_allow_html=True
             )
             st.subheader(f"Order #{order['id']} – Table {order['table']}")
@@ -74,11 +78,12 @@ if orders:
                 index=["Pending", "Preparing", "Served", "Completed"].index(status),
                 key=f"status_{order['id']}"
             )
+
             if new_status != status:
                 order["status"] = new_status
                 save_json(ORDER_FILE, orders)
                 st.success(f"✅ Status updated to {new_status}")
-                st.experimental_rerun()
+                st.stop()
 
             st.markdown("</div>", unsafe_allow_html=True)
 else:
@@ -97,7 +102,7 @@ if feedbacks:
 else:
     st.info("No feedback received yet.")
 
-# 🔁 Auto-refresh every 5s
+# 🔁 Auto-refresh every 5 seconds
 st.markdown("""
 <script>
     setTimeout(() => window.location.reload(), 5000);
