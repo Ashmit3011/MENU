@@ -1,12 +1,1 @@
-[
-  {
-    "id": 1,
-    "table": "5",
-    "timestamp": "2025-07-21 14:15:32",
-    "cart": [
-      {"id": "food001", "name": "Burger", "qty": 2, "price": 120},
-      {"id": "food004", "name": "Pepsi", "qty": 1, "price": 40}
-    ],
-    "status": "Pending"
-  }
-]
+
