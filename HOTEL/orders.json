@@ -1,13 +1,12 @@
-
 [
   {
-    "id": "ABC123",
+    "id": "abcd1234",
     "table": "5",
-    "timestamp": 1721547021.3,
-    "status": "Preparing",
     "items": {
-      "1": {"name": "Pizza", "qty": 2, "price": 150},
-      "2": {"name": "Coke", "qty": 1, "price": 40}
-    }
+      "item1": {"name": "Burger", "qty": 2, "price": 100}
+    },
+    "total": 200,
+    "status": "Pending",
+    "timestamp": 1721513953.5
   }
 ]
