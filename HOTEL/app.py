@@ -3,13 +3,13 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-# Paths
+# Use full absolute paths
 BASE_DIR = Path(__file__).parent.resolve()
 MENU_FILE = BASE_DIR / "menu.json"
 ORDER_FILE = BASE_DIR / "orders.json"
 FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
-# Hide sidebar for customers
+# Hide sidebar
 st.set_page_config(page_title="Smart Restaurant Ordering", layout="wide")
 st.markdown("""
     <style>
@@ -31,9 +31,6 @@ def save_json(path, data):
 # Load menu
 menu = load_json(MENU_FILE)
 
-# Default image URL
-DEFAULT_IMAGE = "https://via.placeholder.com/100?text=No+Image"
-
 # Initialize session state
 if "cart" not in st.session_state:
     st.session_state.cart = []
@@ -52,33 +49,29 @@ st.session_state.table_number = st.text_input("Enter your table number", st.sess
 categories = sorted(set(item.get("category", "Uncategorized") for item in menu))
 selected_category = st.selectbox("Select Category", ["All"] + categories)
 
-# Show menu
+# Show menu (No images)
 st.subheader("Menu")
 for item in menu:
     if selected_category != "All" and item.get("category") != selected_category:
         continue
 
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        st.image(item.get("image", DEFAULT_IMAGE), width=100)
-    with col2:
-        name = item.get("name", "Unnamed Item")
-        price = item.get("price", 0)
-        st.markdown(f"**{name}** - ₹{price}")
-        st.caption(f"{'🌶️' if item.get('spicy') else ''} {'🌱' if item.get('veg') else '🍖'} {item.get('category', '')}")
-        qty = st.number_input(f"Qty for {name}", min_value=0, max_value=10, step=1, key=name)
-        if qty > 0:
-            found = False
-            for c in st.session_state.cart:
-                if c["name"] == name:
-                    c["qty"] = qty
-                    found = True
-            if not found:
-                st.session_state.cart.append({
-                    "name": name,
-                    "price": price,
-                    "qty": qty
-                })
+    name = item.get("name", "Unnamed Item")
+    price = item.get("price", 0)
+    st.markdown(f"**{name}** - ₹{price}")
+    st.caption(f"{'🌶️' if item.get('spicy') else ''} {'🌱' if item.get('veg') else '🍖'} {item.get('category', '')}")
+    qty = st.number_input(f"Qty for {name}", min_value=0, max_value=10, step=1, key=name)
+    if qty > 0:
+        found = False
+        for c in st.session_state.cart:
+            if c["name"] == name:
+                c["qty"] = qty
+                found = True
+        if not found:
+            st.session_state.cart.append({
+                "name": name,
+                "price": price,
+                "qty": qty
+            })
 
 # Cart display
 st.subheader("🛒 Your Cart")
