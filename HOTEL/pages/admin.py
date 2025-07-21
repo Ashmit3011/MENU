@@ -1,98 +1,82 @@
 import streamlit as st
 import json
-import os
-from datetime import datetime
-from uuid import uuid4
 import time
+from datetime import datetime
 
-st.set_page_config(page_title="🍽️ Admin Panel", layout="wide")
+st.set_page_config(page_title="Admin Panel", layout="wide")
+ORDERS_FILE = "orders.json"
 
-# === Paths ===
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-orders_file = os.path.join(BASE_DIR, "orders.json")
+# Load orders safely
+def load_orders():
+    try:
+        with open(ORDERS_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
 
-# === Styling ===
-st.markdown("""
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-        .order-card {
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 16px;
-            background-color: #f8fafc;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transition: all 0.3s ease-in-out;
-        }
-        .pending { border-left: 6px solid #facc15; }
-        .preparing { border-left: 6px solid #38bdf8; }
-        .served { border-left: 6px solid #4ade80; }
-    </style>
-""", unsafe_allow_html=True)
+# Save orders
+def save_orders(orders):
+    with open(ORDERS_FILE, "w") as f:
+        json.dump(orders, f, indent=2)
 
-# === Auto-refresh logic (no blinking) ===
-if "last_refresh" not in st.session_state:
-    st.session_state.last_refresh = time.time()
+# Safe timestamp parsing
+def safe_timestamp(order):
+    try:
+        return float(order.get("timestamp", 0))
+    except (ValueError, TypeError):
+        return 0
 
-if time.time() - st.session_state.last_refresh > 3:
-    st.session_state.last_refresh = time.time()
-    st.rerun()
+# Load and sort
+orders = load_orders()
+orders = sorted(orders, key=safe_timestamp, reverse=True)
 
-# === Load orders ===
-if os.path.exists(orders_file):
-    with open(orders_file, "r") as f:
-        orders = json.load(f)
-else:
-    orders = []
+st.title("🛠️ Admin Panel – Live Orders")
 
-st.title("📋 Admin Dashboard - Live Orders")
+if not orders:
+    st.info("No orders yet.")
+    st.stop()
 
 status_colors = {
-    "Pending": "pending",
-    "Preparing": "preparing",
-    "Served": "served"
+    "Pending": "#fdd835",
+    "Preparing": "#42a5f5",
+    "Ready": "#66bb6a",
+    "Served": "#9e9e9e"
 }
 
-# === Show orders ===
-if orders:
-    orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
-    updated = False
+# Display orders
+for order in orders:
+    st.markdown("---")
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.markdown(f"### 🧾 Order ID: `{order['id']}` | Table: **{order['table']}**")
+        order_time = datetime.fromtimestamp(safe_timestamp(order)).strftime("%I:%M %p")
+        st.caption(f"🕒 Placed at {order_time}")
+        for item in order["items"].values():
+            st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+        st.success(f"Total: ₹{order['total']}")
+    with col2:
+        status = order["status"]
+        new_status = st.selectbox(
+            f"Update Status for `{order['id']}`",
+            ["Pending", "Preparing", "Ready", "Served"],
+            index=["Pending", "Preparing", "Ready", "Served"].index(status),
+            key=order["id"]
+        )
+        if new_status != status:
+            order["status"] = new_status
+            save_orders(orders)
+            st.success(f"✅ Status updated for `{order['id']}`")
+            st.experimental_rerun()
 
-    for order in orders:
-        color_class = status_colors.get(order.get("status", "Pending"), "pending")
-        with st.container():
-            st.markdown(f"<div class='order-card {color_class}'>", unsafe_allow_html=True)
-            st.markdown(f"**🪑 Table {order.get('table', 'N/A')}**  &nbsp;&nbsp; 🕒 _{order.get('timestamp', '')}_")
-            st.markdown(f"**Status:** `{order.get('status', 'Pending')}`")
-            st.markdown("---")
-            for item in order.get("cart", []):
-                name = item.get("name", "")
-                quantity = item.get("quantity", 0)
-                price = item.get("price", 0)
-                st.write(f"- {name} × {quantity} = ₹{price * quantity}")
-            st.markdown("---")
+    st.markdown(
+        f"<div style='padding:6px;border-radius:8px;background-color:{status_colors[order['status']]};color:white;width:120px;text-align:center'>"
+        f"{order['status']}</div>",
+        unsafe_allow_html=True
+    )
 
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("Preparing", key=f"prep_{order['id']}"):
-                    order['status'] = "Preparing"
-                    st.toast(f"🔧 Order for Table {order.get('table', '')} is now Preparing.")
-                    updated = True
-            with col2:
-                if st.button("Served", key=f"serve_{order['id']}"):
-                    order['status'] = "Served"
-                    st.toast(f"🍽️ Order for Table {order.get('table', '')} has been Served!")
-                    updated = True
-            with col3:
-                if st.button("❌ Cancel", key=f"cancel_{order['id']}"):
-                    orders.remove(order)
-                    st.toast(f"❌ Order for Table {order.get('table', '')} has been Cancelled.")
-                    updated = True
-
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    if updated:
-        with open(orders_file, "w") as f:
-            json.dump(orders, f, indent=2)
-
-else:
-    st.info("No orders yet.")
+# Optional: Auto-refresh every 10s
+st.markdown("""
+<script>
+    setTimeout(() => window.location.reload(), 10000);
+</script>
+""", unsafe_allow_html=True)
