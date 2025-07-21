@@ -8,7 +8,7 @@ from pathlib import Path
 # === File Paths ===
 BASE_DIR = Path(__file__).resolve().parent
 ORDERS_FILE = BASE_DIR / "orders.json"
-MENU_FILE = BASE_DIR / "menu.json"
+FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
 # === Streamlit Page Config ===
 st.set_page_config(page_title="🛎️ Admin Panel", layout="centered")
@@ -30,37 +30,37 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# === Load Data ===
-def load_orders():
-    if not ORDERS_FILE.exists():
-        with open(ORDERS_FILE, "w") as f:
-            json.dump([], f)
-        return []
-    with open(ORDERS_FILE, "r") as f:
+# === Load JSON Files ===
+def load_json(file, default):
+    if not file.exists():
+        with open(file, "w") as f:
+            json.dump(default, f)
+        return default
+    with open(file, "r") as f:
         return json.load(f)
 
-def save_orders(data):
-    with open(ORDERS_FILE, "w") as f:
+def save_json(file, data):
+    with open(file, "w") as f:
         json.dump(data, f, indent=2)
+
+orders = load_json(ORDERS_FILE, [])
+feedbacks = load_json(FEEDBACK_FILE, [])
 
 # === State ===
 if "last_order_count" not in st.session_state:
-    st.session_state.last_order_count = 0
-if "played_sound" not in st.session_state:
-    st.session_state.played_sound = False
+    st.session_state.last_order_count = len(orders)
 
 # === Header ===
 st.title("🛎️ Admin Dashboard")
 
-# === Load and Show Orders ===
-orders = load_orders()
-orders.sort(key=lambda x: x["time"], reverse=True)
-
-# === Alert New Order ===
+# === New Order Alert ===
 if len(orders) > st.session_state.last_order_count:
     st.toast("🔔 New order received!", icon="🍽️")
     st.audio("https://www.soundjay.com/buttons/beep-07.wav", autoplay=True)
     st.session_state.last_order_count = len(orders)
+
+# === Sort Orders by Time (newest first) ===
+orders.sort(key=lambda x: x["time"], reverse=True)
 
 if not orders:
     st.info("No orders yet.")
@@ -83,23 +83,30 @@ else:
 
             st.markdown(f"**💰 Total: ₹{order['total']}**")
 
-            # === Status Buttons ===
+            # === Status Control ===
             col1, col2, col3, col4 = st.columns(4)
             statuses = ["Pending", "Preparing", "Ready", "Served"]
             current_idx = statuses.index(order["status"])
 
-            if current_idx < 3:
+            if current_idx < len(statuses) - 1:
                 with col2:
                     if st.button(f"➡️ Mark as {statuses[current_idx + 1]}", key=f"{order['id']}_next"):
                         order["status"] = statuses[current_idx + 1]
-                        save_orders(orders)
-                        st.experimental_rerun()
+                        save_json(ORDERS_FILE, orders)
+                        st.rerun()
             else:
                 with col2:
                     st.success("✅ Completed")
 
+            # === Feedback Section ===
+            matching_feedback = next((fb for fb in feedbacks if fb["order_id"] == order["id"]), None)
+            if matching_feedback:
+                with st.expander("💬 View Customer Feedback"):
+                    st.markdown(f"**😊 Rating:** {matching_feedback['rating']} / 5")
+                    st.markdown(f"**📝 Feedback:** {matching_feedback['text']}")
+
             st.markdown("---")
 
-# === Auto Refresh ===
+# === Auto Refresh Every 5 Seconds ===
 time.sleep(5)
 st.rerun()
