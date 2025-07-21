@@ -1,362 +1,58 @@
 [
   {
-    "id": "item001",
+    "id": "m1",
     "name": "Margherita Pizza",
-    "category": "Main Course",
+    "category": "Pizza",
     "price": 250,
     "veg": true,
-    "spicy": false,
-    "popular": true
+    "spicy": false
   },
   {
-    "id": "item002",
-    "name": "Paneer Tikka",
-    "category": "Appetizers",
-    "price": 180,
-    "veg": true,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item003",
-    "name": "Butter Chicken",
-    "category": "Main Course",
-    "price": 320,
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item004",
-    "name": "Chocolate Brownie",
-    "category": "Desserts",
-    "price": 150,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item005",
-    "name": "Masala Lemonade",
-    "category": "Drinks",
-    "price": 90,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item006",
-    "name": "Chicken Biryani",
-    "category": "Main Course",
-    "price": 280,
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item007",
-    "name": "Veg Spring Rolls",
-    "category": "Appetizers",
-    "price": 120,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item008",
-    "name": "Tandoori Chicken",
-    "category": "Appetizers",
-    "price": 220,
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item009",
-    "name": "Gulab Jamun",
-    "category": "Desserts",
-    "price": 100,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item010",
-    "name": "Cold Coffee",
-    "category": "Drinks",
-    "price": 110,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item011",
-    "name": "Pasta Alfredo",
-    "category": "Main Course",
-    "price": 230,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item012",
-    "name": "Fish Fingers",
-    "category": "Appetizers",
-    "price": 200,
-    "veg": false,
-    "spicy": true,
-    "popular": false
-  },
-  {
-    "id": "item013",
-    "name": "Mango Lassi",
-    "category": "Drinks",
-    "price": 95,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item014",
-    "name": "Chocolate Ice Cream",
-    "category": "Desserts",
-    "price": 130,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item015",
-    "name": "Dal Tadka",
-    "category": "Main Course",
-    "price": 190,
-    "veg": true,
-    "spicy": true,
-    "popular": false
-  },
-  {
-    "id": "item016",
-    "name": "Chicken Lollipop",
-    "category": "Appetizers",
-    "price": 210,
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item017",
-    "name": "Veg Manchurian",
-    "category": "Appetizers",
-    "price": 170,
-    "veg": true,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item018",
-    "name": "Sweet Corn Soup",
-    "category": "Appetizers",
-    "price": 100,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item019",
-    "name": "Sizzling Brownie",
-    "category": "Desserts",
-    "price": 160,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item020",
-    "name": "Fresh Lime Soda",
-    "category": "Drinks",
-    "price": 60,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item021",
-    "name": "Palak Paneer",
-    "category": "Main Course",
-    "price": 240,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item022",
-    "name": "Prawn Masala",
-    "category": "Main Course",
-    "price": 350,
-    "veg": false,
-    "spicy": true,
-    "popular": false
-  },
-  {
-    "id": "item023",
-    "name": "Chicken Soup",
-    "category": "Appetizers",
-    "price": 120,
-    "veg": false,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item024",
-    "name": "Kulfi",
-    "category": "Desserts",
-    "price": 80,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item025",
-    "name": "Iced Tea",
-    "category": "Drinks",
-    "price": 75,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item026",
-    "name": "Chilli Paneer",
-    "category": "Appetizers",
-    "price": 190,
-    "veg": true,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item027",
-    "name": "Egg Curry",
-    "category": "Main Course",
-    "price": 210,
-    "veg": false,
-    "spicy": true,
-    "popular": false
-  },
-  {
-    "id": "item028",
-    "name": "Cheesecake Slice",
-    "category": "Desserts",
-    "price": 170,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item029",
-    "name": "Blueberry Mojito",
-    "category": "Drinks",
-    "price": 100,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item030",
-    "name": "Veg Pulao",
-    "category": "Main Course",
-    "price": 200,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item031",
-    "name": "Seekh Kebab",
-    "category": "Appetizers",
-    "price": 230,
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item032",
-    "name": "Rasmalai",
-    "category": "Desserts",
-    "price": 140,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item033",
-    "name": "Oreo Shake",
-    "category": "Drinks",
-    "price": 120,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item034",
-    "name": "Kadai Chicken",
-    "category": "Main Course",
+    "id": "m2",
+    "name": "Spicy Chicken Pizza",
+    "category": "Pizza",
     "price": 300,
     "veg": false,
-    "spicy": true,
-    "popular": false
+    "spicy": true
   },
   {
-    "id": "item035",
-    "name": "Samosa",
-    "category": "Appetizers",
-    "price": 50,
+    "id": "m3",
+    "name": "Veg Burger",
+    "category": "Burgers",
+    "price": 120,
     "veg": true,
-    "spicy": true,
-    "popular": true
+    "spicy": false
   },
   {
-    "id": "item036",
-    "name": "Fruit Custard",
-    "category": "Desserts",
+    "id": "m4",
+    "name": "Chicken Burger",
+    "category": "Burgers",
+    "price": 150,
+    "veg": false,
+    "spicy": false
+  },
+  {
+    "id": "m5",
+    "name": "French Fries",
+    "category": "Snacks",
     "price": 90,
     "veg": true,
-    "spicy": false,
-    "popular": false
+    "spicy": false
   },
   {
-    "id": "item037",
-    "name": "Strawberry Milkshake",
-    "category": "Drinks",
-    "price": 110,
+    "id": "m6",
+    "name": "Paneer Tikka",
+    "category": "Starters",
+    "price": 180,
     "veg": true,
-    "spicy": false,
-    "popular": false
+    "spicy": true
   },
   {
-    "id": "item038",
-    "name": "Paneer Butter Masala",
-    "category": "Main Course",
-    "price": 260,
+    "id": "m7",
+    "name": "Coke",
+    "category": "Beverages",
+    "price": 50,
     "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item039",
-    "name": "Chicken 65",
-    "category": "Appetizers",
-    "price": 200,
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item040",
-    "name": "Jalebi",
-    "category": "Desserts",
-    "price": 70,
-    "veg": true,
-    "spicy": false,
-    "popular": true
+    "spicy": false
   }
 ]
