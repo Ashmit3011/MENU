@@ -185,7 +185,7 @@
     "category": "Main Course",
     "price": 240,
     "veg": true,
-    "spicy": medium,
+    "spicy": false,
     "popular": true
   },
   {
