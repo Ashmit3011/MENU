@@ -3,7 +3,6 @@ import json
 import os
 from datetime import datetime
 from uuid import uuid4
-from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="🍽️ Smart Menu", layout="wide")
 
@@ -11,9 +10,6 @@ st.set_page_config(page_title="🍽️ Smart Menu", layout="wide")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 menu_file = os.path.join(BASE_DIR, "menu.json")
 orders_file = os.path.join(BASE_DIR, "orders.json")
-
-# Auto refresh every 3 seconds (only the tracking section refreshes)
-st_autorefresh(interval=3000, key="autorefresh")
 
 # === Load Menu ===
 if os.path.exists(menu_file):
@@ -140,19 +136,19 @@ if st.session_state.cart:
         st.markdown("</div>", unsafe_allow_html=True)
 
 # === Order Tracking ===
-if st.session_state.order_status:
-    st.markdown("---")
-    st.markdown("## 🚚 Track Your Order")
-    if os.path.exists(orders_file):
-        with open(orders_file, "r") as f:
-            try:
-                orders = json.load(f)
-            except:
-                orders = []
-        for o in orders:
-            if o["id"] == st.session_state.order_id:
-                st.markdown(f"**Status:** `{o['status']}`")
-                if o['status'] == "Served":
-                    st.success("✅ Your food is served! Enjoy!")
-                    st.session_state.order_status = ""
-                break
+st.markdown("---")
+st.markdown("## 🚚 Track Your Order")
+if os.path.exists(orders_file):
+    with open(orders_file, "r") as f:
+        try:
+            orders = json.load(f)
+        except:
+            orders = []
+    for o in orders:
+        if o["id"] == st.session_state.order_id:
+            st.markdown(f"**Status:** `{o['status']}`")
+            if o['status'] == "Served":
+                st.success("✅ Your food is served! Enjoy!")
+                st.session_state.order_status = ""
+            break
+    st.rerun()
