@@ -21,7 +21,8 @@ def load_orders():
     try:
         with open(ORDERS_FILE, 'r') as f:
             return json.load(f)
-    except:
+    except Exception as e:
+        print("Failed to load orders:", e)
         return []
 
 def save_orders(orders):
@@ -65,16 +66,16 @@ if not orders:
     st.info("No orders yet.")
     st.stop()
 
-orders = sorted(orders, key=lambda x: x['timestamp'], reverse=True)
+orders = sorted(orders, key=lambda x: x.get('timestamp', 0), reverse=True)
 
 # ---------------- NEW ORDER DETECTION ----------------
 if 'last_seen' not in st.session_state:
     st.session_state.last_seen = 0
 
-new_orders = [o for o in orders if o['timestamp'] > st.session_state.last_seen]
+new_orders = [o for o in orders if o.get('timestamp', 0) > st.session_state.last_seen]
 if new_orders:
     toast("🔔 New Order Received!")
-    st.session_state.last_seen = max(o['timestamp'] for o in new_orders)
+    st.session_state.last_seen = max(o.get('timestamp', 0) for o in new_orders)
 
 # ---------------- DISPLAY ORDERS ----------------
 status_options = ["Pending", "Preparing", "Ready", "Served"]
@@ -85,7 +86,7 @@ for order in orders:
         for item in order['items'].values():
             st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
 
-        st.caption("🕒 Placed at: " + datetime.fromtimestamp(order['timestamp']).strftime("%I:%M %p"))
+        st.caption("🕒 Placed at: " + datetime.fromtimestamp(order.get('timestamp', 0)).strftime("%I:%M %p"))
 
         st.write("---")
         status = st.selectbox("Update Status", status_options, index=status_options.index(order['status']), key=order['id'])
