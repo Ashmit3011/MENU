@@ -20,7 +20,7 @@ def load_menu():
             menu = json.load(f)
             assert isinstance(menu, list)
             return menu
-    except Exception as e:
+    except:
         return []
 
 def save_order(order):
@@ -58,23 +58,15 @@ st.markdown("""
             0% {opacity: 0; transform: translateY(20px);}
             100% {opacity: 1; transform: translateY(0);}
         }
-
-        /* Hide sidebar */
-        [data-testid="stSidebar"] {
-            display: none;
-        }
-
-        /* Hide hamburger menu */
-        [data-testid="stToolbar"] {
-            display: none;
-        }
+        [data-testid="stSidebar"] { display: none; }
+        [data-testid="stToolbar"] { display: none; }
     </style>
 """, unsafe_allow_html=True)
 
 def toast(msg):
     st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
 
-# ---------- SESSION STATE ----------
+# ---------- SESSION ----------
 st.session_state.setdefault("cart", {})
 st.session_state.setdefault("table_number", "")
 
@@ -135,11 +127,11 @@ with tab_cart:
                 st.session_state.cart = {}
                 toast("✅ Order placed successfully!")
 
-# ---------- ORDER TRACKING TAB ----------
+# ---------- TRACKING TAB ----------
 with tab_track:
     st.subheader("📦 Track Your Order")
     if not st.session_state.table_number:
-        st.info("Please enter your table number in the Cart tab to track orders.")
+        st.info("Please enter your table number in the Cart tab.")
     else:
         user_orders = [o for o in load_orders() if o['table'] == st.session_state.table_number]
         user_orders = sorted(user_orders, key=lambda x: x['timestamp'], reverse=True)
@@ -155,8 +147,6 @@ with tab_track:
             st.progress(status_index / 3)
 
 # ---------- AUTO REFRESH ----------
-st.markdown("""
-<script>
-    setTimeout(() => window.location.reload(), 7000);
-</script>
-""", unsafe_allow_html=True)
+import time
+time.sleep(7)
+st.experimental_rerun()
