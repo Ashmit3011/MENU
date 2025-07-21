@@ -1,89 +1,74 @@
 import streamlit as st
 import json
 import os
-from datetime import datetime
 import time
+from datetime import datetime
 
-# === File Paths ===
+# === File paths ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MENU_FILE = os.path.join(BASE_DIR, "../menu.json")
-ORDERS_FILE = os.path.join(BASE_DIR, "../orders.json")
-STATE_FILE = os.path.join(BASE_DIR, "last_seen.txt")
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# === Load & Save ===
+# === Helper functions ===
 def load_orders():
-    if os.path.exists(ORDERS_FILE):
-        try:
-            with open(ORDERS_FILE, "r") as f:
-                return json.load(f)
-        except:
-            return []
-    return []
+    if not os.path.exists(ORDERS_FILE):
+        return []
+    with open(ORDERS_FILE, "r") as f:
+        return json.load(f)
 
-def save_orders(orders):
+def save_orders(data):
     with open(ORDERS_FILE, "w") as f:
-        json.dump(orders, f, indent=2)
+        json.dump(data, f, indent=2)
 
-def get_last_seen():
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, "r") as f:
-            return f.read().strip()
-    return ""
+# === UI config ===
+st.set_page_config(page_title="📋 Admin Dashboard", layout="wide")
+st.markdown("""
+    <style>
+        .order-card {
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #333;
+        }
+        .status-selectbox {
+            background-color: #111;
+            color: white;
+            border-radius: 5px;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-def set_last_seen(ts):
-    with open(STATE_FILE, "w") as f:
-        f.write(ts)
-
-# === UI Setup ===
-st.set_page_config(page_title="🍳 Admin Kitchen", layout="wide")
-st.title("👨‍🍳 Kitchen Admin Panel (Auto-Refresh)")
-
-# === Load Orders ===
+st.title("📦 Live Orders Admin Panel")
 orders = load_orders()
-orders.sort(key=lambda x: x["time"], reverse=True)
+updated = False
 
-# === Get Last Seen Timestamp
-last_seen = get_last_seen()
-latest_time = orders[0]["time"] if orders else ""
-
-# === Detect New Order
-new_order = latest_time != last_seen
-
-if new_order and orders:
-    st.toast("🛎️ New Order Received!", icon="📦")
-    st.markdown("""
-        <audio autoplay>
-            <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-        </audio>
-    """, unsafe_allow_html=True)
-    set_last_seen(latest_time)
-
-# === Show Orders ===
 if not orders:
     st.info("No orders yet.")
 else:
-    for idx, order in enumerate(orders):
-        with st.expander(f"🧾 Table {order['table']} - ₹{order['total']} ({order['status']})", expanded=(idx == 0)):
-            st.markdown(f"**🕒 Time:** {order['time']}")
-            for item in order["items"]:
-                st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-            st.markdown(f"### 💰 Total: ₹{order['total']}")
+    for i, order in enumerate(reversed(orders)):
+        with st.container():
+            st.markdown("<div class='order-card'>", unsafe_allow_html=True)
+            st.subheader(f"🧾 Order ID: {order['id']} | Table: {order['table']}")
+            st.markdown(f"**Placed:** {order['time']}")
+            st.markdown("### Items:")
+            for item in order['items']:
+                st.markdown(f"- {item['name']} x {item['qty']} — ₹{item['qty'] * item['price']}")
+            st.markdown(f"**Total:** ₹{order['total']}")
 
-            # Status update dropdown
-            new_status = st.selectbox(
-                "Update Status",
-                ["Pending", "Preparing", "Ready", "Served"],
-                index=["Pending", "Preparing", "Ready", "Served"].index(order["status"]),
-                key=f"status_{idx}"
-            )
-            if new_status != order["status"]:
-                order["status"] = new_status
-                save_orders(orders)
-                st.success(f"✅ Status updated to {new_status}")
-                st.rerun()
+            status_options = ["Pending", "Preparing", "Ready", "Served"]
+            current_status = order.get("status", "Pending")
+            new_status = st.selectbox("Update Status", status_options, index=status_options.index(current_status), key=f"status_{i}")
 
-# === Real-Time Refresh with Streamlit Loop ===
-# Note: This reruns the script every 5 seconds
-st.markdown("<p style='color:gray'>⏱ Refreshing every 5 seconds…</p>", unsafe_allow_html=True)
+            if new_status != current_status:
+                orders[len(orders)-1 - i]['status'] = new_status
+                updated = True
+                st.success(f"Status updated to {new_status}")
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    if updated:
+        save_orders(orders)
+
+# === Real-time refresh ===
 time.sleep(5)
 st.rerun()
