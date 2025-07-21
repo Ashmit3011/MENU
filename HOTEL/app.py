@@ -1,166 +1,136 @@
 import streamlit as st
 import json
 import os
+import time
 from datetime import datetime
 
-# === File Paths ===
+# === File paths ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 
-# === Utility Functions ===
+# === Load helpers ===
 def load_menu():
     with open(MENU_FILE, "r") as f:
         return json.load(f)
 
-def save_order(order):
-    orders = []
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, "r") as f:
-            orders = json.load(f)
-    orders.append(order)
-    with open(ORDERS_FILE, "w") as f:
-        json.dump(orders, f, indent=2)
-
 def load_orders():
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, "r") as f:
-            return json.load(f)
-    return []
+    if not os.path.exists(ORDERS_FILE):
+        return []
+    with open(ORDERS_FILE, "r") as f:
+        return json.load(f)
 
-def save_feedback(feedback):
-    all_feedback = []
-    if os.path.exists(FEEDBACK_FILE):
-        with open(FEEDBACK_FILE, "r") as f:
-            all_feedback = json.load(f)
-    all_feedback.append(feedback)
+def save_orders(data):
+    with open(ORDERS_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+def save_feedback(data):
+    if not os.path.exists(FEEDBACK_FILE):
+        with open(FEEDBACK_FILE, "w") as f:
+            json.dump([], f)
+    with open(FEEDBACK_FILE, "r") as f:
+        feedbacks = json.load(f)
+    feedbacks.append(data)
     with open(FEEDBACK_FILE, "w") as f:
-        json.dump(all_feedback, f, indent=2)
+        json.dump(feedbacks, f, indent=2)
 
-def get_latest_order(table_no, orders):
-    for order in reversed(orders):
-        if order["table"] == table_no:
-            return order
-    return None
-
-# === Streamlit Setup ===
-st.set_page_config(page_title="Smart Table Ordering", layout="centered")
-st.title("🍽️ Smart Table Ordering")
+# === UI config ===
+st.set_page_config(page_title="📋 Smart Table Ordering", layout="centered")
+st.title("🍽️ Welcome to Our Restaurant")
 
 menu = load_menu()
+categories = list(menu.keys())
 
-# === Session Init ===
+# === Session State Setup ===
 if "cart" not in st.session_state:
-    st.session_state.cart = {}
+    st.session_state.cart = []
+if "table" not in st.session_state:
+    st.session_state.table = ""
 if "order_placed" not in st.session_state:
     st.session_state.order_placed = False
-    st.session_state.table_no = ""
+if "order_id" not in st.session_state:
+    st.session_state.order_id = None
 
-# === Order Not Yet Placed ===
-if not st.session_state.order_placed:
-    st.markdown("#### Select your dishes")
+# === Table number input ===
+st.session_state.table = st.text_input("Enter your Table Number", st.session_state.table)
 
-    # Show menu as mobile-friendly cards
-    for category, items in menu.items():
-        st.markdown(f"### 🔸 {category}")
-        for item in items:
-            with st.container():
-                veg_icon = "🥦" if item["veg"] else "🍗"
-                spicy_icon = "🌶️" if item["spicy"] else ""
-                popular_icon = "⭐" if item["popular"] else ""
-                st.markdown(f"**{item['name']}** {veg_icon}{spicy_icon}{popular_icon}")
-                st.markdown(f"💰 ₹{item['price']}")
+# === Menu Display ===
+st.subheader("📜 Menu")
+for category in categories:
+    st.markdown(f"### 🍱 {category}")
+    for item in menu[category]:
+        with st.container():
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**{item['name']}**")
+                st.markdown(f"₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}")
+            with col2:
+                if st.button("Add", key=item['id']):
+                    found = False
+                    for c in st.session_state.cart:
+                        if c['id'] == item['id']:
+                            c['qty'] += 1
+                            found = True
+                            break
+                    if not found:
+                        st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
+                    st.success(f"Added {item['name']}")
 
-                qty = st.number_input(f"Qty for {item['name']}", min_value=0, max_value=10, value=0, key=f"qty_{item['id']}")
-                if qty > 0:
-                    st.session_state.cart[item["id"]] = {"item": item, "qty": qty}
-                elif item["id"] in st.session_state.cart:
-                    del st.session_state.cart[item["id"]]
-
-    # Sticky cart bar
-    total = sum(entry["item"]["price"] * entry["qty"] for entry in st.session_state.cart.values())
-    if total > 0:
-        st.markdown("---")
-        st.markdown(f"### 🛒 Cart Total: ₹{total}")
-        for entry in st.session_state.cart.values():
-            item = entry["item"]
-            qty = entry["qty"]
-            st.markdown(f"- {item['name']} x {qty} = ₹{item['price'] * qty}")
-
-        st.markdown("---")
-        table_no = st.text_input("Enter your Table Number", key="input_table")
-
-        if st.button("✅ Place Order"):
-            if not table_no:
-                st.warning("Enter a valid table number.")
-            else:
-                order = {
-                    "table": table_no,
-                    "items": [
-                        {"name": e["item"]["name"], "qty": e["qty"], "price": e["item"]["price"]}
-                        for e in st.session_state.cart.values()
-                    ],
-                    "total": total,
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "status": "Pending"
-                }
-                save_order(order)
-                st.session_state.order_placed = True
-                st.session_state.table_no = table_no
-                st.session_state.cart = {}
-                st.success("🎉 Order placed successfully!")
-
-# === Order Placed: Show Status and Feedback ===
-if st.session_state.order_placed:
+# === Cart Summary ===
+if st.session_state.cart:
     st.markdown("---")
-    st.subheader("📦 Track Your Order")
+    st.subheader("🛒 Your Cart")
+    total = 0
+    for item in st.session_state.cart:
+        qty = st.number_input(f"{item['name']} (₹{item['price']})", value=item['qty'], min_value=1, key=f"qty_{item['id']}")
+        item['qty'] = qty
+        total += item['qty'] * item['price']
 
+    st.markdown(f"### Total: ₹{total}")
+    if st.button("✅ Place Order"):
+        order = {
+            "id": f"order{int(time.time())}",
+            "table": st.session_state.table,
+            "items": st.session_state.cart,
+            "total": total,
+            "status": "Pending",
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        orders = load_orders()
+        orders.append(order)
+        save_orders(orders)
+        st.success("Order placed successfully!")
+        st.session_state.order_placed = True
+        st.session_state.order_id = order['id']
+        st.session_state.cart = []
+
+# === Order Status Tracking ===
+if st.session_state.order_placed and st.session_state.order_id:
+    st.markdown("---")
+    st.subheader("📦 Order Status")
     orders = load_orders()
-    latest = get_latest_order(st.session_state.table_no, orders)
+    current = next((o for o in orders if o['id'] == st.session_state.order_id), None)
+    if current:
+        status = current['status']
+        st.markdown(f"**Current Status: `{status}`**")
+        st.progress(["Pending", "Preparing", "Ready", "Served"].index(status) / 3)
 
-    if latest:
-        st.markdown(f"**Table:** {latest['table']}  \n⏰ **Time:** {latest['time']}")
-        st.markdown("### 🔄 Status Progress:")
-
-        status_steps = ["Pending", "Preparing", "Ready", "Served"]
-        current_idx = status_steps.index(latest["status"])
-        for i, step in enumerate(status_steps):
-            if i < current_idx:
-                st.success(f"✅ {step}")
-            elif i == current_idx:
-                st.warning(f"🔄 {step}")
-            else:
-                st.info(f"⏳ {step}")
-
-        # Feedback when order is Served
-        if latest["status"] == "Served":
+        # Show feedback form when served
+        if status == "Served":
             st.markdown("---")
-            st.subheader("📝 Share Your Feedback")
-            rating = st.slider("Rating (1–5)", 1, 5, 5)
-            comment = st.text_area("Your comments")
+            st.subheader("📝 Feedback")
+            rating = st.slider("How was your experience?", 1, 5, 4)
+            comment = st.text_area("Leave a comment")
             if st.button("Submit Feedback"):
                 save_feedback({
-                    "table": latest["table"],
+                    "table": st.session_state.table,
                     "rating": rating,
                     "comment": comment,
-                    "time": latest["time"]
+                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 })
-                st.success("🙏 Thank you! Feedback submitted.")
-                st.session_state.order_placed = False
-                st.session_state.table_no = ""
+                st.success("Thanks for your feedback!")
 
-    else:
-        st.error("No order found.")
-
-    # Auto-refresh every 5 seconds (for real-time order status)
-st.markdown(
-    """
-    <script>
-    setTimeout(() => {
-        window.location.reload();
-    }, 5000);
-    </script>
-    """,
-    unsafe_allow_html=True
-)
+# === Real-time Refresh ===
+time.sleep(5)
+st.rerun()
