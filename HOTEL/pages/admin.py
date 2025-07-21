@@ -1,97 +1,119 @@
 import streamlit as st
 import json
-import time
-from datetime import datetime
 from pathlib import Path
-import os
+from datetime import datetime
+import time
 
-# ====== File Paths ======
+# ---- Paths ----
 BASE_DIR = Path(__file__).resolve().parent.parent
 ORDER_FILE = BASE_DIR / "orders.json"
 FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
-# ====== Utility Functions ======
-def load_json(path):
-    if not path.exists():
-        path.write_text("[]", encoding="utf-8")
-    return json.loads(path.read_text(encoding="utf-8"))
+# ---- Page Config ----
+st.set_page_config(page_title="Admin Panel", layout="wide", initial_sidebar_state="collapsed")
 
-def save_json(path, data):
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+# ---- Utility Functions ----
+def load_json(file_path):
+    if not file_path.exists():
+        file_path.write_text("[]", encoding="utf-8")
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-def delete_completed_orders(orders):
-    return [o for o in orders if o["status"] != "Completed"]
+def save_json(file_path, data):
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 
-# ====== UI Setup ======
-st.set_page_config(page_title="Admin Panel", layout="wide")
-hide_sidebar = """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-    </style>
-"""
-st.markdown(hide_sidebar, unsafe_allow_html=True)
-
-st.title("👨‍🍳 Smart Restaurant Admin Dashboard")
-st.markdown("Monitoring all incoming orders with live updates every 5 seconds.")
-
-# ====== Load Orders and Feedback ======
+# ---- Load Orders ----
 orders = load_json(ORDER_FILE)
-feedback = load_json(FEEDBACK_FILE)
+feedback_data = load_json(FEEDBACK_FILE)
 
-# ====== Order Management ======
-latest_order_time = st.session_state.get("latest_order_time", None)
-new_order_alert = False
+# ---- Title ----
+st.title("🧾 Admin Dashboard")
+st.markdown("### Live Orders")
 
-for i, order in enumerate(orders):
-    if not isinstance(order.get("cart"), list):
-        continue  # skip malformed order
+# ---- New Order Sound Effect ----
+if "last_order_count" not in st.session_state:
+    st.session_state.last_order_count = len(orders)
 
-    with st.container(border=True):
-        st.subheader(f"🧾 Order #{order['id']} - Table {order['table']}")
-        st.markdown(f"**Status:** `{order['status']}`")
-        if order["status"] == "Placed":
-            new_order_alert = True
+if len(orders) > st.session_state.last_order_count:
+    st.audio("https://www.soundjay.com/buttons/sounds/button-3.mp3", autoplay=True)
+    st.toast("New order received!", icon="✅")
 
-        for item in order["cart"]:
-            st.write(f"- {item['name']} × {item['quantity']} = ₹{item['price'] * item['quantity']}")
+st.session_state.last_order_count = len(orders)
 
-        total = sum(item['price'] * item['quantity'] for item in order["cart"])
-        st.markdown(f"### Total: ₹{total}")
+# ---- Display Orders ----
+if not orders:
+    st.info("No orders yet.")
+else:
+    for i, order in enumerate(orders):
+        with st.container():
+            status = order.get("status", "placed").capitalize()
+            status_color = {
+                "Placed": "gray",
+                "Preparing": "orange",
+                "Ready": "green",
+                "Cancelled": "red"
+            }.get(status, "gray")
 
-        # Status buttons
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("🧑‍🍳 Start Preparing", key=f"prep_{i}"):
-                order["status"] = "Preparing"
-        with col2:
-            if st.button("✅ Complete", key=f"done_{i}"):
-                order["status"] = "Completed"
-        with col3:
-            if st.button("🗑️ Cancel", key=f"cancel_{i}"):
-                orders.pop(i)
-                save_json(ORDER_FILE, orders)
-                st.experimental_rerun()
+            st.markdown(f"""
+            <div style='padding: 1rem; border-radius: 12px; background-color: #f9f9f9; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1rem;'>
+                <strong>🪑 Table:</strong> {order.get("table")} &nbsp;|&nbsp; 
+                <strong>Status:</strong> <span style='color:{status_color};'>{status}</span><br>
+                <strong>🕒 Placed:</strong> {order.get("timestamp")}
+            </div>
+            """, unsafe_allow_html=True)
 
-# ====== Show Feedback ======
-if feedback:
-    st.markdown("---")
-    st.header("💬 Customer Feedback")
-    for fb in reversed(feedback):
-        with st.container(border=True):
-            st.write(f"🪑 Table {fb['table']}")
-            st.write(f"📝 {fb['feedback']}")
-            st.caption(f"Submitted at {fb['time']}")
+            for item in order.get("cart", []):
+                name = item.get("name", "Unknown")
+                qty = item.get("quantity", 1)
+                price = item.get("price", 0)
+                st.write(f"- {name} × {qty} = ₹{price * qty}")
 
-# ====== Save Updates ======
-orders = delete_completed_orders(orders)
-save_json(ORDER_FILE, orders)
+            # Status buttons
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                if st.button("👨‍🍳 Start Preparing", key=f"prep_{i}"):
+                    order["status"] = "preparing"
+                    save_json(ORDER_FILE, orders)
+                    st.experimental_rerun()
+            with col2:
+                if st.button("✅ Mark Ready", key=f"ready_{i}"):
+                    order["status"] = "ready"
+                    save_json(ORDER_FILE, orders)
+                    st.experimental_rerun()
+            with col3:
+                if st.button("❌ Cancel", key=f"cancel_{i}"):
+                    order["status"] = "cancelled"
+                    save_json(ORDER_FILE, orders)
+                    st.experimental_rerun()
+            with col4:
+                if st.button("🗑 Delete", key=f"del_{i}"):
+                    orders.pop(i)
+                    save_json(ORDER_FILE, orders)
+                    st.experimental_rerun()
 
-# ====== Toast & Refresh ======
-if new_order_alert:
-    st.toast("🛎️ New order received!", icon="✅")
+# ---- Feedback Section ----
+st.markdown("---")
+st.subheader("📝 Customer Feedback")
 
-# Auto-refresh every 5 seconds
+if not feedback_data:
+    st.info("No feedback submitted yet.")
+else:
+    for fb in reversed(feedback_data):
+        st.markdown(f"""
+        <div style='background-color:#fffbe6;padding:1rem;border-left:5px solid #ffc107;margin-bottom:1rem;border-radius:6px;'>
+            <strong>Table {fb.get("table", "N/A")}</strong> said:<br>
+            <em>“{fb.get("message", "No message")}”</em><br>
+            <small>{fb.get("timestamp")}</small>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ---- Auto Refresh ----
 st.markdown(
-    "<script>setTimeout(() => window.location.reload(), 5000);</script>",
-    unsafe_allow_html=True,
+    """
+    <script>
+    setTimeout(function() { window.location.reload(); }, 10000);
+    </script>
+    """,
+    unsafe_allow_html=True
 )
