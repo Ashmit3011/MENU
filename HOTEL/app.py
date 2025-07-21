@@ -58,32 +58,41 @@ for item in menu:
         cols = st.columns([3, 2, 2, 2])
         cols[0].markdown(f"**{item['name']}**")
         cols[1].markdown(f"₹{item['price']}")
-        qty = cols[2].number_input("Qty", 0, 10, 0, key=f"{item['name']}_qty")
-        if cols[3].button("➕ Add", key=f"{item['name']}_add"):
-            if qty > 0:
-                found = False
-                for cart_item in st.session_state.cart:
-                    if cart_item["id"] == item["id"]:
-                        cart_item["qty"] += qty
-                        found = True
-                        break
-                if not found:
-                    st.session_state.cart.append({
-                        "id": item["id"],
-                        "name": item["name"],
-                        "price": item["price"],
-                        "qty": qty
-                    })
-                st.success(f"{qty} x {item['name']} added to cart")
+        added = False
+        if cols[2].button("➕", key=f"add_{item['id']}"):
+            for cart_item in st.session_state.cart:
+                if cart_item["id"] == item["id"]:
+                    cart_item["qty"] += 1
+                    added = True
+                    break
+            if not added:
+                st.session_state.cart.append({
+                    "id": item["id"],
+                    "name": item["name"],
+                    "price": item["price"],
+                    "qty": 1
+                })
+        if cols[3].button("➖", key=f"minus_{item['id']}"):
+            for cart_item in st.session_state.cart:
+                if cart_item["id"] == item["id"]:
+                    cart_item["qty"] -= 1
+                    if cart_item["qty"] <= 0:
+                        st.session_state.cart.remove(cart_item)
+                    break
 
 # --- Cart ---
 if st.session_state.cart:
     st.header("🛒 Your Cart")
     total = 0
     for item in st.session_state.cart:
-        st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-        total += item['qty'] * item['price']
-    st.markdown(f"**Total: ₹{total}**")
+        item_total = item['qty'] * item['price']
+        total += item_total
+        cols = st.columns([4, 1, 1, 2])
+        cols[0].write(f"**{item['name']}**")
+        cols[1].write(f"₹{item['price']}")
+        cols[2].write(f"Qty: {item['qty']}")
+        cols[3].write(f"Total: ₹{item_total}")
+    st.markdown(f"### 🧾 Grand Total: ₹{total}")
 
     if st.button("✅ Place Order"):
         if not st.session_state.table:
