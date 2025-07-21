@@ -15,7 +15,7 @@ st.set_page_config(page_title="Smart Restaurant Ordering", layout="wide")
 # Hide sidebar
 st.markdown('<style>div[data-testid="stSidebar"]{display: none;}</style>', unsafe_allow_html=True)
 
-# Inject custom CSS for better mobile layout and smoother UI
+# Inject custom CSS
 st.markdown("""
     <style>
     body { font-size: 16px; }
@@ -29,47 +29,75 @@ st.markdown("""
 
 st.title("🍽️ Smart Table Ordering")
 
-# Load menu from JSON with better error handling
+# Auto-create sample menu if missing or broken
+default_menu = [
+    {
+        "id": "1",
+        "name": "Paneer Butter Masala",
+        "price": 220,
+        "description": "Creamy paneer in rich tomato gravy.",
+        "category": "Main Course"
+    },
+    {
+        "id": "2",
+        "name": "Garlic Naan",
+        "price": 50,
+        "description": "Fluffy naan with garlic and butter.",
+        "category": "Main Course"
+    },
+    {
+        "id": "3",
+        "name": "Masala Fries",
+        "price": 90,
+        "description": "Crispy fries tossed in tangy masala.",
+        "category": "Appetizers"
+    },
+    {
+        "id": "4",
+        "name": "Mango Lassi",
+        "price": 80,
+        "description": "Sweet mango yogurt smoothie.",
+        "category": "Drinks"
+    },
+    {
+        "id": "5",
+        "name": "Gulab Jamun",
+        "price": 60,
+        "description": "Juicy milk balls soaked in sugar syrup.",
+        "category": "Desserts"
+    }
+]
+
+def ensure_menu_file():
+    if not os.path.exists(menu_file):
+        with open(menu_file, "w") as f:
+            json.dump(default_menu, f, indent=2)
+        st.info("Created default menu.json")
+
+# Load menu
+ensure_menu_file()
+
 try:
     with open(menu_file, "r") as f:
         menu = json.load(f)
-        if not isinstance(menu, list) or not menu:
-            st.warning("🚫 Menu is empty or incorrectly formatted. Please check back later.")
-            menu = []
-except FileNotFoundError:
-    st.error("⚠️ Menu file not found. Please upload 'menu.json'.")
-    menu = []
-except json.JSONDecodeError:
-    st.error("❌ Failed to parse menu JSON. Fix the formatting.")
-    menu = []
+        if not isinstance(menu, list):
+            raise ValueError("Menu file is not a list.")
+        if len(menu) == 0:
+            raise ValueError("Menu is empty.")
 except Exception as e:
-    st.error(f"Unexpected error loading menu: {e}")
-    menu = []
+    st.error("❌ Menu is empty or incorrectly formatted. Please check back later.")
+    st.stop()
 
-# Group menu by category (defensively)
+# Group menu by category
 categorized_menu = defaultdict(list)
 for item in menu:
-    if all(k in item for k in ("id", "name", "price", "description", "category")):
-        categorized_menu[item["category"]].append(item)
+    categorized_menu[item["category"]].append(item)
 
-# Display menu (only if items exist)
-if categorized_menu:
-    for category, items in categorized_menu.items():
-        st.markdown(f"### 🍱 {category}")
-        for item in items:
-            with st.container():
-                col1, col2 = st.columns([4, 1])
-                with col1:
-                    st.markdown(f"**{item['name']}**")
-                    st.markdown(f"₹{item['price']}")
-                    st.caption(item["description"])
-                with col2:
-                    if st.button("➕", key=f"add_{item['id']}"):
-                        add_to_cart(item)
-                        st.toast(f"Added {item['name']} to cart", icon="🛒")
-else:
-    st.info("📭 No menu items available right now.")
-
+# Init session
+if "cart" not in st.session_state:
+    st.session_state.cart = []
+if "order_id" not in st.session_state:
+    st.session_state.order_id = None
 
 # Add to cart
 def add_to_cart(item):
@@ -77,7 +105,12 @@ def add_to_cart(item):
         if existing["id"] == item["id"]:
             existing["quantity"] += 1
             return
-    st.session_state.cart.append({"id": item["id"], "name": item["name"], "price": item["price"], "quantity": 1})
+    st.session_state.cart.append({
+        "id": item["id"],
+        "name": item["name"],
+        "price": item["price"],
+        "quantity": 1
+    })
 
 # Display menu
 for category, items in categorized_menu.items():
@@ -134,7 +167,7 @@ if st.session_state.cart:
 else:
     st.info("Your cart is empty.")
 
-# Track order without refresh
+# Track order
 st.markdown("---")
 st.markdown("## 📦 Track Your Order")
 if st.session_state.order_id:
