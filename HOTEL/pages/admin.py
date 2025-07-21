@@ -24,7 +24,7 @@ def save_json(file, data):
     with open(file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# Session init
+# Initialize session state
 if "last_order_count" not in st.session_state:
     st.session_state.last_order_count = 0
 
@@ -35,28 +35,31 @@ feedbacks = load_json(FEEDBACK_FILE)
 # Header
 st.title("🛠️ Admin Panel – Smart Table Ordering")
 
-# 🔔 New order detection
-if len(orders) > st.session_state.last_order_count:
-    st.toast("🔔 New Order Received!", icon="📦")
+# 🔔 New Order Detection
+new_order = len(orders) > st.session_state.last_order_count
+if new_order:
+    st.toast("🔔 New Order Received!", icon="🛎️")
+    st.audio("https://www.soundjay.com/buttons/sounds/button-10.mp3")
     st.session_state.last_order_count = len(orders)
 
-# Show orders
+# Display Orders
 st.subheader("📦 Orders")
 if orders:
     for order in reversed(orders):
         status = order.get("status", "Pending")
         color = {
-            "Pending": "#ffeeba",
-            "Preparing": "#bee5eb",
+            "Pending": "#fff3cd",
+            "Preparing": "#d1ecf1",
             "Served": "#d4edda",
             "Completed": "#e2e3e5"
         }.get(status, "#f8f9fa")
 
         with st.container():
             st.markdown(
-                f"<div style='background-color: {color}; padding: 1rem; border-radius: 1rem;'>",
+                f"<div style='background-color: {color}; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1rem;'>",
                 unsafe_allow_html=True
             )
+
             st.subheader(f"Order #{order['id']} – Table {order['table']}")
             st.caption(f"🕒 {order['timestamp']}")
             st.markdown(f"**Status:** `{status}`")
@@ -64,10 +67,12 @@ if orders:
             with st.expander("🧾 Items"):
                 total = 0
                 for item in order["cart"]:
-                    st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+                    line = f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}"
+                    st.write(line)
                     total += item['qty'] * item['price']
                 st.write(f"**Total: ₹{total}**")
 
+            # Status update
             new_status = st.selectbox(
                 f"Update status for Order #{order['id']}",
                 ["Pending", "Preparing", "Served", "Completed"],
@@ -77,14 +82,14 @@ if orders:
             if new_status != status:
                 order["status"] = new_status
                 save_json(ORDER_FILE, orders)
-                st.success(f"✅ Status updated to {new_status}")
-                st.stop()  # Avoid rerun loop
+                st.success(f"✅ Order #{order['id']} status updated to {new_status}")
+                st.stop()  # To prevent multiple updates in loop
 
             st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.info("📭 No orders received yet.")
 
-# 💬 Feedback section
+# Display Feedback
 st.markdown("---")
 st.header("💬 Customer Feedback")
 if feedbacks:
@@ -97,11 +102,9 @@ if feedbacks:
 else:
     st.info("No feedback received yet.")
 
-# 🔁 Auto-refresh every 5 seconds with cache bypass
-st.markdown(f"""
+# 🔁 Auto-refresh every 5 seconds
+st.markdown("""
 <script>
-    setTimeout(() => {{
-        location.reload(true);
-    }}, 5000);
+    setTimeout(() => window.location.reload(), 5000);
 </script>
 """, unsafe_allow_html=True)
