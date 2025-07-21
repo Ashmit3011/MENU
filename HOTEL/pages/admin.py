@@ -2,33 +2,43 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-from streamlit_extras.stylable_container import stylable_container
-from streamlit_autorefresh import st_autorefresh
 
-# Refresh every 3 seconds (3000 milliseconds)
-st_autorefresh(interval=3000, key="refresh")
-
+# Auto refresh every 3 seconds
 st.set_page_config(layout="wide", page_title="Admin Panel")
+st.experimental_set_query_params()  # for smooth refresh workaround
 
-# Hide sidebar and default elements
+# Hide sidebar and padding
 st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none; }
         .st-emotion-cache-1avcm0n { padding: 1rem; }
         .order-card {
-            background-color: #f7f7f7;
+            background-color: #f3f4f6;
             border-radius: 12px;
             padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
         .feedback {
-            background-color: #fff7d9;
+            background-color: #fefce8;
             border-radius: 12px;
             padding: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+        h1, h3, .stButton > button {
+            color: #1f2937;
         }
     </style>
+""", unsafe_allow_html=True)
+
+# Auto-refresh workaround
+st.markdown("""
+<script>
+    setTimeout(function() {
+        window.location.reload();
+    }, 3000);
+</script>
 """, unsafe_allow_html=True)
 
 st.title("📟 Live Orders")
@@ -43,37 +53,42 @@ if os.path.exists(orders_file):
 else:
     orders = []
 
-# Display orders
+# Display Orders
 for order in orders:
-    with stylable_container("order-card", key=order["timestamp"]):
-        st.markdown(f"🪑 **Table {order['table']}** — *{order['status']}*")
-        st.caption(f"⏰ {order['timestamp']}")
+    with st.container():
+        with st.container():
+            st.markdown(f"""
+            <div class="order-card">
+                <h4>🪑 Table {order.get('table', '?')} — <em>{order.get('status', 'Unknown')}</em></h4>
+                <p style='font-size: 0.85rem; color: gray;'>⏰ {order.get('timestamp', '')}</p>
+            </div>
+            """, unsafe_allow_html=True)
 
         for item in order.get("cart", []):
             try:
-                name = item['name']
-                qty = item['quantity']
-                price = item['price']
-                st.write(f"- {name} × {qty} = ₹{price * qty}")
-            except KeyError:
+                name = item.get('name', '')
+                qty = item.get('quantity', 0)
+                price = item.get('price', 0)
+                st.markdown(f"- **{name}** × {qty} = ₹{price * qty}")
+            except Exception:
                 continue
 
-        col1, col2, col3, col4 = st.columns([1,1,1,1])
+        col1, col2, col3, col4 = st.columns(4)
 
-        if order["status"] == "Pending":
+        if order.get("status") == "Pending":
             if col1.button("🍳 Start Preparing", key=f"prep_{order['timestamp']}"):
                 order["status"] = "Preparing"
-        if order["status"] == "Preparing":
+        if order.get("status") == "Preparing":
             if col2.button("✅ Mark Ready", key=f"ready_{order['timestamp']}"):
                 order["status"] = "Ready"
-        if order["status"] in ["Pending", "Preparing"]:
+        if order.get("status") in ["Pending", "Preparing"]:
             if col3.button("❌ Cancel", key=f"cancel_{order['timestamp']}"):
                 order["status"] = "Cancelled"
-        if col4.button("🗑️ Delete", key=f"del_{order['timestamp']}"):
+        if col4.button("🗑️ Delete", key=f"delete_{order['timestamp']}"):
             orders.remove(order)
             break
 
-# Save updated orders
+# Save updates
 with open(orders_file, "w") as f:
     json.dump(orders, f, indent=2)
 
@@ -87,9 +102,12 @@ if os.path.exists(feedback_file):
 else:
     feedbacks = []
 
-# Display feedback
-for feedback in reversed(feedbacks):
-    with stylable_container("feedback", key=feedback['timestamp']):
-        st.markdown(f"**Table {feedback['table']} said:**")
-        st.write(f"“{feedback['message']}”")
-        st.caption(f"{feedback['timestamp']}")
+for fb in reversed(feedbacks):
+    with st.container():
+        st.markdown(f"""
+        <div class="feedback">
+            <strong>🪑 Table {fb.get('table', '?')} said:</strong>
+            <p>{fb.get('message', '')}</p>
+            <p style='font-size: 0.8rem; color: gray;'>{fb.get('timestamp', '')}</p>
+        </div>
+        """, unsafe_allow_html=True)
