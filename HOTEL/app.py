@@ -23,7 +23,10 @@ if "table" not in st.session_state:
 with open(MENU_FILE, "r") as f:
     menu = json.load(f)
 
-categories = sorted(set([item["category"] for item in menu]))
+categories = list(menu.keys())
+for category in categories:
+    for item in menu[category]:
+        # item["id"], item["name"], item["price"]
 
 # === Header ===
 st.title("🍴 Welcome to Smart Restaurant")
