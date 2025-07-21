@@ -4,14 +4,14 @@ import os
 import time
 from datetime import datetime
 
-# ---------- CONFIG ----------
+# --- CONFIG ---
 st.set_page_config(page_title="🛎️ Admin Panel", layout="wide")
 
-# ---------- FILE PATHS ----------
+# --- FILE PATH ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ORDERS_FILE = os.path.join(BASE_DIR, "..", "orders.json")
 
-# ---------- LOAD & SAVE ----------
+# --- LOAD / SAVE ---
 def load_orders():
     try:
         with open(ORDERS_FILE, "r") as f:
@@ -23,60 +23,62 @@ def save_orders(orders):
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
 
-# ---------- LOAD ORDERS ----------
+# --- INIT SESSION ---
+if "last_order_count" not in st.session_state:
+    st.session_state.last_order_count = 0
+
+# --- LOAD ORDERS ---
 orders = load_orders()
 orders = sorted(orders, key=lambda x: x["timestamp"], reverse=True)
+current_order_count = len(orders)
+now = time.time()
 
-# ---------- SOUND ALERT + TOAST ----------
-st.markdown("""
-    <style>
-        .toast {
-            position: fixed;
-            bottom: 70px;
-            right: 20px;
-            background-color: #008000;
-            color: white;
-            padding: 16px;
-            border-radius: 10px;
-            z-index: 10000;
-            animation: slideIn 0.5s ease-out;
-            font-size: 18px;
-        }
-        @keyframes slideIn {
-            0% {opacity: 0; transform: translateY(20px);}
-            100% {opacity: 1; transform: translateY(0);}
-        }
-    </style>
-
-    <script>
-        const newOrderSound = new Audio("https://www.soundjay.com/buttons/beep-07.wav");
-        if (!window.prevOrderCount) window.prevOrderCount = 0;
-
-        const checkOrders = async () => {
-            const response = await fetch(window.location.href);
-            const text = await response.text();
-            const count = (text.match(/🧾 Order ID/g) || []).length;
-
-            if (count > window.prevOrderCount) {
-                newOrderSound.play();
-            }
-            window.prevOrderCount = count;
-        };
-
-        setInterval(checkOrders, 4000);  // check every 4 seconds
-    </script>
-""", unsafe_allow_html=True)
-
-# ---------- TITLE ----------
+# --- TITLE ---
 st.title("🛎️ Orders")
 
-# ---------- DISPLAY ORDERS ----------
-now = time.time()
+# --- TOAST + SOUND on new order ---
+if current_order_count > st.session_state.last_order_count:
+    st.session_state.last_order_count = current_order_count
+
+    st.markdown("""
+        <div id="toast" style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4BB543;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 18px;
+            z-index: 10000;
+            animation: slideIn 0.5s ease-out;
+        ">
+            🔔 New order received!
+        </div>
+        <audio autoplay>
+            <source src="https://www.soundjay.com/buttons/sounds/button-10.mp3" type="audio/mpeg">
+        </audio>
+        <script>
+            setTimeout(() => {
+                const toast = document.getElementById("toast");
+                if (toast) toast.style.display = "none";
+            }, 3000);
+        </script>
+        <style>
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+# --- DISPLAY ORDERS ---
 any_orders = False
 
 for i, order in enumerate(orders):
-    is_recent = (now - order["timestamp"]) < 120  # 2 minutes
-    bg_color = "#fff4d2" if is_recent else "#ffffff"
+    is_recent = (now - order["timestamp"]) < 120
+    bg_color = "#fff4d2" if is_recent else "#f4f4f4"
     text_color = "#000000"
 
     with st.container():
@@ -91,11 +93,9 @@ for i, order in enumerate(orders):
             unsafe_allow_html=True
         )
 
-        # Items
         for item in order["items"].values():
             st.markdown(f"- **{item['name']}** x {item['qty']} = ₹{item['qty'] * item['price']}")
 
-        # Status dropdown
         status = st.selectbox(
             "Update Status",
             ["Pending", "Preparing", "Ready", "Served"],
@@ -108,7 +108,6 @@ for i, order in enumerate(orders):
             save_orders(orders)
             st.rerun()
 
-        # Delete button if order is served
         if order["status"] == "Served":
             if st.button(f"🗑️ Delete Order {order['id']}", key=f"delete_{i}"):
                 orders.pop(i)
@@ -122,7 +121,7 @@ for i, order in enumerate(orders):
 if not any_orders:
     st.info("No orders yet.")
 
-# ---------- AUTO REFRESH ----------
+# --- AUTO REFRESH ---
 st.markdown("""
 <script>
     setTimeout(() => window.location.reload(), 10000);
