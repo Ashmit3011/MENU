@@ -77,18 +77,21 @@ else:
     i = 0
     for order in orders[:]:  # Use a copy to allow deletion
         is_recent = (now - order["timestamp"]) < 120
-        color = "#ffeeba" if is_recent else "#f8f9fa"
+        bg_color = "#ffffff" if not is_recent else "#fff4d2"  # Brighter for recent
+text_color = "#000000"
 
-        with st.container():
-            st.markdown(
-                f"""
-                <div style='background-color:{color}; padding:15px; border-radius:10px; margin-bottom:10px'>
-                    <h4>🧾 Order ID: {order['id']} | Table: {order['table']}</h4>
-                    <p>Status: <b>{order['status']}</b> &nbsp;&nbsp; | &nbsp;&nbsp; 
-                    Placed: {datetime.fromtimestamp(order['timestamp']).strftime('%I:%M %p')}</p>
-                """,
-                unsafe_allow_html=True
-            )
+with st.container():
+    st.markdown(
+        f"""
+        <div style='background-color:{bg_color}; color:{text_color}; padding:20px; 
+                     border-radius:12px; margin-bottom:16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);'>
+            <h4 style='margin:0;'>🧾 Order ID: {order['id']} | Table: {order['table']}</h4>
+            <p style='margin-top:8px;'>Status: <b>{order['status']}</b> &nbsp;|&nbsp; 
+               Placed: {datetime.fromtimestamp(order['timestamp']).strftime('%I:%M %p')}</p>
+        """,
+        unsafe_allow_html=True
+    )
+
 
             for item in order["items"].values():
                 st.markdown(f"- **{item['name']}** x {item['qty']} = ₹{item['qty'] * item['price']}")
