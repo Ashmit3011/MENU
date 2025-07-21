@@ -66,7 +66,7 @@ for category in categories:
                 st.markdown(f"**{item['name']}**")
                 st.markdown(f"₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}")
             with col2:
-                if st.button("Add", key=item['id']):
+                if st.button("Add", key=f"add_{item['id']}_{time.time()}"):
                     found = False
                     for c in st.session_state.cart:
                         if c['id'] == item['id']:
@@ -83,7 +83,8 @@ if st.session_state.cart:
     st.subheader("🛒 Your Cart")
     total = 0
     for item in st.session_state.cart:
-        qty = st.number_input(f"{item['name']} (₹{item['price']})", value=item['qty'], min_value=1, key=f"qty_{item['id']}")
+        unique_key = f"qty_{item['id']}_{time.time()}"
+        qty = st.number_input(f"{item['name']} (₹{item['price']})", value=item['qty'], min_value=1, key=unique_key)
         item['qty'] = qty
         total += item['qty'] * item['price']
 
