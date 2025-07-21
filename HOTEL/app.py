@@ -3,7 +3,6 @@ import json
 import os
 from datetime import datetime
 from uuid import uuid4
-import time
 
 st.set_page_config(page_title="🍽️ Smart Menu", layout="wide")
 
@@ -49,6 +48,7 @@ st.markdown("""
         .success-toast {
             color: green;
         }
+        .autorefresh {animation: none;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -76,16 +76,19 @@ def get_total():
     return sum(item["price"] * item["quantity"] for item in st.session_state.cart)
 
 # === Display Menu ===
-for category, items in menu.items():
-    st.markdown(f"## {category}")
-    for item in items:
-        with st.container():
-            st.markdown("<div class='menu-card'>", unsafe_allow_html=True)
-            st.markdown(f"**{item['name']}**  ")
-            st.markdown(f"₹{item['price']}  ")
-            if st.button(f"➕ Add", key=f"add_{item['id']}"):
-                add_to_cart(item)
-            st.markdown("</div>", unsafe_allow_html=True)
+if isinstance(menu, dict):
+    for category, items in menu.items():
+        st.markdown(f"## {category}")
+        for item in items:
+            with st.container():
+                st.markdown("<div class='menu-card'>", unsafe_allow_html=True)
+                st.markdown(f"**{item['name']}**  ")
+                st.markdown(f"₹{item['price']}  ")
+                if st.button(f"➕ Add", key=f"add_{item['id']}"):
+                    add_to_cart(item)
+                st.markdown("</div>", unsafe_allow_html=True)
+else:
+    st.error("Invalid menu format. Expected a dictionary.")
 
 # === Cart ===
 if st.session_state.cart:
@@ -142,6 +145,9 @@ if st.session_state.order_status:
                     st.session_state.order_status = ""
                 break
 
-    # Auto-refresh tracking section every 5 seconds without full rerun
-    time.sleep(3)
-    st.experimental_rerun()
+# Auto-refresh order tracking section without blinking
+st.markdown("""
+<script>
+    setTimeout(() => window.location.reload(), 3000);
+</script>
+""", unsafe_allow_html=True)
