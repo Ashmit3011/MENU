@@ -1,66 +1,92 @@
 import streamlit as st
 import json
 import os
+import time
 from datetime import datetime
-import uuid
-from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
-MENU_FILE = BASE_DIR / "menu.json"
-ORDERS_FILE = BASE_DIR / "orders.json"
+# === File paths ===
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-st.set_page_config(page_title="Admin Panel", layout="centered")
-st.markdown("""
-    <style>
-    body { background-color: #111; color: #fff; }
-    .stButton>button { border-radius: 10px; }
-    </style>
-""", unsafe_allow_html=True)
-
+# === Helper functions ===
 def load_orders():
-    if not ORDERS_FILE.exists(): return []
+    if not os.path.exists(ORDERS_FILE):
+        return []
     with open(ORDERS_FILE, "r") as f:
         return json.load(f)
 
-def save_orders(data):
+def save_orders(orders):
     with open(ORDERS_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(orders, f, indent=2)
 
-def get_status_color(status):
-    return {
-        "Pending": "orange",
-        "Preparing": "gold",
-        "Ready": "deepskyblue",
-        "Served": "limegreen"
-    }.get(status, "gray")
+def next_status(status):
+    steps = ["Pending", "Preparing", "Ready", "Served"]
+    if status in steps and status != "Served":
+        return steps[steps.index(status) + 1]
+    return status
 
-st.title("🛠️ Admin Dashboard")
+# === UI config ===
+st.set_page_config(page_title="🛠️ Admin Panel", layout="centered")
+
+st.markdown("""
+    <style>
+    .order-card {
+        background-color: #181818;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #333;
+    }
+    .status-Pending {
+        color: orange;
+    }
+    .status-Preparing {
+        color: #00bfff;
+    }
+    .status-Ready {
+        color: green;
+    }
+    .status-Served {
+        color: gray;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title("🛠️ Admin Order Manager")
+
 orders = load_orders()
+orders.sort(key=lambda x: x["time"], reverse=True)
 
 if not orders:
-    st.info("No orders found.")
+    st.info("No orders yet.")
 else:
-    for order in sorted(orders, key=lambda x: x['timestamp'], reverse=True):
+    for i, order in enumerate(orders):
         with st.container():
-            st.markdown("---")
-            st.markdown(f"### 🧾 Order ID: `{order['id']}` | Table: **{order['table']}**")
-            status_color = get_status_color(order['status'])
-            st.markdown(f"**Status:** <span style='color:{status_color}; font-weight:bold'>{order['status']}</span>", unsafe_allow_html=True)
+            st.markdown(f"<div class='order-card'>", unsafe_allow_html=True)
+            st.markdown(f"### 🧾 Order ID: `{order['id']}`")
+            st.markdown(f"🪑 **Table:** {order['table']}  |  🕒 *{order['time']}*")
+            st.markdown(f"💵 **Total:** ₹{order['total']}")
 
-            with st.expander("View Items"):
-                for pid, qty in order['items'].items():
-                    st.write(f"🔸 Product ID: {pid}, Qty: {qty}")
+            # Status Display
+            st.markdown(f"📦 **Status:** <span class='status-{order['status']}'>{order['status']}</span>", unsafe_allow_html=True)
 
-            new_status = st.selectbox("Update Status", ["Pending", "Preparing", "Ready", "Served"], index=["Pending", "Preparing", "Ready", "Served"].index(order['status']), key=order['id'])
-            if st.button("Update", key=f"update_{order['id']}"):
-                order['status'] = new_status
-                save_orders(orders)
-                st.success("Status updated successfully!")
-                st.rerun()
+            # Item list
+            st.markdown("**🧺 Items:**")
+            for item in order['items']:
+                st.markdown(f"- {item['name']} × {item['qty']}")
 
-# Auto Refresh Every 5 seconds
-st.markdown("""
-<script>
-    setTimeout(() => window.location.reload(), 5000);
-</script>
-""", unsafe_allow_html=True)
+            # Status control
+            col1, col2 = st.columns([1, 2])
+            with col1:
+                if order['status'] != "Served":
+                    if st.button(f"➡️ Next Status", key=f"next_{order['id']}"):
+                        orders[i]['status'] = next_status(order['status'])
+                        save_orders(orders)
+                        st.experimental_rerun()
+            with col2:
+                st.markdown(f"⬆️ Next: `{next_status(order['status'])}`" if order['status'] != "Served" else "`✅ Order Completed`")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# === Auto-refresh every 5 seconds ===
+time.sleep(5)
+st.rerun()
