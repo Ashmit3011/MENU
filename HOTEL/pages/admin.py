@@ -5,7 +5,7 @@ from datetime import datetime
 
 # Auto refresh every 3 seconds
 st.set_page_config(layout="wide", page_title="Admin Panel")
-st.experimental_set_query_params()  # for smooth refresh workaround
+st.query_params.clear()  # updated API
 
 # Hide sidebar and padding
 st.markdown("""
@@ -32,14 +32,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Auto-refresh workaround
-st.markdown("""
-<script>
-    setTimeout(function() {
-        window.location.reload();
-    }, 3000);
-</script>
-""", unsafe_allow_html=True)
+# Native Streamlit autorefresh using empty container and rerun workaround
+refresh_placeholder = st.empty()
+if refresh_placeholder.button("", key="refresh", help="", disabled=True):
+    st.rerun()
 
 st.title("📟 Live Orders")
 
@@ -111,3 +107,10 @@ for fb in reversed(feedbacks):
             <p style='font-size: 0.8rem; color: gray;'>{fb.get('timestamp', '')}</p>
         </div>
         """, unsafe_allow_html=True)
+
+# Streamlit refresh workaround for auto-refresh (3 seconds)
+st.markdown("""
+<script>
+    setTimeout(() => document.querySelector('button[kind=refresh]').click(), 3000);
+</script>
+""", unsafe_allow_html=True)
