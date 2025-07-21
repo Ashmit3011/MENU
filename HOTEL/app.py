@@ -37,6 +37,27 @@ def save_feedback(data):
 
 # === UI config ===
 st.set_page_config(page_title="📋 Smart Table Ordering", layout="centered")
+st.markdown("""
+    <style>
+        .sticky-cart {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border-top: 1px solid #ccc;
+            padding: 10px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            z-index: 999;
+        }
+        .add-btn {
+            font-size: 20px;
+            padding: 0.3rem 1rem;
+            border-radius: 10px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("🍽️ Welcome to Our Restaurant")
 
 menu = load_menu()
@@ -55,18 +76,17 @@ if "order_id" not in st.session_state:
 # === Table number input ===
 st.session_state.table = st.text_input("Enter your Table Number", st.session_state.table)
 
-# === Menu Display (Category-based Card Layout) ===
+# === Menu Display ===
 st.subheader("📜 Menu")
 for category in categories:
-    st.markdown(f"## 🍱 {category}")
+    st.markdown(f"### 🍱 {category}")
     for item in menu[category]:
         with st.container():
             col1, col2 = st.columns([4, 1])
             with col1:
-                st.markdown(f"**{item['name']}**")
-                st.markdown(f"₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}")
+                st.markdown(f"**{item['name']}**  ₹{item['price']}  {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}")
             with col2:
-                if st.button("Add", key=f"add_{item['id']}_{int(time.time()*1000)}"):
+                if st.button("➕", key=f"add_{item['id']}_{time.time()}"):
                     found = False
                     for c in st.session_state.cart:
                         if c['id'] == item['id']:
@@ -75,29 +95,25 @@ for category in categories:
                             break
                     if not found:
                         st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
-                    st.success(f"Added {item['name']} to cart")
+                    st.toast(f"Added {item['name']} to cart!", icon="🛒")
 
-# === Cart Summary ===
+# === Sticky Cart ===
 if st.session_state.cart:
-    st.markdown("---")
-    st.subheader("🛒 Your Cart")
+    st.markdown("""<div class='sticky-cart'>""", unsafe_allow_html=True)
     total = 0
-    updated_cart = []
     for item in st.session_state.cart:
         col1, col2, col3 = st.columns([4, 2, 1])
         with col1:
-            st.markdown(f"**{item['name']}** - ₹{item['price']}")
+            st.markdown(f"**{item['name']}**")
         with col2:
-            qty = st.number_input("Qty", min_value=1, value=item['qty'], key=f"qty_{item['id']}_{int(time.time()*1000)}")
+            qty = st.number_input("Qty", min_value=1, value=item['qty'], key=f"qty_{item['id']}_{time.time()}")
             item['qty'] = qty
         with col3:
-            if st.button("❌", key=f"remove_{item['id']}_{int(time.time()*1000)}"):
-                continue  # Skip appending to updated_cart
-        updated_cart.append(item)
+            if st.button("❌", key=f"remove_{item['id']}_{time.time()}"):
+                st.session_state.cart = [c for c in st.session_state.cart if c['id'] != item['id']]
+                st.rerun()
         total += item['qty'] * item['price']
-    st.session_state.cart = updated_cart
-
-    st.markdown(f"### Total: ₹{total}")
+    st.markdown(f"**Total: ₹{total}**")
     if st.button("✅ Place Order"):
         order = {
             "id": f"order{int(time.time())}",
@@ -110,10 +126,12 @@ if st.session_state.cart:
         orders = load_orders()
         orders.append(order)
         save_orders(orders)
-        st.success("Order placed successfully!")
         st.session_state.order_placed = True
         st.session_state.order_id = order['id']
         st.session_state.cart = []
+        st.success("✅ Order placed successfully!")
+        st.toast("📦 Order placed! Track below.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # === Order Status Tracking ===
 if st.session_state.order_placed and st.session_state.order_id:
