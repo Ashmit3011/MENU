@@ -1,92 +1,87 @@
 import streamlit as st
 import json
-import os
 import time
 from datetime import datetime
 from pathlib import Path
 
-# === File Paths ===
-BASE_DIR = Path(__file__).resolve().parent
-ORDERS_FILE = BASE_DIR / "orders.json"
-FEEDBACK_FILE = BASE_DIR / "feedback.json"
+ORDERS_FILE = Path(__file__).resolve().parent / "orders.json"
+FEEDBACK_FILE = Path(__file__).resolve().parent / "feedback.json"
 
-st.set_page_config(page_title="🛎️ Admin Panel", layout="wide")
+st.set_page_config(page_title="🛎️ Admin Panel", layout="centered")
 
-# === UI Style ===
-st.markdown("""
-    <style>
-        .order-box {
-            background: #111111dd;
-            border: 1px solid #333;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .status-pending { color: orange; font-weight: bold; }
-        .status-preparing { color: deepskyblue; font-weight: bold; }
-        .status-ready { color: yellowgreen; font-weight: bold; }
-        .status-served { color: lightgreen; font-weight: bold; }
-    </style>
-""", unsafe_allow_html=True)
+# Initialize
+if not ORDERS_FILE.exists():
+    with open(ORDERS_FILE, "w") as f:
+        json.dump([], f)
+if not FEEDBACK_FILE.exists():
+    with open(FEEDBACK_FILE, "w") as f:
+        json.dump([], f)
 
-# === Load Orders ===
-def load_json(file, default):
-    if not file.exists():
-        with open(file, "w") as f: json.dump(default, f)
-        return default
-    with open(file, "r") as f: return json.load(f)
-
-def save_json(file, data):
-    with open(file, "w") as f: json.dump(data, f, indent=2)
-
-orders = load_json(ORDERS_FILE, [])
-orders.sort(key=lambda x: x["time"], reverse=True)
-
-# === Sound on New Order ===
 if "last_order_count" not in st.session_state:
     st.session_state.last_order_count = 0
 
+st.title("🛎️ Admin Dashboard")
+
+# Load Orders
+with open(ORDERS_FILE, "r") as f:
+    orders = json.load(f)
+
+orders.sort(key=lambda x: x["time"], reverse=True)
+
+# New Order Detection
 if len(orders) > st.session_state.last_order_count:
-    st.toast("🔔 New Order Received!", icon="🍽️")
+    st.toast("🔔 New Order Received", icon="🧾")
     st.audio("https://www.soundjay.com/buttons/beep-07.wav", autoplay=True)
     st.session_state.last_order_count = len(orders)
 
-# === Show Orders ===
-st.title("📋 Orders")
 if not orders:
-    st.info("No orders yet.")
+    st.info("No orders yet")
 else:
     for order in orders:
-        status_class = f"status-{order['status'].lower()}"
-        with st.expander(f"🆔 Order {order['id']} — ₹{order['total']} — {order['status']}"):
-            st.markdown(f"**Table:** {order['table']}  \n**Time:** {order['time']}")
-            st.markdown(f"**Status:** <span class='{status_class}'>{order['status']}</span>", unsafe_allow_html=True)
+        st.markdown(f"""
+        ### 🍽️ Order #{order['id']}
+        **🪑 Table:** {order['table']}  
+        **🕒 Time:** {order['time']}  
+        **Status:** `{order['status']}`
+        """)
 
-            st.markdown("#### Items")
-            for item in order["items"]:
-                st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+        for item in order['items']:
+            st.markdown(f"- {item['name']} x {item['qty']} (₹{item['price'] * item['qty']})")
 
-            # === Status Controls ===
-            statuses = ["Pending", "Preparing", "Ready", "Served"]
-            current_idx = statuses.index(order["status"])
+        st.markdown(f"**Total: ₹{order['total']}**")
+
+        col1, col2 = st.columns(2)
+        statuses = ["Pending", "Preparing", "Ready", "Served"]
+        current_idx = statuses.index(order["status"])
+
+        with col1:
             if current_idx < 3:
-                if st.button(f"➡️ Mark as {statuses[current_idx + 1]}", key=f"{order['id']}_next"):
-                    order["status"] = statuses[current_idx + 1]
-                    save_json(ORDERS_FILE, orders)
+                if st.button(f"Next → {statuses[current_idx+1]}", key=f"{order['id']}_next"):
+                    order['status'] = statuses[current_idx + 1]
+                    with open(ORDERS_FILE, "w") as f:
+                        json.dump(orders, f, indent=2)
                     st.rerun()
-            else:
-                st.success("✅ Order Served")
 
-# === Feedback Viewer ===
-st.markdown("## 💬 Customer Feedback")
-feedbacks = load_json(FEEDBACK_FILE, [])
-if not feedbacks:
-    st.info("No feedback received.")
-else:
-    for fb in reversed(feedbacks):
-        st.markdown(f"🧾 **Order ID**: {fb['order_id']}  \n🕒 {fb['time']}  \n💬 {fb['feedback']}")
+        with col2:
+            if st.button("❌ Remove Order", key=f"{order['id']}_remove"):
+                orders.remove(order)
+                with open(ORDERS_FILE, "w") as f:
+                    json.dump(orders, f, indent=2)
+                st.rerun()
+
         st.markdown("---")
 
-# === Auto Refresh (every 5s) ===
+# Feedback Viewer
+st.markdown("### 💬 Customer Feedback")
+with open(FEEDBACK_FILE, "r") as f:
+    feedbacks = json.load(f)
+
+if feedbacks:
+    for fb in feedbacks[-5:]:
+        st.info(f"[{fb['time']}] Table {fb['table']}: {fb['feedback']}")
+else:
+    st.write("No feedback yet")
+
+# Auto-refresh
 time.sleep(5)
 st.rerun()
