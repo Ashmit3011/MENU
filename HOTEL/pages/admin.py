@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).parent.parent.resolve()
 ORDER_FILE = BASE_DIR / "orders.json"
 FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
-# Safely load JSON
+# Load JSON safely
 def load_json(file):
     file.parent.mkdir(parents=True, exist_ok=True)
     if not file.exists():
@@ -24,10 +24,10 @@ def load_json(file):
 
 # Save JSON
 def save_json(file, data):
-    with open(file, "w", encoding="utf-8") as f:
+    with file.open("w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
-# Session state for tracking new orders
+# Session state
 if "last_order_count" not in st.session_state:
     st.session_state.last_order_count = 0
 
@@ -35,16 +35,15 @@ if "last_order_count" not in st.session_state:
 orders = load_json(ORDER_FILE)
 feedbacks = load_json(FEEDBACK_FILE)
 
-# UI Title
 st.title("🛠️ Admin Panel – Smart Table Ordering")
 
-# 🔔 Check for new orders
+# 🔔 New order detection
 if len(orders) > st.session_state.last_order_count:
     st.toast("🔔 New Order Received!", icon="🍽️")
     st.audio("https://www.myinstants.com/media/sounds/bell.mp3", format="audio/mp3")
     st.session_state.last_order_count = len(orders)
 
-# 📦 Display orders
+# 📦 Show Orders
 st.subheader("📦 Orders")
 if orders:
     for order in reversed(orders):
@@ -86,10 +85,17 @@ if orders:
                 st.stop()
 
             st.markdown("</div>", unsafe_allow_html=True)
+
+    # 🗑️ Button to delete completed orders
+    if st.button("🗑️ Delete Completed Orders"):
+        orders = [order for order in orders if order.get("status") != "Completed"]
+        save_json(ORDER_FILE, orders)
+        st.success("✅ Completed orders deleted successfully.")
+        st.rerun()
 else:
     st.info("📭 No orders received yet.")
 
-# 💬 Feedback section
+# 💬 Customer Feedback
 st.markdown("---")
 st.header("💬 Customer Feedback")
 if feedbacks:
