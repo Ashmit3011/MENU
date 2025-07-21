@@ -4,13 +4,13 @@ import os
 import time
 from datetime import datetime
 
-# === File paths ===
+# === Paths ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 
-# === Load helpers ===
+# === Load/save helpers ===
 def load_menu():
     with open(MENU_FILE, "r") as f:
         return json.load(f)
@@ -37,43 +37,46 @@ def save_feedback(data):
     with open(FEEDBACK_FILE, "w") as f:
         json.dump(feedbacks, f, indent=2)
 
-# === UI config ===
-st.set_page_config(page_title="📋 Smart Table Ordering", layout="centered")
+# === Page config ===
+st.set_page_config(page_title="🍽️ Smart Table Ordering", layout="centered")
+
+# === Custom CSS ===
 st.markdown("""
-    <style>
-    .food-card {
-        background-color: #ffffff0c;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border: 1px solid #333;
-    }
-    .cart-card {
-        background-color: #111111cc;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-top: 2rem;
-        border: 1px solid #444;
-    }
-    .plus-btn, .minus-btn {
-        background-color: #0a84ff;
-        color: white;
-        font-size: 20px;
-        border-radius: 5px;
-        width: 40px;
-        height: 40px;
-        border: none;
-        margin: 0 5px;
-    }
-    </style>
+<style>
+body {
+    background-color: #111;
+    color: white;
+}
+h1, h2, h3 {
+    color: #f4f4f4;
+}
+.food-card, .cart-card {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #333;
+}
+.plus-btn, .minus-btn {
+    background-color: #0a84ff;
+    color: white;
+    font-size: 18px;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border: none;
+}
+.status-pending { color: orange; }
+.status-preparing { color: gold; }
+.status-ready { color: lightgreen; }
+.status-served { color: deepskyblue; }
+</style>
 """, unsafe_allow_html=True)
 
-st.title("🍽️ Welcome to Our Restaurant")
+# === App Title ===
+st.title("🍽️ Smart Restaurant Menu")
 
-menu = load_menu()
-categories = list(menu.keys())
-
-# === Session State Setup ===
+# === State setup ===
 if "cart" not in st.session_state:
     st.session_state.cart = []
 if "table" not in st.session_state:
@@ -83,50 +86,59 @@ if "order_placed" not in st.session_state:
 if "order_id" not in st.session_state:
     st.session_state.order_id = None
 
-# === Table number input ===
+# === Input table number ===
 st.session_state.table = st.text_input("Enter your Table Number", st.session_state.table)
 
-# === Menu Display ===
-st.markdown("## 📜 Menu")
+# === Load menu ===
+menu = load_menu()
+categories = list(menu.keys())
 tabs = st.tabs(categories)
 
+# === Menu display ===
 for i, category in enumerate(categories):
     with tabs[i]:
         for item in menu[category]:
-            qty = 0
-            for c in st.session_state.cart:
-                if c['id'] == item['id']:
-                    qty = c['qty']
-
+            qty = next((c['qty'] for c in st.session_state.cart if c['id'] == item['id']), 0)
             col1, col2 = st.columns([4, 2])
             with col1:
                 st.markdown(f"""
-                    <div class='food-card'>
+                    <div class="food-card">
                         <strong>{item['name']}</strong><br>
                         ₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}<br>
                         <small>Category: {category}</small>
                     </div>
                 """, unsafe_allow_html=True)
             with col2:
-                if st.button("➖", key=f"minus_{item['id']}"):
-                    for c in st.session_state.cart:
-                        if c['id'] == item['id']:
-                            c['qty'] -= 1
-                            if c['qty'] <= 0:
-                                st.session_state.cart = [x for x in st.session_state.cart if x['id'] != item['id']]
-                            break
-                st.write(f"Qty: {qty}")
-                if st.button("➕", key=f"plus_{item['id']}"):
-                    found = False
-                    for c in st.session_state.cart:
-                        if c['id'] == item['id']:
-                            c['qty'] += 1
-                            found = True
-                            break
-                    if not found:
-                        st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
+                col_btn1, col_txt, col_btn2 = st.columns([1,1,1])
+                with col_btn1:
+                    if st.button("➖", key=f"minus_{item['id']}"):
+                        for c in st.session_state.cart:
+                            if c['id'] == item['id']:
+                                c['qty'] -= 1
+                                if c['qty'] <= 0:
+                                    st.session_state.cart = [x for x in st.session_state.cart if x['id'] != item['id']]
+                                break
+                        st.rerun()
+                with col_txt:
+                    st.write(f"Qty: {qty}")
+                with col_btn2:
+                    if st.button("➕", key=f"plus_{item['id']}"):
+                        found = False
+                        for c in st.session_state.cart:
+                            if c['id'] == item['id']:
+                                c['qty'] += 1
+                                found = True
+                                break
+                        if not found:
+                            st.session_state.cart.append({
+                                "id": item['id'],
+                                "name": item['name'],
+                                "price": item['price'],
+                                "qty": 1
+                            })
+                        st.rerun()
 
-# === Cart Summary ===
+# === Cart Display ===
 if st.session_state.cart:
     st.markdown("<div class='cart-card'>", unsafe_allow_html=True)
     st.subheader("🛒 Your Cart")
@@ -143,7 +155,7 @@ if st.session_state.cart:
                 st.rerun()
         total += item['qty'] * item['price']
 
-    st.markdown(f"### Total: ₹{total}")
+    st.markdown(f"### 💰 Total: ₹{total}")
     if st.button("✅ Place Order"):
         order = {
             "id": f"order{int(time.time())}",
@@ -156,13 +168,13 @@ if st.session_state.cart:
         orders = load_orders()
         orders.append(order)
         save_orders(orders)
-        st.success("🎉 Order placed successfully!")
+        st.success("✅ Order placed successfully!")
         st.session_state.order_placed = True
         st.session_state.order_id = order['id']
         st.session_state.cart = []
     st.markdown("</div>", unsafe_allow_html=True)
 
-# === Order Status Tracking ===
+# === Order Status ===
 if st.session_state.order_id:
     orders = load_orders()
     current = next((o for o in orders if o['id'] == st.session_state.order_id), None)
@@ -170,14 +182,17 @@ if st.session_state.order_id:
         st.markdown("---")
         st.subheader("📦 Order Status")
         status = current['status']
-        st.markdown(f"**Current Status:** <span style='color:lightgreen'>{status}</span>", unsafe_allow_html=True)
-        st.progress(["Pending", "Preparing", "Ready", "Served"].index(status) / 3)
+        status_class = status.lower()
+        st.markdown(f"**Current Status:** <span class='status-{status_class}'>{status}</span>", unsafe_allow_html=True)
+        progress = ["Pending", "Preparing", "Ready", "Served"]
+        st.progress(progress.index(status) / 3)
 
+        # === Feedback ===
         if status == "Served":
             st.markdown("---")
             st.subheader("📝 Feedback")
-            rating = st.slider("How was your experience?", 1, 5, 4)
-            comment = st.text_area("Leave a comment")
+            rating = st.slider("Rate your experience:", 1, 5, 4)
+            comment = st.text_area("Leave a comment (optional)")
             if st.button("Submit Feedback"):
                 save_feedback({
                     "table": st.session_state.table,
@@ -185,8 +200,8 @@ if st.session_state.order_id:
                     "comment": comment,
                     "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 })
-                st.success("Thanks for your feedback!")
+                st.success("✅ Thanks for your feedback!")
 
-# === Real-time Refresh every 5 sec ===
+# === Real-time Refresh ===
 time.sleep(5)
 st.rerun()
