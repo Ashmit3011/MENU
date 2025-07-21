@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 from uuid import uuid4
+import time
 
 st.set_page_config(page_title="🍽️ Smart Menu", layout="wide")
 
@@ -130,13 +131,17 @@ if st.session_state.cart:
 if st.session_state.order_status:
     st.markdown("---")
     st.markdown("## 🚚 Track Your Order")
-    with open(orders_file, "r") as f:
-        orders = json.load(f)
-    for o in orders:
-        if o["id"] == st.session_state.order_id:
-            st.markdown(f"**Status:** `{o['status']}`")
-            if o['status'] == "Served":
-                st.success("✅ Your food is served! Enjoy!")
-                st.session_state.order_status = ""
-            st.experimental_rerun()
-            break
+    if os.path.exists(orders_file):
+        with open(orders_file, "r") as f:
+            orders = json.load(f)
+        for o in orders:
+            if o["id"] == st.session_state.order_id:
+                st.markdown(f"**Status:** `{o['status']}`")
+                if o['status'] == "Served":
+                    st.success("✅ Your food is served! Enjoy!")
+                    st.session_state.order_status = ""
+                break
+
+    # Auto-refresh tracking section every 5 seconds without full rerun
+    time.sleep(3)
+    st.experimental_rerun()
