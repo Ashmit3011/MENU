@@ -10,7 +10,7 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 st_autorefresh(interval=5000, limit=None, key="customer_refresh")
 
-# ---------------- FILE PATHS ---------------
+# ---------------- FILE PATHS ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
@@ -33,48 +33,23 @@ def save_order(order):
 # ---------------- STYLE ----------------
 st.markdown("""
     <style>
-    body {
-        color: #fff;
-    }
-    .card {
-        background-color: #ffffff;
-        color: #111 !important;
-        padding: 1rem;
-        border-radius: 1rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        transition: 0.3s ease;
-        margin-bottom: 1rem;
-    }
-    .card:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-    }
-    .food-title {
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 0.25rem;
-    }
-    .price {
-        font-weight: 500;
-        color: #555;
-        margin-bottom: 0.5rem;
-    }
-    .emoji {
-        font-size: 1.2rem;
-    }
-    .add-btn {
-        background-color: #10b981;
-        border: none;
-        color: white;
-        padding: 0.3rem 0.8rem;
-        font-weight: bold;
-        border-radius: 0.5rem;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-    .add-btn:hover {
-        background-color: #059669;
-    }
+        .card {
+            background-color: #ffffff;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-add {
+            background-color: #00b894;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+        [data-testid="stSidebar"], [data-testid="stToolbar"] {
+            display: none;
+        }
     </style>
 """, unsafe_allow_html=True)
 
