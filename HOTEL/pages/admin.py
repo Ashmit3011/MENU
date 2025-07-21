@@ -9,17 +9,12 @@ MENU_FILE = os.path.join(BASE_DIR, "../menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "../orders.json")
 
 # === Utility Functions ===
-def load_menu():
-    with open(MENU_FILE, "r") as f:
-        return json.load(f)
-
 def load_orders():
     if os.path.exists(ORDERS_FILE):
         try:
             with open(ORDERS_FILE, "r") as f:
                 return json.load(f)
         except json.JSONDecodeError:
-            st.error("⚠️ orders.json is corrupted. Fixing now...")
             with open(ORDERS_FILE, "w") as f:
                 json.dump([], f)
             return []
@@ -29,18 +24,36 @@ def save_orders(orders):
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
 
-# === Streamlit UI ===
-st.set_page_config(page_title="Kitchen Admin Panel", layout="wide")
-st.title("👨‍🍳 Kitchen Dashboard")
+# === Load State ===
+st.set_page_config(page_title="Kitchen Admin", layout="wide")
+
+if "last_order_count" not in st.session_state:
+    st.session_state.last_order_count = 0
 
 orders = load_orders()
 
-if not orders:
-    st.info("No orders found.")
-else:
-    # Sort orders by time descending
-    orders.sort(key=lambda x: x["time"], reverse=True)
+# === Detect New Orders ===
+new_order_detected = len(orders) > st.session_state.last_order_count
+st.session_state.last_order_count = len(orders)
 
+# === Alert for New Orders ===
+if new_order_detected:
+    st.toast("🔔 New order received!", icon="🛎️")
+    st.markdown(
+        """
+        <audio autoplay>
+            <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+        </audio>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.title("👨‍🍳 Kitchen Admin Panel")
+
+if not orders:
+    st.info("No orders yet.")
+else:
+    orders.sort(key=lambda x: x["time"], reverse=True)
     for idx, order in enumerate(orders):
         with st.expander(f"🧾 Table {order['table']} - ₹{order['total']} ({order['status']})", expanded=(idx == 0)):
             st.markdown(f"**🕒 Time:** {order['time']}")
@@ -48,7 +61,7 @@ else:
                 st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
             st.markdown(f"### 💰 Total: ₹{order['total']}")
 
-            # Status selector
+            # Update status
             new_status = st.selectbox(
                 "Update Status",
                 ["Pending", "Preparing", "Ready", "Served"],
@@ -62,5 +75,11 @@ else:
                 st.success(f"✅ Status updated to {new_status}")
                 st.rerun()
 
-# === Auto-refresh every 5 seconds ===
-st.markdown("<script>setTimeout(() => location.reload(), 5000);</script>", unsafe_allow_html=True)
+# === Auto-refresh every 5 seconds (force reload without blinking) ===
+st.markdown("""
+<script>
+setTimeout(() => {
+    window.location.reload();
+}, 3000);
+</script>
+""", unsafe_allow_html=True)
