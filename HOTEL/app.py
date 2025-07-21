@@ -171,5 +171,9 @@ if st.session_state.order_id:
                 st.success("✅ Thank you for your feedback!")
                 st.session_state.feedback_given = True
 
-    time.sleep(5)
-    st.rerun()
+    # Auto-refresh every 5 seconds
+    st.markdown("""
+        <script>
+            setTimeout(() => window.location.reload(), 5000);
+        </script>
+    """, unsafe_allow_html=True)
