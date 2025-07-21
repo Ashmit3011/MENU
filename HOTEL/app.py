@@ -153,5 +153,14 @@ if st.session_state.order_placed:
     else:
         st.error("No order found.")
 
-    # Auto-refresh every 5 seconds
-    st.markdown("<script>setTimeout(() => location.reload(), 5000);</script>", unsafe_allow_html=True)
+    # Auto-refresh every 5 seconds (for real-time order status)
+st.markdown(
+    """
+    <script>
+    setTimeout(() => {
+        window.location.reload();
+    }, 5000);
+    </script>
+    """,
+    unsafe_allow_html=True
+)
