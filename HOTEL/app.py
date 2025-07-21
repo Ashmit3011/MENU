@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 from uuid import uuid4
+import time
 
 st.set_page_config(page_title="🍽️ Smart Menu", layout="wide")
 
@@ -15,15 +16,21 @@ orders_file = os.path.join(BASE_DIR, "orders.json")
 if os.path.exists(menu_file):
     with open(menu_file, "r") as f:
         try:
-            menu = json.load(f)
-            if not isinstance(menu, dict):
+            raw_items = json.load(f)
+            if not isinstance(raw_items, list):
                 raise ValueError
         except Exception:
-            st.error("Invalid menu format. Expected a dictionary.")
+            st.error("Invalid menu format. Expected a list of items.")
             st.stop()
 else:
     st.error("Menu not found!")
     st.stop()
+
+# Group by category
+menu = {}
+for item in raw_items:
+    cat = item.get("category", "Others")
+    menu.setdefault(cat, []).append(item)
 
 # === Session State ===
 if "cart" not in st.session_state:
@@ -42,7 +49,7 @@ st.markdown("""
             background-color: #f8fafc;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             padding: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         .cart-box {
             border-radius: 12px;
@@ -51,8 +58,13 @@ st.markdown("""
             padding: 16px;
             margin-top: 32px;
         }
-        .success-toast {
-            color: green;
+        @media (max-width: 768px) {
+            .menu-card {
+                font-size: 16px;
+            }
+            .cart-box {
+                font-size: 16px;
+            }
         }
     </style>
 """, unsafe_allow_html=True)
@@ -82,14 +94,16 @@ def get_total():
 
 # === Display Menu ===
 for category, items in menu.items():
-    st.markdown(f"## {category}")
+    st.markdown(f"### 🍴 {category}")
     for item in items:
         with st.container():
             st.markdown("<div class='menu-card'>", unsafe_allow_html=True)
-            st.markdown(f"**{item['name']}**  ")
+            st.markdown(f"**{item['name']}**")
+            st.markdown(f"{item['description']}  ")
             st.markdown(f"₹{item['price']}  ")
             if st.button(f"➕ Add", key=f"add_{item['id']}"):
                 add_to_cart(item)
+                st.toast(f"✅ {item['name']} added to cart")
             st.markdown("</div>", unsafe_allow_html=True)
 
 # === Cart ===
@@ -129,7 +143,7 @@ if st.session_state.cart:
             all_orders.append(order_data)
             with open(orders_file, "w") as f:
                 json.dump(all_orders, f, indent=2)
-            st.toast("✅ Order Placed!", icon="✅")
+            st.toast("✅ Order Placed! You can track your order below.")
             st.session_state.order_status = "Pending"
             st.session_state.cart = []
 
@@ -138,25 +152,31 @@ if st.session_state.cart:
 # === Order Tracking ===
 st.markdown("---")
 st.markdown("## 🚚 Track Your Order")
+tracking_placeholder = st.empty()
+found_order = False
+
 if os.path.exists(orders_file):
-    with open(orders_file, "r") as f:
-        try:
-            orders = json.load(f)
-        except:
-            orders = []
-    for o in orders:
-        if o["id"] == st.session_state.order_id:
-            st.markdown(f"**Status:** `{o['status']}`")
-            if o['status'] == "Served":
-                st.success("✅ Your food is served! Enjoy!")
-                st.session_state.order_status = ""
+    for _ in range(30):  # retry loop
+        with open(orders_file, "r") as f:
+            try:
+                orders = json.load(f)
+            except:
+                orders = []
+
+        for o in orders:
+            if o["id"] == st.session_state.order_id:
+                found_order = True
+                with tracking_placeholder.container():
+                    st.markdown(f"**Status:** `{o['status']}`")
+                    if o['status'] == "Served":
+                        st.success("✅ Your food is served! Enjoy!")
+                        st.session_state.order_status = ""
+                break
+
+        if st.session_state.order_status != "Served":
+            time.sleep(2)
+        else:
             break
 
-# Auto-refresh order tracking section every 5 seconds without blinking
-st.markdown("""
-<script>
-    setInterval(function() {
-        window.location.reload(false);
-    }, 5000);
-</script>
-""", unsafe_allow_html=True)
+if not found_order:
+    st.info("No order found. Please place an order first.")
