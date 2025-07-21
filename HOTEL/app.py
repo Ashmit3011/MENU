@@ -1,21 +1,23 @@
-# --------- app.py ---------
 import streamlit as st
-import json
-import uuid
-import time
+import json, uuid, time
 from datetime import datetime
-import os
+from pathlib import Path
 from streamlit_autorefresh import st_autorefresh
 
-# ---------- CONFIG ----------
+# Paths
+BASE_DIR = Path(__file__).resolve().parent
+MENU_FILE = BASE_DIR / "menu.json"
+ORDERS_FILE = BASE_DIR / "orders.json"
+
+# Auto-refresh every 5 sec
+st_autorefresh(interval=5000, key="app_refresh")
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 
-# ---------- FILE PATHS ----------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+# Session
+st.session_state.setdefault("cart", {})
+st.session_state.setdefault("table_number", "")
 
-# ---------- DATA FUNCTIONS ----------
+# Load menu
 def load_menu():
     try:
         with open(MENU_FILE, "r") as f:
@@ -40,118 +42,79 @@ def load_orders():
     except:
         return []
 
-# ---------- UI STYLING ----------
+# Toast style
 st.markdown("""
     <style>
-        .toast {
-            position: fixed;
-            bottom: 70px;
-            right: 20px;
-            background-color: #333;
-            color: white;
-            padding: 16px;
-            border-radius: 10px;
-            z-index: 10000;
-            animation: slideIn 0.5s ease-out;
-        }
-        @keyframes slideIn {
-            0% {opacity: 0; transform: translateY(20px);}
-            100% {opacity: 1; transform: translateY(0);}
-        }
-        [data-testid="stSidebar"], [data-testid="stToolbar"] {
-            display: none;
-        }
+    .toast { position: fixed; bottom: 70px; right: 20px; background: #222; color: white; padding: 12px;
+             border-radius: 8px; z-index: 9999; animation: fadeIn 0.5s ease-in-out;}
+    @keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
     </style>
 """, unsafe_allow_html=True)
+def toast(msg): st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
 
-def toast(msg):
-    st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
-
-# ---------- SESSION ----------
-st.session_state.setdefault("cart", {})
-st.session_state.setdefault("table_number", "")
-
-# ---------- MENU ----------
+# Load menu
 menu = load_menu()
-st.title("🍽️ Smart Table Ordering")
-
 if not menu:
-    st.error("❌ Menu is empty or missing!")
+    st.error("Menu not available.")
     st.stop()
 
-tab_menu, tab_cart, tab_track = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track Order"])
+st.title("🍽️ Smart Table Ordering")
+tab1, tab2, tab3 = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track"])
 
-# ---------- MENU TAB ----------
-with tab_menu:
-    categories = sorted(set(item["category"] for item in menu))
-    selected_category = st.selectbox("🍴 Select a category", categories)
-    filtered = [item for item in menu if item["category"] == selected_category]
-
-    for item in filtered:
-        col1, col2 = st.columns([4, 1])
+with tab1:
+    categories = sorted(set(i['category'] for i in menu))
+    selected = st.selectbox("Select Category", categories)
+    for item in [m for m in menu if m['category'] == selected]:
+        col1, col2 = st.columns([4,1])
         with col1:
-            veg_icon = "🟢" if item["veg"] else "🔴"
-            spice_icon = "🌶️" if item["spicy"] else ""
             st.markdown(f"**{item['name']}**")
-            st.caption(f"₹{item['price']} {veg_icon} {spice_icon}")
+            st.caption(f"₹{item['price']} {'🟢' if item['veg'] else '🔴'} {'🌶️' if item['spicy'] else ''}")
         with col2:
-            qty = st.number_input(f"Qty - {item['id']}", min_value=0, step=1, key=f"qty_{item['id']}")
+            qty = st.number_input(f"Qty - {item['id']}", 0, 20, 0, 1, key=f"qty_{item['id']}")
             if qty > 0:
-                st.session_state.cart[item['id']] = {
-                    "name": item["name"],
-                    "qty": qty,
-                    "price": item["price"]
-                }
-            elif item["id"] in st.session_state.cart:
-                del st.session_state.cart[item["id"]]
+                st.session_state.cart[item['id']] = {"name": item["name"], "qty": qty, "price": item["price"]}
+            elif item['id'] in st.session_state.cart:
+                del st.session_state.cart[item['id']]
 
-# ---------- CART TAB ----------
-with tab_cart:
-    st.subheader("🛒 Your Cart")
+with tab2:
+    st.subheader("Your Cart")
     if not st.session_state.cart:
-        st.info("Your cart is empty.")
+        st.info("No items.")
     else:
         total = 0
         for item in st.session_state.cart.values():
-            st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+            st.write(f"{item['name']} x {item['qty']} = ₹{item['qty']*item['price']}")
             total += item['qty'] * item['price']
         st.success(f"Total: ₹{total}")
-
-        table_number = st.text_input("Enter your table number", key="table_number_input")
-        if st.button("✅ Place Order"):
-            if not table_number:
-                st.warning("Please enter your table number.")
+        table_num = st.text_input("Table Number", key="table_number")
+        if st.button("Place Order"):
+            if not table_num:
+                st.warning("Enter table number.")
             else:
-                order = {
+                new_order = {
                     "id": str(uuid.uuid4())[:8],
-                    "table": table_number,
+                    "table": table_num,
                     "items": st.session_state.cart,
                     "total": total,
                     "status": "Pending",
                     "timestamp": time.time()
                 }
-                save_order(order)
+                save_order(new_order)
                 st.session_state.cart = {}
-                st.session_state.table_number = table_number
-                toast("✅ Order placed successfully!")
+                st.session_state.table_number = table_num
+                toast("✅ Order placed!")
 
-# ---------- TRACK ORDER TAB ----------
-with tab_track:
-    st.subheader("📦 Track Your Order")
+with tab3:
+    st.subheader("Track Order")
     if not st.session_state.table_number:
-        st.info("Please enter your table number in the Cart tab.")
+        st.info("Place an order to begin tracking.")
     else:
-        all_orders = load_orders()
-        your_orders = [o for o in all_orders if o["table"] == st.session_state.table_number]
-        your_orders = sorted(your_orders, key=lambda x: x["timestamp"], reverse=True)
-
-        if not your_orders:
-            st.info("No orders found for your table.")
+        orders = load_orders()
+        table_orders = [o for o in orders if o["table"] == st.session_state.table_number]
+        if not table_orders:
+            st.info("No orders found.")
         else:
-            latest = your_orders[0]
+            latest = sorted(table_orders, key=lambda x: x["timestamp"], reverse=True)[0]
             st.write(f"🧾 Order ID: `{latest['id']}` | Status: **{latest['status']}**")
-            st.caption(f"🕒 Placed at {datetime.fromtimestamp(latest['timestamp']).strftime('%I:%M %p')}")
-            st.progress(["Pending", "Preparing", "Ready", "Served"].index(latest['status']) / 3)
-
-# ---------- AUTO REFRESH ----------
-st_autorefresh(interval=5000, key="app_autorefresh")
+            st.caption(datetime.fromtimestamp(latest["timestamp"]).strftime("Placed at %I:%M %p"))
+            st.progress(["Pending", "Preparing", "Ready", "Served"].index(latest["status"]) / 3)
