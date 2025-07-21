@@ -101,7 +101,7 @@ else:
             if status != order["status"]:
                 order["status"] = status
                 save_orders(orders)
-                st.experimental_rerun()
+                st.rerun()
 
 # ---------- AUTO REFRESH ----------
 st.markdown("""
