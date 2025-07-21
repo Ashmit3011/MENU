@@ -37,27 +37,6 @@ def save_feedback(data):
 
 # === UI config ===
 st.set_page_config(page_title="📋 Smart Table Ordering", layout="centered")
-st.markdown("""
-    <style>
-        .sticky-cart {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            border-top: 1px solid #ccc;
-            padding: 10px;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            z-index: 999;
-        }
-        .add-btn {
-            font-size: 20px;
-            padding: 0.3rem 1rem;
-            border-radius: 10px;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 st.title("🍽️ Welcome to Our Restaurant")
 
 menu = load_menu()
@@ -76,17 +55,34 @@ if "order_id" not in st.session_state:
 # === Table number input ===
 st.session_state.table = st.text_input("Enter your Table Number", st.session_state.table)
 
-# === Menu Display ===
+# === Category-wise Tabs ===
 st.subheader("📜 Menu")
-for category in categories:
-    st.markdown(f"### 🍱 {category}")
-    for item in menu[category]:
-        with st.container():
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.markdown(f"**{item['name']}**  ₹{item['price']}  {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}")
-            with col2:
-                if st.button("➕", key=f"add_{item['id']}_{time.time()}"):
+tabs = st.tabs(categories)
+for i, category in enumerate(categories):
+    with tabs[i]:
+        for item in menu[category]:
+            with st.container():
+                st.markdown(
+                    f"""
+                    <div style='background-color:#fff; border-radius:12px; padding:12px 16px; margin:8px 0; box-shadow:0 2px 8px rgba(0,0,0,0.05);'>
+                        <div style='display:flex; justify-content:space-between; align-items:center;'>
+                            <div>
+                                <div style='font-weight:600; font-size:18px;'>{item['name']}</div>
+                                <div style='color:#888; font-size:13px;'>Category: {category}</div>
+                            </div>
+                            <div style='text-align:right;'>
+                                <div style='font-size:18px; font-weight:bold;'>₹{item['price']}</div>
+                                <form action="" method="post">
+                                    <button type="submit" name="add_{item['id']}" style='background:#0d6efd; color:white; border:none; border-radius:8px; padding:4px 12px; font-size:18px;'>+</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+                if st.button("Add", key=f"add_{item['id']}_{time.time()}"):
                     found = False
                     for c in st.session_state.cart:
                         if c['id'] == item['id']:
@@ -95,25 +91,26 @@ for category in categories:
                             break
                     if not found:
                         st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
-                    st.toast(f"Added {item['name']} to cart!", icon="🛒")
+                    st.toast(f"✅ Added {item['name']}")
 
-# === Sticky Cart ===
+# === Cart Summary ===
 if st.session_state.cart:
-    st.markdown("""<div class='sticky-cart'>""", unsafe_allow_html=True)
+    st.markdown("---")
+    st.subheader("🛒 Your Cart")
     total = 0
     for item in st.session_state.cart:
-        col1, col2, col3 = st.columns([4, 2, 1])
+        col1, col2, col3 = st.columns([3, 1, 1])
         with col1:
             st.markdown(f"**{item['name']}**")
         with col2:
-            qty = st.number_input("Qty", min_value=1, value=item['qty'], key=f"qty_{item['id']}_{time.time()}")
+            qty = st.number_input("Qty", min_value=1, value=item['qty'], key=item['id'])
             item['qty'] = qty
         with col3:
-            if st.button("❌", key=f"remove_{item['id']}_{time.time()}"):
+            if st.button("❌", key=f"remove_{item['id']}"):
                 st.session_state.cart = [c for c in st.session_state.cart if c['id'] != item['id']]
-                st.rerun()
         total += item['qty'] * item['price']
-    st.markdown(f"**Total: ₹{total}**")
+
+    st.markdown(f"### 💵 Total: ₹{total}")
     if st.button("✅ Place Order"):
         order = {
             "id": f"order{int(time.time())}",
@@ -126,12 +123,10 @@ if st.session_state.cart:
         orders = load_orders()
         orders.append(order)
         save_orders(orders)
+        st.success("🎉 Order placed successfully!")
         st.session_state.order_placed = True
         st.session_state.order_id = order['id']
         st.session_state.cart = []
-        st.success("✅ Order placed successfully!")
-        st.toast("📦 Order placed! Track below.")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # === Order Status Tracking ===
 if st.session_state.order_placed and st.session_state.order_id:
