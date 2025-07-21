@@ -1,12 +1,10 @@
 [
-  {"id": "101", "name": "Paneer Tikka", "category": "Starters", "price": 180, "veg": true, "spicy": true, "popular": true},
-  {"id": "102", "name": "Chicken Wings", "category": "Starters", "price": 220, "veg": false, "spicy": true, "popular": true},
-  {"id": "201", "name": "Butter Naan", "category": "Main Course", "price": 40, "veg": true, "spicy": false, "popular": true},
-  {"id": "202", "name": "Paneer Butter Masala", "category": "Main Course", "price": 250, "veg": true, "spicy": false, "popular": true},
-  {"id": "203", "name": "Chicken Curry", "category": "Main Course", "price": 270, "veg": false, "spicy": true, "popular": false},
-  {"id": "301", "name": "Gulab Jamun", "category": "Desserts", "price": 60, "veg": true, "spicy": false, "popular": true},
-  {"id": "302", "name": "Ice Cream", "category": "Desserts", "price": 90, "veg": true, "spicy": false, "popular": true},
-  {"id": "401", "name": "Masala Chai", "category": "Drinks", "price": 30, "veg": true, "spicy": false, "popular": true},
-  {"id": "402", "name": "Cold Coffee", "category": "Drinks", "price": 70, "veg": true, "spicy": false, "popular": true},
-  {"id": "403", "name": "Lassi", "category": "Drinks", "price": 50, "veg": true, "spicy": false, "popular": false}
+  { "id": "f1", "name": "Paneer Tikka", "price": 180, "category": "Appetizers" },
+  { "id": "f2", "name": "Spring Rolls", "price": 120, "category": "Appetizers" },
+  { "id": "f3", "name": "Veg Biryani", "price": 200, "category": "Main Course" },
+  { "id": "f4", "name": "Butter Naan", "price": 40, "category": "Main Course" },
+  { "id": "f5", "name": "Brownie", "price": 100, "category": "Desserts" },
+  { "id": "f6", "name": "Ice Cream", "price": 90, "category": "Desserts" },
+  { "id": "f7", "name": "Mango Lassi", "price": 70, "category": "Drinks" },
+  { "id": "f8", "name": "Cold Coffee", "price": 90, "category": "Drinks" }
 ]
