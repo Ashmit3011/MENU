@@ -136,8 +136,7 @@ with tab2:
             st.session_state.cart = {}
             st.success("✅ Order Placed!")
             st.balloons()
-            time.sleep(2)
-            st.experimental_rerun()
+            st.stop()
 
 # --- Order Tracking ---
 if st.session_state.order_id:
