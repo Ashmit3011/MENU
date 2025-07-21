@@ -124,6 +124,7 @@ if not any_orders:
 # --- AUTO REFRESH ---
 st.markdown("""
 <script>
-    setTimeout(() => window.location.reload(), 10000);
+    setTimeout(() => window.location.reload(), 50000);
 </script>
 """, unsafe_allow_html=True)
+
