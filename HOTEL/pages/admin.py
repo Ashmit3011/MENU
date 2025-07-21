@@ -75,22 +75,22 @@ else:
                 if st.button("👨‍🍳 Start Preparing", key=f"prep_{i}"):
                     order["status"] = "preparing"
                     save_json(ORDER_FILE, orders)
-                    st.experimental_rerun()
+                    st.rerun()
             with col2:
                 if st.button("✅ Mark Ready", key=f"ready_{i}"):
                     order["status"] = "ready"
                     save_json(ORDER_FILE, orders)
-                    st.experimental_rerun()
+                    st.rerun()
             with col3:
                 if st.button("❌ Cancel", key=f"cancel_{i}"):
                     order["status"] = "cancelled"
                     save_json(ORDER_FILE, orders)
-                    st.experimental_rerun()
+                    st.rerun()
             with col4:
                 if st.button("🗑 Delete", key=f"del_{i}"):
                     orders.pop(i)
                     save_json(ORDER_FILE, orders)
-                    st.experimental_rerun()
+                    st.rerun()
 
 # ---- Feedback Section ----
 st.markdown("---")
