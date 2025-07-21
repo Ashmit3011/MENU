@@ -47,7 +47,7 @@ st.markdown("""
             position: fixed;
             bottom: 70px;
             right: 20px;
-            background-color: #333;
+            background-color: #444;
             color: white;
             padding: 16px;
             border-radius: 10px;
@@ -88,9 +88,8 @@ tab_menu, tab_cart, tab_track = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track O
 
 # -------------- MENU TAB --------------
 with tab_menu:
-    for category in menu:
+    for category, items in menu.items():
         st.markdown(f"### 🍽️ {category}")
-        items = menu[category]
         for item in items:
             col1, col2 = st.columns([4, 1])
             with col1:
@@ -121,7 +120,10 @@ with tab_cart:
             total += item['qty'] * item['price']
         st.success(f"Total: ₹{total}")
 
-        st.text_input("Enter your table number", key="table_number")
+        table_input = st.text_input("Enter your table number", key="table_input")
+        if table_input:
+            st.session_state.table_number = table_input
+
         if st.button("✅ Place Order"):
             if not st.session_state.table_number:
                 st.warning("Please enter a table number.")
