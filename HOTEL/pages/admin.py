@@ -99,9 +99,9 @@ if FEEDBACK_FILE.exists():
         for fb in feedbacks[::-1]:
             st.info(f"🪑 Table {fb['table']} - {fb['feedback']}")
 
+# Auto-refresh every 10 seconds without blinking
 st.markdown("""
-    <script>
-    setTimeout(() => { location.reload(); }, 10000);
-    </script>
+    <meta http-equiv="refresh" content="10">
 """, unsafe_allow_html=True)
+
 
