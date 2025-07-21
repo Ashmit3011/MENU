@@ -98,3 +98,10 @@ if FEEDBACK_FILE.exists():
         st.subheader("🗣️ Customer Feedback")
         for fb in feedbacks[::-1]:
             st.info(f"🪑 Table {fb['table']} - {fb['feedback']}")
+
+st.markdown("""
+    <script>
+    setTimeout(() => { location.reload(); }, 10000);
+    </script>
+""", unsafe_allow_html=True)
+
