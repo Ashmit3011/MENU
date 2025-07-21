@@ -1,66 +1,74 @@
-[
-  {
-    "id": "1",
-    "name": "Margherita Pizza",
-    "category": "Main Course",
-    "price": 299,
-    "veg": true,
-    "spicy": false
-  },
-  {
-    "id": "2",
-    "name": "Chicken Biryani",
-    "category": "Main Course",
-    "price": 349,
-    "veg": false,
-    "spicy": true
-  },
-  {
-    "id": "3",
-    "name": "French Fries",
-    "category": "Appetizers",
-    "price": 149,
-    "veg": true,
-    "spicy": false
-  },
-  {
-    "id": "4",
-    "name": "Paneer Tikka",
-    "category": "Appetizers",
-    "price": 199,
-    "veg": true,
-    "spicy": true
-  },
-  {
-    "id": "5",
-    "name": "Gulab Jamun",
-    "category": "Desserts",
-    "price": 99,
-    "veg": true,
-    "spicy": false
-  },
-  {
-    "id": "6",
-    "name": "Chocolate Brownie",
-    "category": "Desserts",
-    "price": 129,
-    "veg": true,
-    "spicy": false
-  },
-  {
-    "id": "7",
-    "name": "Lemonade",
-    "category": "Drinks",
-    "price": 79,
-    "veg": true,
-    "spicy": false
-  },
-  {
-    "id": "8",
-    "name": "Masala Chai",
-    "category": "Drinks",
-    "price": 59,
-    "veg": true,
-    "spicy": true
-  }
-]
+{
+  "Main Course": [
+    {
+      "id": "mc01",
+      "name": "Paneer Butter Masala",
+      "price": 180,
+      "veg": true,
+      "spicy": true,
+      "popular": true
+    },
+    {
+      "id": "mc02",
+      "name": "Chicken Biryani",
+      "price": 220,
+      "veg": false,
+      "spicy": true,
+      "popular": true
+    }
+  ],
+  "Appetizers": [
+    {
+      "id": "ap01",
+      "name": "Spring Rolls",
+      "price": 90,
+      "veg": true,
+      "spicy": false,
+      "popular": true
+    },
+    {
+      "id": "ap02",
+      "name": "Chicken Tikka",
+      "price": 150,
+      "veg": false,
+      "spicy": true,
+      "popular": true
+    }
+  ],
+  "Desserts": [
+    {
+      "id": "ds01",
+      "name": "Gulab Jamun",
+      "price": 60,
+      "veg": true,
+      "spicy": false,
+      "popular": true
+    },
+    {
+      "id": "ds02",
+      "name": "Ice Cream",
+      "price": 80,
+      "veg": true,
+      "spicy": false,
+      "popular": false
+    }
+  ],
+  "Drinks": [
+    {
+      "id": "dr01",
+      "name": "Masala Chai",
+      "price": 30,
+      "veg": true,
+      "spicy": false,
+      "popular": true
+    },
+    {
+      "id": "dr02",
+      "name": "Cold Coffee",
+      "price": 60,
+      "veg": true,
+      "spicy": false,
+      "popular": false
+    }
+  ]
+}
