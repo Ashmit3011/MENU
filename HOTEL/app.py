@@ -11,12 +11,11 @@ FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
 # Hide sidebar for customers
 st.set_page_config(page_title="Smart Restaurant Ordering", layout="wide")
-hide_sidebar = """
+st.markdown("""
     <style>
         [data-testid="stSidebar"] {display: none;}
     </style>
-"""
-st.markdown(hide_sidebar, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 # Load or init JSON
 def load_json(path, default=[]):
@@ -31,6 +30,9 @@ def save_json(path, data):
 
 # Load menu
 menu = load_json(MENU_FILE)
+
+# Default image URL
+DEFAULT_IMAGE = "https://via.placeholder.com/100?text=No+Image"
 
 # Initialize session state
 if "cart" not in st.session_state:
@@ -47,31 +49,34 @@ st.markdown("Order your favorite items below.")
 st.session_state.table_number = st.text_input("Enter your table number", st.session_state.table_number)
 
 # Categories
-categories = sorted(set(item["category"] for item in menu))
+categories = sorted(set(item.get("category", "Uncategorized") for item in menu))
 selected_category = st.selectbox("Select Category", ["All"] + categories)
 
 # Show menu
 st.subheader("Menu")
 for item in menu:
-    if selected_category != "All" and item["category"] != selected_category:
+    if selected_category != "All" and item.get("category") != selected_category:
         continue
+
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image(item["image"], width=100)
+        st.image(item.get("image", DEFAULT_IMAGE), width=100)
     with col2:
-        st.markdown(f"**{item['name']}** - ₹{item['price']}")
-        st.caption(f"{'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'} {item['category']}")
-        qty = st.number_input(f"Qty for {item['name']}", min_value=0, max_value=10, step=1, key=item["name"])
+        name = item.get("name", "Unnamed Item")
+        price = item.get("price", 0)
+        st.markdown(f"**{name}** - ₹{price}")
+        st.caption(f"{'🌶️' if item.get('spicy') else ''} {'🌱' if item.get('veg') else '🍖'} {item.get('category', '')}")
+        qty = st.number_input(f"Qty for {name}", min_value=0, max_value=10, step=1, key=name)
         if qty > 0:
             found = False
             for c in st.session_state.cart:
-                if c["name"] == item["name"]:
+                if c["name"] == name:
                     c["qty"] = qty
                     found = True
             if not found:
                 st.session_state.cart.append({
-                    "name": item["name"],
-                    "price": item["price"],
+                    "name": name,
+                    "price": price,
                     "qty": qty
                 })
 
