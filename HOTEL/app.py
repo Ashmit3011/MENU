@@ -151,4 +151,12 @@ if os.path.exists(orders_file):
                 st.success("✅ Your food is served! Enjoy!")
                 st.session_state.order_status = ""
             break
-    st.rerun()
+
+# Auto-refresh order tracking section every 5 seconds without blinking
+st.markdown("""
+<script>
+    setInterval(function() {
+        window.location.reload(false);
+    }, 5000);
+</script>
+""", unsafe_allow_html=True)
