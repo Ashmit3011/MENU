@@ -134,7 +134,7 @@ else:
     if st.button("✅ Place Order", disabled=not table):
         order_id = place_order(table)
         st.toast(f"🧾 Order placed! ID: {order_id}", icon="✅")
-        st.experimental_rerun()
+        st.rerun()
 
 # Order Tracking
 if st.session_state.order_id:
@@ -147,7 +147,7 @@ if st.session_state.order_id:
     else:
         st.warning("Order not found.")
     time.sleep(5)
-    st.experimental_rerun()
+    st.rerun()
 
 # Feedback
 if st.session_state.order_id:
