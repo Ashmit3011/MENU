@@ -1,89 +1,143 @@
-# app.py
+# app.py (Enhanced Customer Interface)
 import streamlit as st
 import json
 import os
 import time
-from uuid import uuid4
+import uuid
 from streamlit_autorefresh import st_autorefresh
 
-# ------------ SETUP ------------
+# ---------------- CONFIG ----------------
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
+st_autorefresh(interval=5000, limit=None, key="customer_refresh")
+
+# ---------------- FILE PATHS ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# ------------ AUTO REFRESH ------------
-st_autorefresh(interval=5000, key="app_refresh")
-
-# ------------ LOAD MENU ------------
+# ---------------- LOADERS ----------------
 def load_menu():
+    with open(MENU_FILE, 'r') as f:
+        return json.load(f)
+
+def save_order(order):
     try:
-        with open(MENU_FILE, 'r') as f:
-            return json.load(f)
+        with open(ORDERS_FILE, 'r') as f:
+            orders = json.load(f)
     except:
-        return {}
+        orders = []
+    orders.append(order)
+    with open(ORDERS_FILE, 'w') as f:
+        json.dump(orders, f, indent=2)
 
-menu = load_menu()
-if not menu:
-    st.error("Menu could not be loaded.")
-    st.stop()
+# ---------------- STYLE ----------------
+st.markdown("""
+    <style>
+        .card {
+            background-color: #ffffff;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-add {
+            background-color: #00b894;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+        [data-testid="stSidebar"], [data-testid="stToolbar"] {
+            display: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-# ------------ SESSION STATE ------------
-if "cart" not in st.session_state:
+# ---------------- CART STATE ----------------
+if 'cart' not in st.session_state:
     st.session_state.cart = {}
 
-if "table" not in st.session_state:
-    st.session_state.table = ""
-
-# ------------ UI ------------
+# ---------------- MENU DISPLAY ----------------
 st.title("🍽️ Smart Table Ordering")
+menu = load_menu()
 
-st.text_input("Enter Table Number", key="table")
+# Category Tabs
+categories = list(menu.keys())
+selected_category = st.selectbox("Choose Category", categories)
 
-st.header("📋 Menu")
+st.subheader(f"{selected_category} Menu")
+col1, col2 = st.columns(2)
 
-for category, items in menu.items():
-    st.subheader(category)
-    for item in items:
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            st.markdown(f"**{item['name']}** - ₹{item['price']}")
-        with col2:
-            qty = st.number_input(
-                f"Qty_{item['id']}", min_value=0, step=1, label_visibility="collapsed", key=f"{item['id']}_qty")
-            if qty > 0:
-                st.session_state.cart[item['id']] = {
-                    "name": item['name'],
-                    "price": item['price'],
-                    "qty": qty
-                }
+for idx, item in enumerate(menu[selected_category]):
+    with [col1, col2][idx % 2]:
+        with st.container():
+            st.markdown(f"""
+            <div class='card'>
+                <h5>{item['name']}</h5>
+                <p>₹{item['price']} | {'🌶️' if item.get('spicy') else ''} {'🌱' if item.get('veg') else '🍗'}</p>
+                <form action="#" method="post">
+                    <input type="hidden" name="item_id" value="{item['id']}">
+                    <input type="number" min="1" value="1" id="qty_{item['id']}" style="width:60px;"> 
+                    <button type="button" class="btn-add" onclick="sendAdd('{item['id']}', {item['price']}, '{item['name']}')">Add</button>
+                </form>
+            </div>
+            """, unsafe_allow_html=True)
 
-# ------------ PLACE ORDER ------------
-if st.button("🛒 Place Order"):
-    if not st.session_state.table:
-        st.warning("Please enter your table number.")
-    elif not st.session_state.cart:
-        st.warning("Please add some items.")
-    else:
-        order = {
-            "id": str(uuid4())[:8],
-            "table": st.session_state.table,
-            "items": st.session_state.cart,
-            "total": sum(item["price"] * item["qty"] for item in st.session_state.cart.values()),
-            "status": "Pending",
-            "timestamp": int(time.time())
-        }
+# ---------------- CART SECTION ----------------
+st.sidebar.title("🛒 Your Cart")
+total = 0
+for key, item in st.session_state.cart.items():
+    st.sidebar.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+    total += item['qty'] * item['price']
 
-        if os.path.exists(ORDERS_FILE):
-            with open(ORDERS_FILE, "r") as f:
-                orders = json.load(f)
+if total > 0:
+    st.sidebar.success(f"Total: ₹{total}")
+    table_no = st.sidebar.text_input("Enter Table Number")
+    if st.sidebar.button("Place Order"):
+        if table_no.strip() == "":
+            st.sidebar.warning("Please enter table number.")
         else:
-            orders = []
+            order = {
+                "id": str(uuid.uuid4())[:8],
+                "table": table_no,
+                "items": st.session_state.cart,
+                "total": total,
+                "status": "Pending",
+                "timestamp": int(time.time())
+            }
+            save_order(order)
+            st.session_state.cart = {}
+            st.success("✅ Order placed successfully!")
+            st.balloons()
+else:
+    st.sidebar.info("Your cart is empty")
 
-        orders.append(order)
+# ---------------- JS TO ADD ITEM ----------------
+st.markdown("""
+<script>
+    function sendAdd(id, price, name) {
+        const qty = parseInt(document.getElementById('qty_' + id).value);
+        if (qty > 0) {
+            const pyCmd = `add_item("${id}", ${price}, "${name}", ${qty})`;
+            const el = window.parent.document.querySelector('[data-testid="stActionButton"]');
+            if (el) el.click();
+            fetch("_stcore/_custom_component", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({name: "add_item", args: [id, price, name, qty]})
+            });
+        }
+    }
+</script>
+""", unsafe_allow_html=True)
 
-        with open(ORDERS_FILE, "w") as f:
-            json.dump(orders, f, indent=2)
+# ---------------- FUNCTION TO ADD ITEM ----------------
+def add_item(id, price, name, qty):
+    cart = st.session_state.cart
+    if id in cart:
+        cart[id]['qty'] += qty
+    else:
+        cart[id] = {"name": name, "price": price, "qty": qty}
+    st.session_state.cart = cart
 
-        st.success("✅ Order placed successfully!")
-        st.session_state.cart = {}
+st.button("_trigger", key="internal_trigger")
