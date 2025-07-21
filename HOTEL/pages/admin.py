@@ -2,87 +2,77 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
+import time
 
-st.set_page_config(page_title="🧑‍🍳 Admin Panel - Live Orders", layout="wide")
-st.title("🧑‍🍳 Admin Panel - Live Orders")
+# Page setup
+st.set_page_config(page_title="Admin Panel", layout="wide")
+st.markdown("<h1>🧑‍🍳 Admin Panel - Live Orders</h1>", unsafe_allow_html=True)
 
-ORDERS_FILE = "orders.json"
+ORDERS_FILE = os.path.join(os.path.dirname(__file__), '..', 'orders.json')
 
 def load_orders():
     if os.path.exists(ORDERS_FILE):
-        try:
-            with open(ORDERS_FILE, "r") as f:
+        with open(ORDERS_FILE, 'r') as f:
+            try:
                 return json.load(f)
-        except:
-            return []
+            except:
+                return []
     return []
-
-def save_orders(orders):
-    with open(ORDERS_FILE, "w") as f:
-        json.dump(orders, f, indent=2)
 
 orders = load_orders()
 
-# Handle missing or invalid timestamps gracefully
-for order in orders:
-    try:
-        order['timestamp'] = float(order.get('timestamp', 0))
-    except:
-        order['timestamp'] = 0
-
-# Sort by latest timestamp
-orders = sorted(orders, key=lambda x: x['timestamp'], reverse=True)
-
-status_colors = {
-    "Pending": "#FFA500",
-    "Preparing": "#3498DB",
-    "Ready": "#27AE60",
-    "Served": "#8E44AD"
-}
-
-st.markdown("### 📦 Current Orders")
-
 if not orders:
     st.info("No orders yet.")
-else:
-    for order in orders:
-        status_color = status_colors.get(order['status'], "#000")
-        try:
-            time_str = datetime.fromtimestamp(order['timestamp']).strftime("%I:%M %p")
-        except:
-            time_str = "N/A"
+    st.stop()
 
-        st.markdown(f"""
-            <div style='border: 2px solid {status_color}; border-radius: 10px; padding: 10px; margin-bottom: 10px; background-color: #f9f9f9;'>
-                <strong>🧾 Order ID:</strong> {order['id']}<br>
-                <strong>🪑 Table:</strong> {order['table']}<br>
-                <strong>⏰ Time:</strong> {time_str}<br>
-                <strong>Status:</strong> <span style='color:{status_color}; font-weight:bold'>{order['status']}</span><br>
-                <strong>Items:</strong><br>
-        """, unsafe_allow_html=True)
+# Sort orders by timestamp (latest first)
+try:
+    orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
+except:
+    st.error("Some orders are missing timestamps.")
 
-        for item in order.get("items", {}).values():
-            st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+# Display orders
+for order in orders:
+    status = order.get("status", "Unknown")
+    status_color = {
+        "Preparing": "#3498db",
+        "Ready": "#2ecc71",
+        "Served": "#95a5a6"
+    }.get(status, "gray")
 
-        # Status update dropdown
-        new_status = st.selectbox(
-            "Update Status",
-            options=["Pending", "Preparing", "Ready", "Served"],
-            index=["Pending", "Preparing", "Ready", "Served"].index(order["status"]),
-            key=f"status_{order['id']}"
-        )
+    try:
+        timestamp = float(order.get("timestamp", time.time()))
+        time_str = datetime.fromtimestamp(timestamp).strftime('%I:%M %p')
+    except:
+        time_str = "N/A"
 
-        if new_status != order["status"]:
-            order["status"] = new_status
-            save_orders(orders)
-            st.success(f"✅ Order {order['id']} status updated to {new_status}")
-            st.experimental_rerun()
+    st.markdown(f"""
+        <div style='
+            border: 2px solid {status_color}; 
+            border-radius: 12px; 
+            padding: 16px; 
+            margin-bottom: 16px; 
+            background-color: #1e1e1e;
+            color: white;
+        '>
+            <strong>🧾 Order ID:</strong> {order.get('id', 'N/A')}<br>
+            <strong>🪑 Table:</strong> {order.get('table', 'N/A')}<br>
+            <strong>⏰ Time:</strong> {time_str}<br>
+            <strong>Status:</strong> <span style='color:{status_color}; font-weight:bold'>{status}</span><br>
+            <strong>Items:</strong><br>
+    """, unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    items = order.get("items", {})
+    if isinstance(items, dict):
+        for item in items.values():
+            try:
+                st.markdown(
+                    f"<span style='color:white'>- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}</span>",
+                    unsafe_allow_html=True
+                )
+            except:
+                st.markdown("<span style='color:orange'>- ❌ Invalid item format</span>", unsafe_allow_html=True)
+    else:
+        st.warning("⚠️ Items data is invalid or missing.")
 
-# Smooth auto-refresh every 5 seconds
-st.markdown("""
-<script>
-    setTimeout(() => window.location.reload(), 5000);
-</script>
-""", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
