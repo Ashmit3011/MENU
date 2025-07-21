@@ -88,8 +88,9 @@ tab_menu, tab_cart, tab_track = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track O
 
 # -------------- MENU TAB --------------
 with tab_menu:
-    for category, items in menu.items():
+    for category in menu:
         st.markdown(f"### 🍽️ {category}")
+        items = menu[category]
         for item in items:
             col1, col2 = st.columns([4, 1])
             with col1:
