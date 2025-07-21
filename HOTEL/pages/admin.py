@@ -29,17 +29,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # === Auto-refresh logic (no blinking) ===
-if "last_refresh" not in st.session_state:
-    st.session_state.last_refresh = time.time()
-
-if time.time() - st.session_state.last_refresh > 3:
-    st.session_state.last_refresh = time.time()
-    st.rerun()
+if "_auto_refresh_time" not in st.session_state:
+    st.session_state._auto_refresh_time = time.time()
+else:
+    if time.time() - st.session_state._auto_refresh_time > 3:
+        st.session_state._auto_refresh_time = time.time()
+        st.rerun()
 
 # === Load orders ===
 if os.path.exists(orders_file):
     with open(orders_file, "r") as f:
-        orders = json.load(f)
+        try:
+            orders = json.load(f)
+        except json.JSONDecodeError:
+            orders = []
 else:
     orders = []
 
@@ -53,35 +56,38 @@ status_colors = {
 
 # === Show orders ===
 if orders:
-    orders = sorted(orders, key=lambda x: x["timestamp"], reverse=True)
+    orders = sorted(orders, key=lambda x: x.get("timestamp", ""), reverse=True)
     updated = False
 
     for order in orders:
-        color_class = status_colors.get(order["status"], "pending")
+        color_class = status_colors.get(order.get("status", "Pending"), "pending")
         with st.container():
             st.markdown(f"<div class='order-card {color_class}'>", unsafe_allow_html=True)
-            st.markdown(f"**🪑 Table {order['table']}**  &nbsp;&nbsp; 🕒 _{order['timestamp']}_")
-            st.markdown(f"**Status:** `{order['status']}`")
+            st.markdown(f"**🪑 Table {order.get('table', 'N/A')}**  &nbsp;&nbsp; 🕒 _{order.get('timestamp', '')}_")
+            st.markdown(f"**Status:** `{order.get('status', 'Pending')}`")
             st.markdown("---")
             for item in order.get("cart", []):
-                st.write(f"- {item['name']} × {item['quantity']} = ₹{item['price'] * item['quantity']}")
+                name = item.get("name", "")
+                qty = item.get("quantity", 0)
+                price = item.get("price", 0)
+                st.write(f"- {name} × {qty} = ₹{price * qty}")
             st.markdown("---")
 
             col1, col2, col3 = st.columns(3)
             with col1:
                 if st.button("Preparing", key=f"prep_{order['id']}"):
                     order['status'] = "Preparing"
-                    st.toast(f"🔧 Order for Table {order['table']} is now Preparing.")
+                    st.toast(f"🔧 Order for Table {order.get('table', '')} is now Preparing.")
                     updated = True
             with col2:
                 if st.button("Served", key=f"serve_{order['id']}"):
                     order['status'] = "Served"
-                    st.toast(f"🍽️ Order for Table {order['table']} has been Served!")
+                    st.toast(f"🍽️ Order for Table {order.get('table', '')} has been Served!")
                     updated = True
             with col3:
                 if st.button("❌ Cancel", key=f"cancel_{order['id']}"):
                     orders.remove(order)
-                    st.toast(f"❌ Order for Table {order['table']} has been Cancelled.")
+                    st.toast(f"❌ Order for Table {order.get('table', '')} has been Cancelled.")
                     updated = True
 
             st.markdown("</div>", unsafe_allow_html=True)
