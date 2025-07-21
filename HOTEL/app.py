@@ -10,7 +10,7 @@ MENU_FILE = BASE_DIR / "menu.json"
 ORDERS_FILE = BASE_DIR / "orders.json"
 
 # Auto-refresh every 5 sec
-st_autorefresh(interval=5000, key="app_refresh")
+st_autorefresh(interval=15000, key="app_refresh")
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 
 # Session
