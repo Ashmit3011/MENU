@@ -29,27 +29,47 @@ st.markdown("""
 
 st.title("🍽️ Smart Table Ordering")
 
-# Load menu
+# Load menu from JSON with better error handling
 try:
     with open(menu_file, "r") as f:
         menu = json.load(f)
-        if not isinstance(menu, list):
-            st.error("Invalid menu format. Expected a list of items.")
-            st.stop()
+        if not isinstance(menu, list) or not menu:
+            st.warning("🚫 Menu is empty or incorrectly formatted. Please check back later.")
+            menu = []
+except FileNotFoundError:
+    st.error("⚠️ Menu file not found. Please upload 'menu.json'.")
+    menu = []
+except json.JSONDecodeError:
+    st.error("❌ Failed to parse menu JSON. Fix the formatting.")
+    menu = []
 except Exception as e:
-    st.error(f"Failed to load menu: {e}")
-    st.stop()
+    st.error(f"Unexpected error loading menu: {e}")
+    menu = []
 
-# Group menu by category
+# Group menu by category (defensively)
 categorized_menu = defaultdict(list)
 for item in menu:
-    categorized_menu[item["category"]].append(item)
+    if all(k in item for k in ("id", "name", "price", "description", "category")):
+        categorized_menu[item["category"]].append(item)
 
-# Init session
-if "cart" not in st.session_state:
-    st.session_state.cart = []
-if "order_id" not in st.session_state:
-    st.session_state.order_id = None
+# Display menu (only if items exist)
+if categorized_menu:
+    for category, items in categorized_menu.items():
+        st.markdown(f"### 🍱 {category}")
+        for item in items:
+            with st.container():
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.markdown(f"**{item['name']}**")
+                    st.markdown(f"₹{item['price']}")
+                    st.caption(item["description"])
+                with col2:
+                    if st.button("➕", key=f"add_{item['id']}"):
+                        add_to_cart(item)
+                        st.toast(f"Added {item['name']} to cart", icon="🛒")
+else:
+    st.info("📭 No menu items available right now.")
+
 
 # Add to cart
 def add_to_cart(item):
