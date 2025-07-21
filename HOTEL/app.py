@@ -55,18 +55,18 @@ if "order_id" not in st.session_state:
 # === Table number input ===
 st.session_state.table = st.text_input("Enter your Table Number", st.session_state.table)
 
-# === Menu Display ===
+# === Menu Display (Category-based Card Layout) ===
 st.subheader("📜 Menu")
 for category in categories:
-    st.markdown(f"### 🍱 {category}")
+    st.markdown(f"## 🍱 {category}")
     for item in menu[category]:
         with st.container():
-            col1, col2 = st.columns([3, 1])
+            col1, col2 = st.columns([4, 1])
             with col1:
                 st.markdown(f"**{item['name']}**")
                 st.markdown(f"₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}")
             with col2:
-                if st.button("Add", key=f"add_{item['id']}_{time.time()}"):
+                if st.button("Add", key=f"add_{item['id']}_{int(time.time()*1000)}"):
                     found = False
                     for c in st.session_state.cart:
                         if c['id'] == item['id']:
@@ -75,18 +75,27 @@ for category in categories:
                             break
                     if not found:
                         st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
-                    st.success(f"Added {item['name']}")
+                    st.success(f"Added {item['name']} to cart")
 
 # === Cart Summary ===
 if st.session_state.cart:
     st.markdown("---")
     st.subheader("🛒 Your Cart")
     total = 0
+    updated_cart = []
     for item in st.session_state.cart:
-        unique_key = f"qty_{item['id']}_{time.time()}"
-        qty = st.number_input(f"{item['name']} (₹{item['price']})", value=item['qty'], min_value=1, key=unique_key)
-        item['qty'] = qty
+        col1, col2, col3 = st.columns([4, 2, 1])
+        with col1:
+            st.markdown(f"**{item['name']}** - ₹{item['price']}")
+        with col2:
+            qty = st.number_input("Qty", min_value=1, value=item['qty'], key=f"qty_{item['id']}_{int(time.time()*1000)}")
+            item['qty'] = qty
+        with col3:
+            if st.button("❌", key=f"remove_{item['id']}_{int(time.time()*1000)}"):
+                continue  # Skip appending to updated_cart
+        updated_cart.append(item)
         total += item['qty'] * item['price']
+    st.session_state.cart = updated_cart
 
     st.markdown(f"### Total: ₹{total}")
     if st.button("✅ Place Order"):
