@@ -150,9 +150,14 @@ with tab_track:
             st.write(f"🧾 Order ID: `{latest['id']}` | Status: **{latest['status']}**")
             order_time = datetime.fromtimestamp(latest['timestamp']).strftime("%I:%M %p")
             st.caption(f"🕒 Placed at {order_time}")
-            status_index = ["Pending", "Preparing", "Ready", "Served"].index(latest['status'])
-            st.progress(status_index / 3)
 
-# ---------- AUTO REFRESH ----------
-time.sleep(7)
-st.rerun()
+            status_list = ["Pending", "Preparing", "Ready", "Served"]
+            status_index = status_list.index(latest['status'])
+            st.progress(status_index / (len(status_list) - 1))
+
+            # Refresh every 7 seconds
+            st.markdown("""
+                <script>
+                    setTimeout(() => window.location.reload(), 7000);
+                </script>
+            """, unsafe_allow_html=True)
