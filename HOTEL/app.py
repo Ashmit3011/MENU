@@ -122,7 +122,7 @@ else:
             save_order(order)
             st.session_state.cart = {}
             toast("✅ Order placed successfully!")
-            st.experimental_rerun()
+            
 
 # --- ORDER TRACKING ---
 st.markdown("---")
