@@ -2,19 +2,16 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-import time
+from pathlib import Path
 
-# Get base directory of current script
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-ORDER_FILE = os.path.join(BASE_DIR, "orders.json")
+# Paths
+BASE_DIR = Path(__file__).resolve().parent.parent  # Go one level up from /pages
+ORDER_FILE = BASE_DIR / "orders.json"
 
 # Utility functions
 def load_json(file):
-    if not os.path.exists(file):
-        with open(file, 'w', encoding='utf-8') as f:
-            json.dump([], f)
+    if not file.exists():
+        return []
     with open(file, 'r', encoding='utf-8') as f:
         try:
             content = f.read().strip()
@@ -28,128 +25,77 @@ def save_json(file, data):
     with open(file, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-def generate_order_id():
-    orders = load_json(ORDER_FILE)
-    return len(orders) + 1
-
 # App config
-st.set_page_config(page_title="Smart Table Ordering", layout="wide")
+st.set_page_config(page_title="Admin Dashboard", layout="wide")
+st.title("🔧 Admin Dashboard - Smart Restaurant")
 
-# State
-if "cart" not in st.session_state:
-    st.session_state.cart = []
-if "table" not in st.session_state:
-    st.session_state.table = ""
-if "order_id" not in st.session_state:
-    st.session_state.order_id = None
-if "last_status" not in st.session_state:
-    st.session_state.last_status = None
+# Load orders
+orders = load_json(ORDER_FILE)
 
-# Header
-st.title("🍽️ Smart Table Ordering")
-st.info("🎉 Get a Free Donut!\n\nOrder above ₹200 and enjoy a delicious free donut 🍩 with your meal!")
+# Auto-refresh every 10s (JavaScript way)
+st.markdown("""
+<script>
+setTimeout(function() {
+    window.location.reload();
+}, 10000);
+</script>
+""", unsafe_allow_html=True)
 
-# Table number
-st.text_input("Enter Table Number", key="table", value=st.session_state.table)
-
-# Load menu and categories
-menu = load_json(MENU_FILE)
-categories = sorted(set(item.get("category", "Uncategorized") for item in menu if "category" in item))
-
-# Create tabs if there are categories
-if categories:
-    tabs = st.tabs(categories)
-    for index, category in enumerate(categories):
-        with tabs[index]:
-            st.subheader(f"{category} Menu")
-            for item in [m for m in menu if m.get("category") == category]:
-                tags = ""
-                if item.get("spicy"): tags += " 🌶️"
-                if item.get("veg"): tags += " 🥦"
-                if item.get("popular"): tags += " ⭐"
-
-                with st.container():
-                    st.markdown(f"**{item['name']}** {tags}")
-                    st.caption(f"₹{item['price']}")
-                    qty = st.number_input(f"Quantity for {item['name']}", min_value=0, step=1, key=f"qty_{item['id']}")
-                    if qty > 0:
-                        existing = next((c for c in st.session_state.cart if c['id'] == item['id']), None)
-                        if existing:
-                            existing['qty'] = qty
-                        else:
-                            st.session_state.cart.append({
-                                "id": item["id"],
-                                "name": item["name"],
-                                "price": item["price"],
-                                "qty": qty
-                            })
+if not orders:
+    st.info("📭 No orders received yet.")
 else:
-    st.warning("⚠️ No categories found in menu. Please check your menu.json.")
+    updated = False
+    for order in orders:
+        status_color = {
+            "Pending": "#f9c74f",
+            "Preparing": "#90be6d",
+            "Served": "#577590",
+            "Completed": "#adb5bd"
+        }.get(order['status'], "#ccc")
 
-# Cart
-st.markdown("## 🛒 Your Cart")
-total = 0
-if st.session_state.cart:
-    for item in st.session_state.cart:
-        st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-        total += item['qty'] * item['price']
+        with st.container():
+            st.markdown(
+                f"""
+                <div style="border-left: 6px solid {status_color}; padding: 1rem; margin-bottom: 1rem; background-color: #f8f9fa; border-radius: 10px;">
+                    <h4 style="margin-bottom: 0.2rem;">Order #{order['id']} - Table {order['table']}</h4>
+                    <p style="margin: 0.2rem 0;">⏰ {order['timestamp']}</p>
+                    <p style="margin: 0.2rem 0;">🧾 <b>Status:</b> <code>{order['status']}</code></p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
-    st.markdown(f"**Total: ₹{total}**")
-    if total >= 200:
-        st.success("🎉 Congrats! You’ll get a free donut with your order.")
+            with st.expander("📦 View Order Details"):
+                total = 0
+                for item in order['cart']:
+                    st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+                    total += item['qty'] * item['price']
+                st.markdown(f"**Total: ₹{total}**")
 
-    if st.button("✅ Place Order"):
-        if not st.session_state.table.strip():
-            st.error("Please enter your table number.")
-        else:
-            new_order = {
-                "id": generate_order_id(),
-                "table": st.session_state.table.strip(),
-                "cart": st.session_state.cart,
-                "status": "Pending",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            orders = load_json(ORDER_FILE)
-            orders.append(new_order)
-            save_json(ORDER_FILE, orders)
-            st.session_state.order_id = new_order["id"]
-            st.session_state.last_status = "Pending"
-            st.success(f"🎉 Order placed successfully! Table: {new_order['table']}")
-            st.balloons()
-            st.session_state.cart = []
-            st.rerun()
-else:
-    st.info("Your cart is empty. Add items from the menu.")
+            # Status update
+            new_status = st.selectbox(
+                f"Update Status for Order #{order['id']}",
+                ["Pending", "Preparing", "Served", "Completed"],
+                index=["Pending", "Preparing", "Served", "Completed"].index(order['status']),
+                key=f"status_{order['id']}"
+            )
 
-# Auto-refresh order tracking
-if st.session_state.order_id:
-    st.markdown("---")
-    st.header("🔍 Track Your Order")
+            if new_status != order['status']:
+                order['status'] = new_status
+                updated = True
+                st.toast(f"✅ Order #{order['id']} marked as {new_status}")
 
-    orders = load_json(ORDER_FILE)
-    order = next((o for o in orders if o["id"] == st.session_state.order_id), None)
-    if order:
-        if order["status"] != st.session_state.last_status:
-            st.toast(f"📢 Status Updated: {order['status']}")
-            st.session_state.last_status = order["status"]
+    if updated:
+        save_json(ORDER_FILE, orders)
+        st.experimental_rerun()
 
-        st.success(f"Order #{order['id']} for Table {order['table']}")
-        st.markdown(f"**Status:** `{order['status']}`")
+# Button to delete completed orders
+if st.button("🗑️ Delete Completed Orders"):
+    orders = [o for o in orders if o['status'] != 'Completed']
+    save_json(ORDER_FILE, orders)
+    st.success("Completed orders deleted.")
+    st.experimental_rerun()
 
-        # Progress bar
-        status_stages = ["Pending", "Preparing", "Served", "Completed"]
-        current_index = status_stages.index(order["status"]) if order["status"] in status_stages else 0
-        progress = (current_index + 1) / len(status_stages)
-        st.progress(progress, text=f"{order['status']}")
-
-        with st.expander("🧾 View Your Order"):
-            total = 0
-            for item in order["cart"]:
-                line = f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}"
-                st.markdown(line)
-                total += item['qty'] * item['price']
-            st.markdown(f"**Total: ₹{total}**")
-
-    # Auto-refresh after 5 seconds
-    time.sleep(5)
-    st.rerun()
+# Debug output to confirm orders are being read
+with st.expander("🛠 Debug: Raw Orders Data"):
+    st.json(orders)
