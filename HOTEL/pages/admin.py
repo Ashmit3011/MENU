@@ -19,8 +19,9 @@ st.markdown("""
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
-            background-color: #f1f5f9;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background-color: #f8fafc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s ease-in-out;
         }
         .pending { border-left: 6px solid #facc15; }
         .preparing { border-left: 6px solid #38bdf8; }
@@ -29,20 +30,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # === Auto-refresh logic (no blinking) ===
-if "_auto_refresh_time" not in st.session_state:
-    st.session_state._auto_refresh_time = time.time()
-else:
-    if time.time() - st.session_state._auto_refresh_time > 3:
-        st.session_state._auto_refresh_time = time.time()
-        st.rerun()
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+if time.time() - st.session_state.last_refresh > 3:
+    st.session_state.last_refresh = time.time()
+    st.experimental_rerun()
 
 # === Load orders ===
 if os.path.exists(orders_file):
     with open(orders_file, "r") as f:
-        try:
-            orders = json.load(f)
-        except json.JSONDecodeError:
-            orders = []
+        orders = json.load(f)
 else:
     orders = []
 
@@ -68,9 +66,9 @@ if orders:
             st.markdown("---")
             for item in order.get("cart", []):
                 name = item.get("name", "")
-                qty = item.get("quantity", 0)
+                quantity = item.get("quantity", 0)
                 price = item.get("price", 0)
-                st.write(f"- {name} × {qty} = ₹{price * qty}")
+                st.write(f"- {name} × {quantity} = ₹{price * quantity}")
             st.markdown("---")
 
             col1, col2, col3 = st.columns(3)
