@@ -50,6 +50,13 @@ st.markdown("""
     [data-testid="stSidebar"], [data-testid="stToolbar"] {
         display: none;
     }
+    .order-card {
+        background: #f9f9f9;
+        padding: 1rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 1rem;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -66,31 +73,32 @@ if not orders:
     st.info("No orders yet.")
     st.stop()
 
-orders = sorted(orders, key=lambda x: x.get('timestamp', 0), reverse=True)
+orders = sorted(orders, key=lambda x: x['timestamp'], reverse=True)
 
 # ---------------- NEW ORDER DETECTION ----------------
 if 'last_seen' not in st.session_state:
     st.session_state.last_seen = 0
 
-new_orders = [o for o in orders if o.get('timestamp', 0) > st.session_state.last_seen]
+new_orders = [o for o in orders if o['timestamp'] > st.session_state.last_seen]
 if new_orders:
     toast("🔔 New Order Received!")
-    st.session_state.last_seen = max(o.get('timestamp', 0) for o in new_orders)
+    st.session_state.last_seen = max(o['timestamp'] for o in new_orders)
 
 # ---------------- DISPLAY ORDERS ----------------
 status_options = ["Pending", "Preparing", "Ready", "Served"]
 
 for order in orders:
-    with st.expander(f"🧾 Order #{order['id']} - Table {order['table']} | ₹{order['total']} | {order['status']}", expanded=True):
-        st.write("### Items:")
-        for item in order['items'].values():
-            st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+    with st.container():
+        with st.expander(f"🧾 Order #{order['id']} - Table {order['table']} | ₹{order['total']} | {order['status']}", expanded=True):
+            st.markdown("### Items:")
+            for item in order['items'].values():
+                st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
 
-        st.caption("🕒 Placed at: " + datetime.fromtimestamp(order.get('timestamp', 0)).strftime("%I:%M %p"))
+            st.caption("🕒 Placed at: " + datetime.fromtimestamp(order['timestamp']).strftime("%I:%M %p"))
 
-        st.write("---")
-        status = st.selectbox("Update Status", status_options, index=status_options.index(order['status']), key=order['id'])
-        if status != order['status']:
-            order['status'] = status
-            save_orders(orders)
-            toast(f"✅ Order {order['id']} marked as {status}")
+            st.write("---")
+            status = st.selectbox("Update Status", status_options, index=status_options.index(order['status']), key=order['id'])
+            if status != order['status']:
+                order['status'] = status
+                save_orders(orders)
+                toast(f"✅ Order {order['id']} marked as {status}")
