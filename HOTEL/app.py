@@ -33,9 +33,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-menu_file = "menu.json"
-orders_file = "orders.json"
-feedback_file = "feedback.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+menu_file = os.path.join(BASE_DIR, "menu.json")
+orders_file = os.path.join(BASE_DIR, "orders.json")
+feedback_file = os.path.join(BASE_DIR, "feedback.json")
 
 # Load menu
 if os.path.exists(menu_file):
