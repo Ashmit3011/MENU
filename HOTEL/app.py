@@ -3,131 +3,125 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-# File paths
-BASE_DIR = Path(__file__).resolve().parent
+# Paths
+BASE_DIR = Path(__file__).parent.resolve()
 MENU_FILE = BASE_DIR / "menu.json"
 ORDER_FILE = BASE_DIR / "orders.json"
 FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
-# Page config
-st.set_page_config(page_title="Smart Table Ordering", layout="wide", initial_sidebar_state="collapsed")
-
-# Helper functions
-def load_json(file):
-    if not file.exists():
-        file.write_text("[]", encoding="utf-8")
-    with open(file, "r", encoding="utf-8") as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return []
-
-def save_json(file, data):
-    with open(file, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-# Load menu and orders
-menu = load_json(MENU_FILE)
-orders = load_json(ORDER_FILE)
-
-# Session state
-if "cart" not in st.session_state:
-    st.session_state.cart = []
-if "order_id" not in st.session_state:
-    st.session_state.order_id = len(orders) + 1
-
-# Hide sidebar
-hide_sidebar_style = """
+# Hide sidebar for customers
+st.set_page_config(page_title="Smart Restaurant Ordering", layout="wide")
+hide_sidebar = """
     <style>
-        [data-testid="stSidebar"] { display: none !important; }
+        [data-testid="stSidebar"] {display: none;}
     </style>
 """
-st.markdown(hide_sidebar_style, unsafe_allow_html=True)
+st.markdown(hide_sidebar, unsafe_allow_html=True)
 
-# --- UI ---
-st.title("🍽️ Welcome to Smart Table Ordering")
-table_number = st.text_input("Enter your Table Number", max_chars=5)
+# Load or init JSON
+def load_json(path, default=[]):
+    if not path.exists():
+        path.write_text(json.dumps(default), encoding="utf-8")
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
 
-st.markdown("### 🧾 Menu")
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+# Load menu
+menu = load_json(MENU_FILE)
+
+# Initialize session state
+if "cart" not in st.session_state:
+    st.session_state.cart = []
+if "table_number" not in st.session_state:
+    st.session_state.table_number = ""
+if "order_placed" not in st.session_state:
+    st.session_state.order_placed = False
+
+st.title("🍽️ Welcome to Smart Restaurant")
+st.markdown("Order your favorite items below.")
+
+# Table number
+st.session_state.table_number = st.text_input("Enter your table number", st.session_state.table_number)
+
+# Categories
 categories = sorted(set(item["category"] for item in menu))
-selected_category = st.selectbox("Filter by Category", ["All"] + categories)
+selected_category = st.selectbox("Select Category", ["All"] + categories)
 
-# Menu display
+# Show menu
+st.subheader("Menu")
 for item in menu:
     if selected_category != "All" and item["category"] != selected_category:
         continue
-
-    col1, col2 = st.columns([3, 1])
+    col1, col2 = st.columns([1, 2])
     with col1:
-        st.subheader(f"{item['name']} {'🌶️' if item.get('spicy') else ''}")
-        st.caption(f"₹{item['price']} | {'🥬 Veg' if item.get('veg') else '🍗 Non-Veg'}")
+        st.image(item["image"], width=100)
     with col2:
-        qty = st.number_input(f"Qty for {item['id']}", min_value=0, step=1, key=item['id'])
+        st.markdown(f"**{item['name']}** - ₹{item['price']}")
+        st.caption(f"{'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'} {item['category']}")
+        qty = st.number_input(f"Qty for {item['name']}", min_value=0, max_value=10, step=1, key=item["name"])
         if qty > 0:
-            st.session_state.cart.append({**item, "qty": qty})
+            found = False
+            for c in st.session_state.cart:
+                if c["name"] == item["name"]:
+                    c["qty"] = qty
+                    found = True
+            if not found:
+                st.session_state.cart.append({
+                    "name": item["name"],
+                    "price": item["price"],
+                    "qty": qty
+                })
 
-# Cart
+# Cart display
+st.subheader("🛒 Your Cart")
+total = 0
 if st.session_state.cart:
-    st.markdown("### 🛒 Your Cart")
-    total = 0
     for item in st.session_state.cart:
-        line_total = item["qty"] * item["price"]
-        total += line_total
-        st.write(f"- {item['name']} x {item['qty']} = ₹{line_total}")
-    st.write(f"**Total: ₹{total}**")
-
-    if total >= 300:
-        st.success("🎉 You earned a free dessert!")
-
-    if st.button("✅ Place Order"):
-        if not table_number.strip():
-            st.warning("Please enter your table number.")
-        else:
-            orders.append({
-                "id": st.session_state.order_id,
-                "table": table_number.strip(),
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "cart": st.session_state.cart,
-                "status": "Pending"
-            })
-            save_json(ORDER_FILE, orders)
-            st.success("✅ Order placed successfully!")
-            st.balloons()
-            st.session_state.order_id += 1
-            st.session_state.cart = []
-
-# Order tracker
-st.markdown("---")
-st.header("🔎 Track Your Order")
-track_id = st.number_input("Enter your Order ID", min_value=1, step=1)
-matching_order = next((o for o in orders if o["id"] == track_id), None)
-if matching_order:
-    st.info(f"🪑 Table: {matching_order['table']} | 📦 Status: `{matching_order['status']}`")
-    st.progress(
-        {
-            "Pending": 0.25,
-            "Preparing": 0.5,
-            "Served": 0.75,
-            "Completed": 1.0
-        }.get(matching_order["status"], 0.0)
-    )
+        st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+        total += item['qty'] * item['price']
+    st.markdown(f"**Total: ₹{total}**")
 else:
-    st.caption("Enter your order ID to track status.")
+    st.info("Cart is empty.")
 
-# Feedback
-st.markdown("---")
-st.header("💬 Leave Feedback")
-rating = st.slider("Rate your experience", 1, 5, 4)
-comments = st.text_area("Your comments")
-feedback_table = st.text_input("Enter your Table Number again")
+# Place order
+if st.button("✅ Place Order"):
+    if not st.session_state.table_number.strip():
+        st.error("Please enter your table number.")
+    elif not st.session_state.cart:
+        st.warning("Cart is empty.")
+    else:
+        orders = load_json(ORDER_FILE)
+        order_id = len(orders) + 1
+        orders.append({
+            "id": order_id,
+            "table": st.session_state.table_number.strip(),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "cart": st.session_state.cart,
+            "status": "Pending"
+        })
+        save_json(ORDER_FILE, orders)
+        st.success(f"🎉 Order #{order_id} placed successfully!")
+        st.balloons()
+        st.info("🎁 You've received a free dessert!")
+        st.session_state.order_placed = True
+        st.session_state.cart = []
 
-if st.button("📩 Submit Feedback"):
-    feedbacks = load_json(FEEDBACK_FILE)
-    feedbacks.append({
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "rating": rating,
-        "comments": comments,
-        "table": feedback_table.strip()
-    })
-    save_json(FEEDBACK_FILE, feedbacks)
-    st.toast("Thanks for your feedback!", icon="💌")
+# Show feedback after order placed
+if st.session_state.order_placed:
+    st.markdown("---")
+    st.subheader("💬 We'd love your feedback!")
+    rating = st.slider("Rate your experience (1-5)", 1, 5, 4)
+    comment = st.text_area("Any comments?")
+    if st.button("Submit Feedback"):
+        feedbacks = load_json(FEEDBACK_FILE)
+        feedbacks.append({
+            "table": st.session_state.table_number,
+            "rating": rating,
+            "comments": comment,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        save_json(FEEDBACK_FILE, feedbacks)
+        st.success("Thank you for your feedback!")
