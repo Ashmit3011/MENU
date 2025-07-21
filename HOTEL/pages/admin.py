@@ -1,47 +1,49 @@
 import streamlit as st
 import json
+import os
 from datetime import datetime
-from pathlib import Path
 
-# === File paths ===
-BASE_DIR = Path(__file__).parent.resolve()
-ORDER_FILE = BASE_DIR / "orders.json"
-FEEDBACK_FILE = BASE_DIR / "feedback.json"
+# Setup file paths using os.path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ORDER_FILE = os.path.join(BASE_DIR, "orders.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 
 st.set_page_config(page_title="Admin Panel", layout="wide")
 
-# === Load JSON safely ===
+# Load JSON
 def load_json(file):
-    if not file.exists():
-        file.write_text("[]", encoding="utf-8")
+    if not os.path.exists(file):
+        with open(file, "w", encoding="utf-8") as f:
+            json.dump([], f)
     with open(file, "r", encoding="utf-8") as f:
         try:
             return json.load(f)
         except json.JSONDecodeError:
             return []
 
+# Save JSON
 def save_json(file, data):
     with open(file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# === Session init for new order detection ===
+# Session init
 if "last_order_count" not in st.session_state:
     st.session_state.last_order_count = 0
 
-# === Load orders and feedback ===
+# Load orders and feedbacks
 orders = load_json(ORDER_FILE)
 feedbacks = load_json(FEEDBACK_FILE)
 
-# === Admin Title ===
+# Header
 st.title("🛠️ Admin Panel – Smart Table Ordering")
 
-# === 🔔 New Order Detection ===
+# 🔔 New order alert
 if len(orders) > st.session_state.last_order_count:
-    st.toast("🔔 New Order Received!", icon="🛎️")
+    st.toast("🔔 New Order Received!", icon="🔔")
     st.audio("https://www.myinstants.com/media/sounds/bell.mp3", format="audio/mp3")
     st.session_state.last_order_count = len(orders)
 
-# === Show Orders ===
+# Show orders
 st.subheader("📦 Orders")
 if orders:
     for order in reversed(orders):
@@ -54,20 +56,17 @@ if orders:
         }.get(status, "#f8f9fa")
 
         with st.container():
-            st.markdown(
-                f"<div style='background-color: {color}; padding: 1rem; border-radius: 1rem;'>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div style='background-color: {color}; padding: 1rem; border-radius: 1rem;'>", unsafe_allow_html=True)
             st.subheader(f"Order #{order['id']} – Table {order['table']}")
             st.caption(f"🕒 {order['timestamp']}")
             st.markdown(f"**Status:** `{status}`")
 
-            with st.expander("🧾 View Items"):
+            with st.expander("🧾 Items"):
                 total = 0
                 for item in order["cart"]:
                     st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
                     total += item['qty'] * item['price']
-                st.markdown(f"**Total: ₹{total}**")
+                st.write(f"**Total: ₹{total}**")
 
             new_status = st.selectbox(
                 f"Update status for Order #{order['id']}",
@@ -78,14 +77,14 @@ if orders:
             if new_status != status:
                 order["status"] = new_status
                 save_json(ORDER_FILE, orders)
-                st.success(f"✅ Order #{order['id']} status updated to {new_status}")
-                st.stop()  # Avoid looping issues
+                st.success(f"✅ Status updated to {new_status}")
+                st.stop()
 
             st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.info("📭 No orders received yet.")
 
-# === 💬 Feedback Section ===
+# Feedback section
 st.markdown("---")
 st.header("💬 Customer Feedback")
 if feedbacks:
@@ -98,7 +97,7 @@ if feedbacks:
 else:
     st.info("No feedback received yet.")
 
-# === 🔁 Auto-refresh every 5 seconds ===
+# 🔁 Auto-refresh every 5 seconds
 st.markdown("""
 <script>
     setTimeout(() => window.location.reload(), 5000);
