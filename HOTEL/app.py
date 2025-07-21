@@ -84,15 +84,43 @@ for item in menu:
 if st.session_state.cart:
     st.header("🛒 Your Cart")
     total = 0
+
     for item in st.session_state.cart:
         item_total = item['qty'] * item['price']
         total += item_total
-        cols = st.columns([4, 1, 1, 2])
-        cols[0].write(f"**{item['name']}**")
-        cols[1].write(f"₹{item['price']}")
-        cols[2].write(f"Qty: {item['qty']}")
-        cols[3].write(f"Total: ₹{item_total}")
-    st.markdown(f"### 🧾 Grand Total: ₹{total}")
+
+        with st.container():
+            st.markdown(f"""
+            <div style="
+                background-color:#fefefe;
+                border-radius:15px;
+                padding:15px;
+                margin:10px 0;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                ">
+                <h5 style="margin-bottom:5px;">🍽️ {item['name']}</h5>
+                <div style="display:flex; justify-content: space-between;">
+                    <span>💰 ₹{item['price']} x {item['qty']}</span>
+                    <span>🧾 ₹{item_total}</span>
+                </div>
+                <div style="margin-top:10px;">
+                    <form action="" method="post">
+                        <button name="add_{item['id']}" type="submit" style="margin-right:8px;">➕</button>
+                        <button name="minus_{item['id']}" type="submit">➖</button>
+                    </form>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Plus/Minus functionality
+        if st.button("➕", key=f"cart_add_{item['id']}"):
+            item['qty'] += 1
+        if st.button("➖", key=f"cart_minus_{item['id']}"):
+            item['qty'] -= 1
+            if item['qty'] <= 0:
+                st.session_state.cart.remove(item)
+
+    st.markdown(f"<h3 style='text-align:right;'>Grand Total: ₹{total}</h3>", unsafe_allow_html=True)
 
     if st.button("✅ Place Order"):
         if not st.session_state.table:
@@ -109,6 +137,7 @@ if st.session_state.cart:
             save_json(ORDERS_FILE, orders)
             st.session_state.cart = []
             st.success("✅ Order placed successfully!")
+
 
 # --- Order Tracking ---
 st.markdown("---")
