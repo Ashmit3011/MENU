@@ -53,7 +53,7 @@ st.markdown("""
         margin-top: 2rem;
         border: 1px solid #444;
     }
-    .plus-btn {
+    .plus-btn, .minus-btn {
         background-color: #0a84ff;
         color: white;
         font-size: 20px;
@@ -61,6 +61,10 @@ st.markdown("""
         width: 40px;
         height: 40px;
         border: none;
+        margin-right: 5px;
+    }
+    .minus-btn {
+        background-color: #ff3b30;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -91,27 +95,36 @@ for i, category in enumerate(categories):
     with tabs[i]:
         for item in menu[category]:
             with st.container():
-                st.markdown(f"""
-                    <div class='food-card'>
-                        <strong>{item['name']}</strong><br>
-                        ₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}<br>
-                        <small>Category: {category}</small><br><br>
-                        <form action="" method="post">
-                            <button class="plus-btn" type="submit" name="add_{item['id']}">+</button>
-                        </form>
-                    </div>
-                """, unsafe_allow_html=True)
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.markdown(f"""
+                        <div class='food-card'>
+                            <strong>{item['name']}</strong><br>
+                            ₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}<br>
+                            <small>Category: {category}</small>
+                        </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    if st.button("➖", key=f"minus_{item['id']}"):
+                        for c in st.session_state.cart:
+                            if c['id'] == item['id']:
+                                c['qty'] -= 1
+                                if c['qty'] <= 0:
+                                    st.session_state.cart = [x for x in st.session_state.cart if x['id'] != item['id']]
+                                break
+                        st.rerun()
 
-                if st.button("Add", key=f"add_{item['id']}_{time.time()}"):
-                    found = False
-                    for c in st.session_state.cart:
-                        if c['id'] == item['id']:
-                            c['qty'] += 1
-                            found = True
-                            break
-                    if not found:
-                        st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
-                    st.toast(f"Added {item['name']}", icon="✅")
+                    if st.button("➕", key=f"plus_{item['id']}"):
+                        found = False
+                        for c in st.session_state.cart:
+                            if c['id'] == item['id']:
+                                c['qty'] += 1
+                                found = True
+                                break
+                        if not found:
+                            st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
+                        st.toast(f"Added {item['name']}", icon="✅")
+                        st.rerun()
 
 # === Cart Summary ===
 if st.session_state.cart:
