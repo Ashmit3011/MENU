@@ -5,6 +5,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
+from streamlit_autorefresh import st_autorefresh
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Admin Panel", layout="wide")
@@ -80,7 +81,7 @@ else:
             st.caption(datetime.fromtimestamp(order['timestamp']).strftime("%b %d, %I:%M %p"))
             for item in order['items'].values():
                 st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-            st.success(f"Total: ₹{total}")
+            st.success(f"Total: ₹{order['total']}")
 
             col1, col2 = st.columns([2, 1])
             with col1:
@@ -100,7 +101,7 @@ else:
                     st.rerun()
 
 # ---------- AUTO REFRESH ----------
-st.query_params["refresh"] = str(time.time())
+st_autorefresh(interval=5000, key="admin_autorefresh")
 
 
 # --------- app.py ---------
@@ -110,6 +111,7 @@ import uuid
 import time
 from datetime import datetime
 import os
+from streamlit_autorefresh import st_autorefresh
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
@@ -260,4 +262,4 @@ with tab_track:
             st.progress(status_index / 3)
 
 # ---------- AUTO REFRESH ----------
-st.query_params["refresh"] = str(time.time())
+st_autorefresh(interval=5000, key="app_autorefresh")
