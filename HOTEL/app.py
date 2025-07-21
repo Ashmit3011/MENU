@@ -1,194 +1,148 @@
 import streamlit as st
 import json
-import os
 import uuid
+import time
 from datetime import datetime
-from collections import defaultdict
+import os
 
-# File paths
-menu_file = os.path.abspath("menu.json")
-orders_file = os.path.abspath("orders.json")
+st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 
-# Page config
-st.set_page_config(page_title="Smart Restaurant Ordering", layout="wide")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MENU_FILE = os.path.join(BASE_DIR, "menu.json")
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# Hide sidebar
-st.markdown('<style>div[data-testid="stSidebar"]{display: none;}</style>', unsafe_allow_html=True)
+# Load menu
+def load_menu():
+    try:
+        with open(MENU_FILE, "r") as f:
+            menu = json.load(f)
+            assert isinstance(menu, list)
+            return menu
+    except Exception as e:
+        return []
 
-# Inject custom CSS
+# Save order
+def save_order(order):
+    try:
+        with open(ORDERS_FILE, "r") as f:
+            orders = json.load(f)
+    except:
+        orders = []
+    orders.append(order)
+    with open(ORDERS_FILE, "w") as f:
+        json.dump(orders, f, indent=2)
+
+# Load orders
+def load_orders():
+    try:
+        with open(ORDERS_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return []
+
+# Toast notification
 st.markdown("""
     <style>
-    body { font-size: 16px; }
-    .element-container { margin-bottom: 10px !important; }
-    @media screen and (max-width: 768px) {
-        .stButton > button { width: 100%; font-size: 16px; }
-        .stTextInput > div > div > input { font-size: 16px; }
-    }
+        .toast {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 16px;
+            border-radius: 10px;
+            z-index: 10000;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            0% {opacity: 0; transform: translateY(20px);}
+            100% {opacity: 1; transform: translateY(0);}
+        }
     </style>
 """, unsafe_allow_html=True)
 
+def toast(msg):
+    st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
+
+# --- APP LOGIC ---
+menu = load_menu()
 st.title("🍽️ Smart Table Ordering")
 
-# Auto-create sample menu if missing or broken
-default_menu = [
-    {
-        "id": "1",
-        "name": "Paneer Butter Masala",
-        "price": 220,
-        "description": "Creamy paneer in rich tomato gravy.",
-        "category": "Main Course"
-    },
-    {
-        "id": "2",
-        "name": "Garlic Naan",
-        "price": 50,
-        "description": "Fluffy naan with garlic and butter.",
-        "category": "Main Course"
-    },
-    {
-        "id": "3",
-        "name": "Masala Fries",
-        "price": 90,
-        "description": "Crispy fries tossed in tangy masala.",
-        "category": "Appetizers"
-    },
-    {
-        "id": "4",
-        "name": "Mango Lassi",
-        "price": 80,
-        "description": "Sweet mango yogurt smoothie.",
-        "category": "Drinks"
-    },
-    {
-        "id": "5",
-        "name": "Gulab Jamun",
-        "price": 60,
-        "description": "Juicy milk balls soaked in sugar syrup.",
-        "category": "Desserts"
-    }
-]
-
-def ensure_menu_file():
-    if not os.path.exists(menu_file):
-        with open(menu_file, "w") as f:
-            json.dump(default_menu, f, indent=2)
-        st.info("Created default menu.json")
-
-# Load menu
-ensure_menu_file()
-
-try:
-    with open(menu_file, "r") as f:
-        menu = json.load(f)
-        if not isinstance(menu, list):
-            raise ValueError("Menu file is not a list.")
-        if len(menu) == 0:
-            raise ValueError("Menu is empty.")
-except Exception as e:
+if not menu:
     st.error("❌ Menu is empty or incorrectly formatted. Please check back later.")
     st.stop()
 
-# Group menu by category
-categorized_menu = defaultdict(list)
-for item in menu:
-    categorized_menu[item["category"]].append(item)
+# --- FILTERED DISPLAY ---
+categories = sorted(set(item["category"] for item in menu))
+st.subheader("📋 Menu")
+tab1, tab2, tab3 = st.columns(3)
+st.session_state.setdefault("cart", {})
+st.session_state.setdefault("table_number", "")
 
-# Init session
-if "cart" not in st.session_state:
-    st.session_state.cart = []
-if "order_id" not in st.session_state:
-    st.session_state.order_id = None
+selected_category = st.selectbox("Select a category", categories)
+filtered_menu = [item for item in menu if item["category"] == selected_category]
 
-# Add to cart
-def add_to_cart(item):
-    for existing in st.session_state.cart:
-        if existing["id"] == item["id"]:
-            existing["quantity"] += 1
-            return
-    st.session_state.cart.append({
-        "id": item["id"],
-        "name": item["name"],
-        "price": item["price"],
-        "quantity": 1
-    })
+for item in filtered_menu:
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.markdown(f"**{item['name']}**")
+        st.caption(f"₹{item['price']} | {'🌶️' if item['spicy'] else ''} {'🟢' if item['veg'] else '🔴'}")
+    with col2:
+        qty = st.number_input(f"Qty - {item['id']}", min_value=0, step=1, key=item['id'])
+        if qty > 0:
+            st.session_state.cart[item['id']] = {"name": item['name'], "qty": qty, "price": item['price']}
+        elif item['id'] in st.session_state.cart:
+            del st.session_state.cart[item['id']]
 
-# Display menu
-for category, items in categorized_menu.items():
-    st.markdown(f"### 🍱 {category}")
-    for item in items:
-        with st.container():
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.markdown(f"**{item['name']}**")
-                st.markdown(f"₹{item['price']}")
-                st.caption(item["description"])
-            with col2:
-                if st.button("➕", key=f"add_{item['id']}"):
-                    add_to_cart(item)
-                    st.toast(f"Added {item['name']} to cart", icon="🛒")
-
-# Cart
+# --- CART ---
 st.markdown("---")
-st.markdown("## 🛒 Your Cart")
-if st.session_state.cart:
+st.subheader("🛒 Your Cart")
+if not st.session_state.cart:
+    st.info("Your cart is empty.")
+else:
     total = 0
-    for item in st.session_state.cart:
-        st.write(f"- {item['name']} × {item['quantity']} = ₹{item['price'] * item['quantity']}")
-        total += item['price'] * item['quantity']
-    st.write(f"**Total: ₹{total}**")
-    table = st.text_input("Enter your table number:")
+    for item in st.session_state.cart.values():
+        st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+        total += item['qty'] * item['price']
+    st.success(f"Total: ₹{total}")
+
+    st.text_input("Enter your table number", key="table_number")
     if st.button("✅ Place Order"):
-        if not table:
-            st.warning("Please enter your table number.")
+        if not st.session_state.table_number:
+            st.warning("Please enter a table number.")
         else:
             order = {
-                "id": str(uuid.uuid4()),
+                "id": str(uuid.uuid4())[:8],
+                "table": st.session_state.table_number,
                 "items": st.session_state.cart,
                 "total": total,
-                "table": table,
-                "status": "Preparing",
-                "timestamp": datetime.now().isoformat()
+                "status": "Pending",
+                "timestamp": time.time()
             }
-            try:
-                if os.path.exists(orders_file):
-                    with open(orders_file, "r") as f:
-                        orders = json.load(f)
-                else:
-                    orders = []
-                orders.append(order)
-                with open(orders_file, "w") as f:
-                    json.dump(orders, f, indent=2)
-                st.session_state.order_id = order["id"]
-                st.session_state.cart = []
-                st.success("✅ Order placed successfully!")
-                st.toast("Order Placed!", icon="🚀")
-            except Exception as e:
-                st.error(f"Failed to save order: {e}")
-else:
-    st.info("Your cart is empty.")
+            save_order(order)
+            st.session_state.cart = {}
+            toast("✅ Order placed successfully!")
+            st.experimental_rerun()
 
-# Track order
+# --- ORDER TRACKING ---
 st.markdown("---")
-st.markdown("## 📦 Track Your Order")
-if st.session_state.order_id:
-    try:
-        with open(orders_file, "r") as f:
-            orders = json.load(f)
-        order = next((o for o in orders if o["id"] == st.session_state.order_id), None)
-        if order:
-            status = order["status"]
-            if status == "Preparing":
-                st.info("🧑‍🍳 Your order is being prepared.")
-            elif status == "Ready":
-                st.warning("📦 Your food is ready to be served.")
-            elif status == "Served":
-                st.success("✅ Your food has been served!")
-                st.balloons()
-            else:
-                st.caption(f"Order status: {status}")
-        else:
-            st.caption("Order not found.")
-    except Exception as e:
-        st.error(f"Failed to read order status: {e}")
+st.subheader("📦 Track Your Order")
+user_orders = [o for o in load_orders() if o['table'] == st.session_state.table_number]
+user_orders = sorted(user_orders, key=lambda x: x['timestamp'], reverse=True)
+
+if not user_orders:
+    st.info("Place an order to begin tracking.")
 else:
-    st.caption("Place an order to begin tracking.")
+    latest = user_orders[0]
+    st.write(f"🧾 Order ID: {latest['id']} | Status: **{latest['status']}**")
+    order_time = datetime.fromtimestamp(latest['timestamp']).strftime("%I:%M %p")
+    st.caption(f"Placed at {order_time}")
+
+    st.progress(["Pending", "Preparing", "Ready", "Served"].index(latest['status']) / 3)
+
+# --- SMOOTH REFRESH ---
+st.markdown("""
+<script>
+    setTimeout(() => window.location.reload(), 5000);
+</script>
+""", unsafe_allow_html=True)
