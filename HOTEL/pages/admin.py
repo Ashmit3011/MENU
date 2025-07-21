@@ -1,20 +1,18 @@
 import streamlit as st
 import json
 import os
-import time
-from datetime import datetime 
-from pathlib import Path
+from datetime import datetime
 
-# Paths
-BASE_DIR = Path(__file__).resolve().parent
-ORDER_FILE = BASE_DIR / "orders.json"
-MENU_FILE = BASE_DIR / "menu.json"
+# Fix file paths relative to base directory
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ORDER_FILE = os.path.join(BASE_DIR, "orders.json")
+MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 
-# Utilities
+# Load JSON data
 def load_json(file):
-    if not file.exists():
+    if not os.path.exists(file):
         return []
-    with open(file, 'r', encoding='utf-8') as f:
+    with open(file, "r", encoding="utf-8") as f:
         try:
             content = f.read().strip()
             if not content:
@@ -24,77 +22,45 @@ def load_json(file):
             return []
 
 def save_json(file, data):
-    with open(file, 'w', encoding='utf-8') as f:
+    with open(file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-# App config
+# Streamlit app
 st.set_page_config(page_title="Admin Dashboard", layout="wide")
+st.title("🛠️ Admin Dashboard - Smart Restaurant")
 
-st.title("🔧 Admin Dashboard - Smart Restaurant")
-
-# Load Orders
 orders = load_json(ORDER_FILE)
-if not orders:
-    st.info("📭 No orders received yet.")
-else:
-    updated = False
-    new_orders_detected = False
 
-    for order in orders:
-        status_color = {
-            "Pending": "#f9c74f",
-            "Preparing": "#90be6d",
-            "Served": "#577590",
-            "Completed": "#adb5bd"
-        }.get(order['status'], "#ccc")
-
+if orders:
+    st.success(f"📦 {len(orders)} total orders")
+    for order in reversed(orders):
         with st.container():
-            st.markdown(
-                f"""
-                <div style="border-left: 6px solid {status_color}; padding: 1rem; margin-bottom: 1rem; background-color: #f8f9fa; border-radius: 10px;">
-                    <h4 style="margin-bottom: 0.2rem;">Order #{order['id']} - Table {order['table']}</h4>
-                    <p style="margin: 0.2rem 0;">⏰ {order['timestamp']}</p>
-                    <p style="margin: 0.2rem 0;">🧾 <b>Status:</b> <code>{order['status']}</code></p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.subheader(f"🧾 Order #{order['id']} - Table {order['table']}")
+            st.caption(f"🕒 {order['timestamp']}")
+            st.markdown(f"**Status:** `{order['status']}`")
 
-            with st.expander("View Order Details"):
-                total = 0
+            with st.expander("🔍 View Items"):
                 for item in order['cart']:
-                    st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-                    total += item['qty'] * item['price']
-                st.markdown(f"**Total: ₹{total}**")
-
-            # Update Status Dropdown
+                    st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
             new_status = st.selectbox(
-                f"Update Status for Order #{order['id']}",
+                "Update Status",
                 ["Pending", "Preparing", "Served", "Completed"],
                 index=["Pending", "Preparing", "Served", "Completed"].index(order['status']),
                 key=f"status_{order['id']}"
             )
-
             if new_status != order['status']:
                 order['status'] = new_status
-                updated = True
-                st.toast(f"✅ Order #{order['id']} marked as {new_status}")
+                save_json(ORDER_FILE, orders)
+                st.success(f"✅ Order #{order['id']} status updated to {new_status}")
+else:
+    st.info("📭 No orders received yet.")
 
-    if updated:
-        save_json(ORDER_FILE, orders)
-
-# Delete completed orders
+# Option to clear completed
 if st.button("🗑️ Delete Completed Orders"):
-    orders = [o for o in orders if o['status'] != 'Completed']
+    orders = [o for o in orders if o["status"] != "Completed"]
     save_json(ORDER_FILE, orders)
-    st.success("Completed orders deleted.")
-    st.rerun()
+    st.success("✅ Completed orders removed!")
 
-# Auto-refresh every 10s
-st.markdown("""
-<script>
-setTimeout(function() {
-    window.location.reload();
-}, 10000);
-</script>
-""", unsafe_allow_html=True)
+# Debug panel
+with st.expander("🛠 Debug: Raw Orders Data"):
+    st.json(orders)
