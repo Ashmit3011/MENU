@@ -3,10 +3,12 @@ import json
 import time
 from datetime import datetime
 
-st.set_page_config(page_title="Admin Panel", layout="wide")
 ORDERS_FILE = "orders.json"
 
-# Load orders safely
+st.set_page_config(page_title="Admin Panel", layout="wide")
+st.title("🧑‍🍳 Admin Panel - Live Orders")
+
+# Load orders
 def load_orders():
     try:
         with open(ORDERS_FILE, "r") as f:
@@ -19,64 +21,87 @@ def save_orders(orders):
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
 
-# Safe timestamp parsing
-def safe_timestamp(order):
-    try:
-        return float(order.get("timestamp", 0))
-    except (ValueError, TypeError):
-        return 0
+# Toast style
+st.markdown("""
+<style>
+.toast {
+    position: fixed;
+    bottom: 70px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    padding: 16px;
+    border-radius: 10px;
+    z-index: 10000;
+    animation: slideIn 0.5s ease-out;
+}
+@keyframes slideIn {
+    0% {opacity: 0; transform: translateY(20px);}
+    100% {opacity: 1; transform: translateY(0);}
+}
+.order-card {
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    color: white;
+}
+.pending { background-color: #f39c12; }
+.preparing { background-color: #3498db; }
+.ready { background-color: #2ecc71; }
+.served { background-color: #95a5a6; }
+</style>
+""", unsafe_allow_html=True)
 
-# Load and sort
+def toast(msg):
+    st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
+
+# --- MAIN LOGIC ---
 orders = load_orders()
-orders = sorted(orders, key=safe_timestamp, reverse=True)
+if not isinstance(orders, list):
+    st.error("Orders format invalid.")
+    st.stop()
 
-st.title("🛠️ Admin Panel – Live Orders")
+orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
 
 if not orders:
     st.info("No orders yet.")
-    st.stop()
+else:
+    for order in orders:
+        status = order.get("status", "Pending")
+        status_class = {
+            "Pending": "pending",
+            "Preparing": "preparing",
+            "Ready": "ready",
+            "Served": "served"
+        }.get(status, "pending")
 
-status_colors = {
-    "Pending": "#fdd835",
-    "Preparing": "#42a5f5",
-    "Ready": "#66bb6a",
-    "Served": "#9e9e9e"
-}
+        with st.container():
+            st.markdown(f'<div class="order-card {status_class}">', unsafe_allow_html=True)
+            st.markdown(f"### 🧾 Order ID: `{order['id']}`  |  Table: `{order['table']}`")
+            st.markdown(f"**Status:** `{status}`")
+            ts = datetime.fromtimestamp(order.get("timestamp", time.time()))
+            st.caption(f"🕒 Placed at {ts.strftime('%I:%M %p')}")
 
-# Display orders
-for order in orders:
-    st.markdown("---")
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown(f"### 🧾 Order ID: `{order['id']}` | Table: **{order['table']}**")
-        order_time = datetime.fromtimestamp(safe_timestamp(order)).strftime("%I:%M %p")
-        st.caption(f"🕒 Placed at {order_time}")
-        for item in order["items"].values():
-            st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-        st.success(f"Total: ₹{order['total']}")
-    with col2:
-        status = order["status"]
-        new_status = st.selectbox(
-            f"Update Status for `{order['id']}`",
-            ["Pending", "Preparing", "Ready", "Served"],
-            index=["Pending", "Preparing", "Ready", "Served"].index(status),
-            key=order["id"]
-        )
-        if new_status != status:
-            order["status"] = new_status
-            save_orders(orders)
-            st.success(f"✅ Status updated for `{order['id']}`")
-            st.experimental_rerun()
+            items = order.get("items", {})
+            if isinstance(items, dict):
+                for item in items.values():
+                    st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+                st.success(f"**Total: ₹{order.get('total', 0)}**")
+            else:
+                st.warning("⚠️ Malformed items in this order.")
 
-    st.markdown(
-        f"<div style='padding:6px;border-radius:8px;background-color:{status_colors[order['status']]};color:white;width:120px;text-align:center'>"
-        f"{order['status']}</div>",
-        unsafe_allow_html=True
-    )
+            new_status = st.selectbox("Update Status", ["Pending", "Preparing", "Ready", "Served"], index=["Pending", "Preparing", "Ready", "Served"].index(status), key=order["id"])
+            if new_status != status:
+                order["status"] = new_status
+                save_orders(orders)
+                toast(f"✅ Order {order['id']} marked as {new_status}")
+                st.experimental_rerun()
 
-# Optional: Auto-refresh every 10s
+            st.markdown("</div>", unsafe_allow_html=True)
+
+# --- Auto-refresh (no blinking) ---
 st.markdown("""
 <script>
-    setTimeout(() => window.location.reload(), 10000);
+setTimeout(() => window.location.reload(), 5000);
 </script>
 """, unsafe_allow_html=True)
