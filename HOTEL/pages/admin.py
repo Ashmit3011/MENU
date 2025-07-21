@@ -1,104 +1,67 @@
-# admin.py
 import streamlit as st
 import json
 import os
-import time
 from datetime import datetime
-from streamlit_autorefresh import st_autorefresh
 
-# ---------------- CONFIG ----------------
-st.set_page_config(page_title="Admin Panel", layout="wide")
-
-# ---------------- FILE PATHS ----------------
+# Set base directory and file paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# ---------------- AUTO REFRESH ----------------
-st_autorefresh(interval=5000, limit=None, key="admin_auto_refresh")
-
-# ---------------- UTILITY FUNCTIONS ----------------
 def load_orders():
-    try:
-        with open(ORDERS_FILE, 'r') as f:
+    if os.path.exists(ORDERS_FILE):
+        with open(ORDERS_FILE, "r") as f:
             return json.load(f)
-    except Exception as e:
-        print("Failed to load orders:", e)
-        return []
+    return []
 
 def save_orders(orders):
-    with open(ORDERS_FILE, 'w') as f:
+    with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
 
-# ---------------- STYLE & TOAST ----------------
-st.markdown("""
-    <style>
-    .toast {
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        background-color: #28a745;
-        color: #fff;
-        padding: 14px;
-        border-radius: 10px;
-        z-index: 9999;
-        animation: slideIn 0.5s ease-out;
-    }
-    @keyframes slideIn {
-        0% {opacity: 0; transform: translateY(30px);}
-        100% {opacity: 1; transform: translateY(0);}
-    }
-    [data-testid="stSidebar"], [data-testid="stToolbar"] {
-        display: none;
-    }
-    .order-card {
-        background: #f9f9f9;
-        padding: 1rem;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        margin-bottom: 1rem;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# Streamlit setup
+st.set_page_config(page_title="Admin - Kitchen View", layout="wide")
+st.title("👨‍🍳 Kitchen Admin Panel")
 
-def toast(msg):
-    st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
-    st.audio("https://www.soundjay.com/buttons/sounds/button-10.mp3", autoplay=True)
-
-# ---------------- MAIN ----------------
-st.title("🧑‍🍳 Admin Panel - Manage Orders")
+st.markdown("Real-time order tracking. Refreshes every 5 seconds.")
+st.markdown("---")
 
 orders = load_orders()
 
-if not orders:
-    st.info("No orders yet.")
-    st.stop()
+status_colors = {
+    "Pending": "orange",
+    "Preparing": "blue",
+    "Ready": "green",
+    "Served": "gray"
+}
 
-orders = sorted(orders, key=lambda x: x['timestamp'], reverse=True)
+# Show orders in reverse (latest first)
+for idx, order in enumerate(orders[::-1]):
+    container = st.container()
+    with container:
+        st.markdown(f"### 🧾 Table {order['table']} • `{order['status']}`")
+        st.markdown(f"_Time: {order['time']}_")
+        for item in order["items"]:
+            st.markdown(f"- {item['name']} x {item['qty']}")
+        st.markdown(f"💰 **Total: ₹{order['total']}**")
 
-# ---------------- NEW ORDER DETECTION ----------------
-if 'last_seen' not in st.session_state:
-    st.session_state.last_seen = 0
-
-new_orders = [o for o in orders if o['timestamp'] > st.session_state.last_seen]
-if new_orders:
-    toast("🔔 New Order Received!")
-    st.session_state.last_seen = max(o['timestamp'] for o in new_orders)
-
-# ---------------- DISPLAY ORDERS ----------------
-status_options = ["Pending", "Preparing", "Ready", "Served"]
-
-for order in orders:
-    with st.container():
-        with st.expander(f"🧾 Order #{order['id']} - Table {order['table']} | ₹{order['total']} | {order['status']}", expanded=True):
-            st.markdown("### Items:")
-            for item in order['items'].values():
-                st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-
-            st.caption("🕒 Placed at: " + datetime.fromtimestamp(order['timestamp']).strftime("%I:%M %p"))
-
-            st.write("---")
-            status = st.selectbox("Update Status", status_options, index=status_options.index(order['status']), key=order['id'])
-            if status != order['status']:
-                order['status'] = status
+        current_status = order["status"]
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("Preparing", key=f"prep_{idx}"):
+                orders[-(idx+1)]["status"] = "Preparing"
                 save_orders(orders)
-                toast(f"✅ Order {order['id']} marked as {status}")
+                st.experimental_rerun()
+        with col2:
+            if st.button("Ready", key=f"ready_{idx}"):
+                orders[-(idx+1)]["status"] = "Ready"
+                save_orders(orders)
+                st.experimental_rerun()
+        with col3:
+            if st.button("Served", key=f"served_{idx}"):
+                orders[-(idx+1)]["status"] = "Served"
+                save_orders(orders)
+                st.experimental_rerun()
+
+        st.markdown(f"<hr style='border:1px solid {status_colors[current_status]}'/>", unsafe_allow_html=True)
+
+# Auto-refresh
+st.markdown("<script>setTimeout(() => location.reload(), 5000);</script>", unsafe_allow_html=True)
