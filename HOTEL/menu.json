@@ -1,58 +1,66 @@
 [
   {
-    "id": "m1",
+    "id": "1",
     "name": "Margherita Pizza",
-    "category": "Pizza",
-    "price": 250,
+    "category": "Main Course",
+    "price": 299,
     "veg": true,
     "spicy": false
   },
   {
-    "id": "m2",
-    "name": "Spicy Chicken Pizza",
-    "category": "Pizza",
-    "price": 300,
+    "id": "2",
+    "name": "Chicken Biryani",
+    "category": "Main Course",
+    "price": 349,
     "veg": false,
     "spicy": true
   },
   {
-    "id": "m3",
-    "name": "Veg Burger",
-    "category": "Burgers",
-    "price": 120,
-    "veg": true,
-    "spicy": false
-  },
-  {
-    "id": "m4",
-    "name": "Chicken Burger",
-    "category": "Burgers",
-    "price": 150,
-    "veg": false,
-    "spicy": false
-  },
-  {
-    "id": "m5",
+    "id": "3",
     "name": "French Fries",
-    "category": "Snacks",
-    "price": 90,
+    "category": "Appetizers",
+    "price": 149,
     "veg": true,
     "spicy": false
   },
   {
-    "id": "m6",
+    "id": "4",
     "name": "Paneer Tikka",
-    "category": "Starters",
-    "price": 180,
+    "category": "Appetizers",
+    "price": 199,
     "veg": true,
     "spicy": true
   },
   {
-    "id": "m7",
-    "name": "Coke",
-    "category": "Beverages",
-    "price": 50,
+    "id": "5",
+    "name": "Gulab Jamun",
+    "category": "Desserts",
+    "price": 99,
     "veg": true,
     "spicy": false
+  },
+  {
+    "id": "6",
+    "name": "Chocolate Brownie",
+    "category": "Desserts",
+    "price": 129,
+    "veg": true,
+    "spicy": false
+  },
+  {
+    "id": "7",
+    "name": "Lemonade",
+    "category": "Drinks",
+    "price": 79,
+    "veg": true,
+    "spicy": false
+  },
+  {
+    "id": "8",
+    "name": "Masala Chai",
+    "category": "Drinks",
+    "price": 59,
+    "veg": true,
+    "spicy": true
   }
 ]
