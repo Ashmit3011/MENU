@@ -149,4 +149,4 @@ with tab_track:
 # ---------- AUTO REFRESH ----------
 import time
 time.sleep(7)
-st.experimental_rerun()
+st.rerun()
