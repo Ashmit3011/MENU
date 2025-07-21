@@ -34,7 +34,7 @@ if "last_refresh" not in st.session_state:
 
 if time.time() - st.session_state.last_refresh > 3:
     st.session_state.last_refresh = time.time()
-    st.experimental_rerun()
+    st.rerun()
 
 # === Load orders ===
 if os.path.exists(orders_file):
