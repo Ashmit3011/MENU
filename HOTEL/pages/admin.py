@@ -54,7 +54,7 @@ status_colors = {
 
 # === Show orders ===
 if orders:
-    orders = sorted(orders, key=lambda x: x.get("timestamp", ""), reverse=True)
+    orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
     updated = False
 
     for order in orders:
