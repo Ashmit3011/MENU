@@ -37,8 +37,7 @@ st.title("🛠️ Admin Panel – Smart Table Ordering")
 
 # 🔔 New order detection
 if len(orders) > st.session_state.last_order_count:
-    st.toast("🔔 New Order Received!", icon="🔔")
-    st.audio("https://www.myinstants.com/media/sounds/bell.mp3", format="audio/mp3")
+    st.toast("🔔 New Order Received!", icon="📦")
     st.session_state.last_order_count = len(orders)
 
 # Show orders
@@ -79,7 +78,7 @@ if orders:
                 order["status"] = new_status
                 save_json(ORDER_FILE, orders)
                 st.success(f"✅ Status updated to {new_status}")
-                st.stop()  # Avoid multiple reruns in a loop
+                st.stop()  # Avoid rerun loop
 
             st.markdown("</div>", unsafe_allow_html=True)
 else:
@@ -98,9 +97,11 @@ if feedbacks:
 else:
     st.info("No feedback received yet.")
 
-# 🔁 Auto-refresh safely
-st.markdown("""
+# 🔁 Auto-refresh every 5 seconds with cache bypass
+st.markdown(f"""
 <script>
-    setTimeout(() => window.location.reload(), 5000);
+    setTimeout(() => {{
+        location.reload(true);
+    }}, 5000);
 </script>
 """, unsafe_allow_html=True)
