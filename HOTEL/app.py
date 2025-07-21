@@ -3,7 +3,6 @@ import json
 import os
 from datetime import datetime
 from uuid import uuid4
-import time
 
 st.set_page_config(page_title="🍽️ Smart Menu", layout="wide")
 
@@ -139,9 +138,5 @@ if st.session_state.order_status:
             if o['status'] == "Served":
                 st.success("✅ Your food is served! Enjoy!")
                 st.session_state.order_status = ""
+            st.experimental_rerun()
             break
-
-# Auto refresh tracking section only
-if st.session_state.order_status:
-    time.sleep(3)
-    st.experimental_rerun()
