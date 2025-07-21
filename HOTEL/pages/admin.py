@@ -31,7 +31,7 @@ def update_status(order_id, new_status):
             order["status"] = new_status
             break
     save_orders(orders)
-    st.experimental_rerun()
+    st.rerun()
 
 def delete_completed_orders():
     orders = load_orders()
