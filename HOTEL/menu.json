@@ -1,26 +1,62 @@
-{
-  "Main Course": [
-    { "id": "m1", "name": "Paneer Butter Masala", "price": 150 },
-    { "id": "m2", "name": "Chicken Curry", "price": 180 },
-    { "id": "m3", "name": "Veg Biryani", "price": 130 },
-    { "id": "m4", "name": "Dal Tadka", "price": 110 }
-  ],
-  "Appetizers": [
-    { "id": "a1", "name": "Spring Rolls", "price": 80 },
-    { "id": "a2", "name": "Chicken Tikka", "price": 120 },
-    { "id": "a3", "name": "Paneer Tikka", "price": 100 },
-    { "id": "a4", "name": "Hara Bhara Kabab", "price": 90 }
-  ],
-  "Desserts": [
-    { "id": "d1", "name": "Gulab Jamun", "price": 60 },
-    { "id": "d2", "name": "Ice Cream", "price": 70 },
-    { "id": "d3", "name": "Rasmalai", "price": 90 },
-    { "id": "d4", "name": "Brownie with Ice Cream", "price": 120 }
-  ],
-  "Drinks": [
-    { "id": "dr1", "name": "Lassi", "price": 50 },
-    { "id": "dr2", "name": "Masala Chai", "price": 30 },
-    { "id": "dr3", "name": "Cold Coffee", "price": 60 },
-    { "id": "dr4", "name": "Fresh Lime Soda", "price": 40 }
-  ]
-}
+[
+  {
+    "id": "M001",
+    "name": "Margherita Pizza",
+    "category": "Main Course",
+    "price": 220
+  },
+  {
+    "id": "M002",
+    "name": "Paneer Butter Masala",
+    "category": "Main Course",
+    "price": 250
+  },
+  {
+    "id": "M003",
+    "name": "Veg Biryani",
+    "category": "Main Course",
+    "price": 180
+  },
+  {
+    "id": "A001",
+    "name": "French Fries",
+    "category": "Appetizers",
+    "price": 120
+  },
+  {
+    "id": "A002",
+    "name": "Spring Rolls",
+    "category": "Appetizers",
+    "price": 150
+  },
+  {
+    "id": "D001",
+    "name": "Chocolate Brownie",
+    "category": "Desserts",
+    "price": 90
+  },
+  {
+    "id": "D002",
+    "name": "Gulab Jamun",
+    "category": "Desserts",
+    "price": 60
+  },
+  {
+    "id": "B001",
+    "name": "Masala Chai",
+    "category": "Drinks",
+    "price": 30
+  },
+  {
+    "id": "B002",
+    "name": "Cold Coffee",
+    "category": "Drinks",
+    "price": 90
+  },
+  {
+    "id": "B003",
+    "name": "Fresh Lime Soda",
+    "category": "Drinks",
+    "price": 60
+  }
+]
