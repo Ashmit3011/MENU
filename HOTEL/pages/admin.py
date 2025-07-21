@@ -73,8 +73,10 @@ now = time.time()
 if not orders:
     st.info("No orders yet.")
 else:
-    for i, order in enumerate(orders):
-        is_recent = (now - order["timestamp"]) < 120  # 2 mins
+    updated = False
+    i = 0
+    for order in orders[:]:  # Use a copy to allow deletion
+        is_recent = (now - order["timestamp"]) < 120
         color = "#ffeeba" if is_recent else "#f8f9fa"
 
         with st.container():
@@ -95,13 +97,26 @@ else:
                 "Update Status",
                 ["Pending", "Preparing", "Ready", "Served"],
                 index=["Pending", "Preparing", "Ready", "Served"].index(order["status"]),
-                key=f"status_{i}"
+                key=f"status_{order['id']}"
             )
 
             if status != order["status"]:
                 order["status"] = status
-                save_orders(orders)
-                st.rerun()
+                updated = True
+
+            # DELETE button for completed (Served) orders
+            if order["status"] == "Served":
+                if st.button("🗑️ Delete Order", key=f"delete_{order['id']}"):
+                    orders.remove(order)
+                    updated = True
+                    st.success(f"Order #{order['id']} deleted.")
+
+            st.markdown("---")
+        i += 1
+
+    if updated:
+        save_orders(orders)
+        st.rerun()
 
 # ---------- AUTO REFRESH ----------
 st.markdown("""
