@@ -17,6 +17,8 @@ def load_menu():
 
 def load_orders():
     if not os.path.exists(ORDERS_FILE):
+        with open(ORDERS_FILE, "w") as f:
+            json.dump([], f)
         return []
     with open(ORDERS_FILE, "r") as f:
         return json.load(f)
@@ -91,39 +93,38 @@ tabs = st.tabs(categories)
 for i, category in enumerate(categories):
     with tabs[i]:
         for item in menu[category]:
-            with st.container():
-                qty = 0
-                for c in st.session_state.cart:
-                    if c['id'] == item['id']:
-                        qty = c['qty']
+            qty = 0
+            for c in st.session_state.cart:
+                if c['id'] == item['id']:
+                    qty = c['qty']
 
-                col1, col2 = st.columns([4, 2])
-                with col1:
-                    st.markdown(f"""
-                        <div class='food-card'>
-                            <strong>{item['name']}</strong><br>
-                            ₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}<br>
-                            <small>Category: {category}</small>
-                        </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    if st.button("➖", key=f"minus_{item['id']}"):
-                        for c in st.session_state.cart:
-                            if c['id'] == item['id']:
-                                c['qty'] -= 1
-                                if c['qty'] <= 0:
-                                    st.session_state.cart = [x for x in st.session_state.cart if x['id'] != item['id']]
-                                break
-                    st.write(f"Qty: {qty}")
-                    if st.button("➕", key=f"plus_{item['id']}"):
-                        found = False
-                        for c in st.session_state.cart:
-                            if c['id'] == item['id']:
-                                c['qty'] += 1
-                                found = True
-                                break
-                        if not found:
-                            st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
+            col1, col2 = st.columns([4, 2])
+            with col1:
+                st.markdown(f"""
+                    <div class='food-card'>
+                        <strong>{item['name']}</strong><br>
+                        ₹{item['price']} {'🌶️' if item['spicy'] else ''} {'🌱' if item['veg'] else '🍖'}<br>
+                        <small>Category: {category}</small>
+                    </div>
+                """, unsafe_allow_html=True)
+            with col2:
+                if st.button("➖", key=f"minus_{item['id']}"):
+                    for c in st.session_state.cart:
+                        if c['id'] == item['id']:
+                            c['qty'] -= 1
+                            if c['qty'] <= 0:
+                                st.session_state.cart = [x for x in st.session_state.cart if x['id'] != item['id']]
+                            break
+                st.write(f"Qty: {qty}")
+                if st.button("➕", key=f"plus_{item['id']}"):
+                    found = False
+                    for c in st.session_state.cart:
+                        if c['id'] == item['id']:
+                            c['qty'] += 1
+                            found = True
+                            break
+                    if not found:
+                        st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
 
 # === Cart Summary ===
 if st.session_state.cart:
@@ -159,18 +160,17 @@ if st.session_state.cart:
         st.session_state.order_placed = True
         st.session_state.order_id = order['id']
         st.session_state.cart = []
-        st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 # === Order Status Tracking ===
-if st.session_state.order_placed and st.session_state.order_id:
-    st.markdown("---")
-    st.subheader("📦 Order Status")
+if st.session_state.order_id:
     orders = load_orders()
     current = next((o for o in orders if o['id'] == st.session_state.order_id), None)
     if current:
+        st.markdown("---")
+        st.subheader("📦 Order Status")
         status = current['status']
-        st.markdown(f"**Current Status: `{status}`**")
+        st.markdown(f"**Current Status:** <span style='color:lightgreen'>{status}</span>", unsafe_allow_html=True)
         st.progress(["Pending", "Preparing", "Ready", "Served"].index(status) / 3)
 
         if status == "Served":
@@ -186,11 +186,7 @@ if st.session_state.order_placed and st.session_state.order_id:
                     "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 })
                 st.success("Thanks for your feedback!")
-                for key in ["order_placed", "order_id", "cart"]:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                st.rerun()
 
-# === Real-time Refresh for status tracking ===
+# === Real-time Refresh every 5 sec ===
 time.sleep(5)
 st.rerun()
