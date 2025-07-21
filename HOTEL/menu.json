@@ -1,18 +1,26 @@
 {
   "Main Course": [
-    {"id": "m1", "name": "Paneer Butter Masala", "price": 160},
-    {"id": "m2", "name": "Chicken Curry", "price": 190}
+    { "id": "m1", "name": "Paneer Butter Masala", "price": 150 },
+    { "id": "m2", "name": "Chicken Curry", "price": 180 },
+    { "id": "m3", "name": "Veg Biryani", "price": 130 },
+    { "id": "m4", "name": "Dal Tadka", "price": 110 }
   ],
   "Appetizers": [
-    {"id": "a1", "name": "Veg Spring Rolls", "price": 80},
-    {"id": "a2", "name": "Chicken Tikka", "price": 130}
+    { "id": "a1", "name": "Spring Rolls", "price": 80 },
+    { "id": "a2", "name": "Chicken Tikka", "price": 120 },
+    { "id": "a3", "name": "Paneer Tikka", "price": 100 },
+    { "id": "a4", "name": "Hara Bhara Kabab", "price": 90 }
   ],
   "Desserts": [
-    {"id": "d1", "name": "Gulab Jamun", "price": 60},
-    {"id": "d2", "name": "Chocolate Ice Cream", "price": 70}
+    { "id": "d1", "name": "Gulab Jamun", "price": 60 },
+    { "id": "d2", "name": "Ice Cream", "price": 70 },
+    { "id": "d3", "name": "Rasmalai", "price": 90 },
+    { "id": "d4", "name": "Brownie with Ice Cream", "price": 120 }
   ],
   "Drinks": [
-    {"id": "dr1", "name": "Mango Lassi", "price": 50},
-    {"id": "dr2", "name": "Masala Chai", "price": 30}
+    { "id": "dr1", "name": "Lassi", "price": 50 },
+    { "id": "dr2", "name": "Masala Chai", "price": 30 },
+    { "id": "dr3", "name": "Cold Coffee", "price": 60 },
+    { "id": "dr4", "name": "Fresh Lime Soda", "price": 40 }
   ]
 }
