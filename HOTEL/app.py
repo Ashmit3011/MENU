@@ -96,7 +96,7 @@ for i, category in enumerate(categories):
                 for c in st.session_state.cart:
                     if c['id'] == item['id']:
                         qty = c['qty']
-                
+
                 col1, col2 = st.columns([4, 2])
                 with col1:
                     st.markdown(f"""
@@ -159,6 +159,7 @@ if st.session_state.cart:
         st.session_state.order_placed = True
         st.session_state.order_id = order['id']
         st.session_state.cart = []
+        st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
 # === Order Status Tracking ===
@@ -185,7 +186,11 @@ if st.session_state.order_placed and st.session_state.order_id:
                     "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 })
                 st.success("Thanks for your feedback!")
+                for key in ["order_placed", "order_id", "cart"]:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
 
-# === Real-time Refresh ===
+# === Real-time Refresh for status tracking ===
 time.sleep(5)
 st.rerun()
