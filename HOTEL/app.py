@@ -7,60 +7,60 @@ from datetime import datetime
 import os
 from streamlit_autorefresh import st_autorefresh
 
-# -------------- CONFIG --------------
+# ---------------- CONFIG ----------------
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 
-# -------------- FILE PATHS --------------
+# ---------------- FILE PATHS ----------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# -------------- DATA FUNCTIONS --------------
+# ---------------- UTILITY FUNCTIONS ----------------
 def load_menu():
     try:
-        with open(MENU_FILE, "r") as f:
+        with open(MENU_FILE, 'r') as f:
             return json.load(f)
     except:
         return {}
 
 def save_order(order):
     try:
-        with open(ORDERS_FILE, "r") as f:
+        with open(ORDERS_FILE, 'r') as f:
             orders = json.load(f)
     except:
         orders = []
     orders.append(order)
-    with open(ORDERS_FILE, "w") as f:
+    with open(ORDERS_FILE, 'w') as f:
         json.dump(orders, f, indent=2)
 
 def load_orders():
     try:
-        with open(ORDERS_FILE, "r") as f:
+        with open(ORDERS_FILE, 'r') as f:
             return json.load(f)
     except:
         return []
 
-# -------------- TOAST + STYLE --------------
+# ---------------- STYLE & TOAST ----------------
 st.markdown("""
     <style>
-        .toast {
-            position: fixed;
-            bottom: 70px;
-            right: 20px;
-            background-color: #222;
-            color: white;
-            padding: 16px;
-            border-radius: 10px;
-            z-index: 10000;
-            animation: slideIn 0.5s ease-out;
-        }
-        @keyframes slideIn {
-            0% {opacity: 0; transform: translateY(20px);}
-            100% {opacity: 1; transform: translateY(0);}
-        }
-        [data-testid="stSidebar"], [data-testid="stToolbar"] {
-            display: none;
-        }
+    .toast {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        background-color: #333;
+        color: #fff;
+        padding: 14px;
+        border-radius: 10px;
+        z-index: 9999;
+        animation: slideIn 0.5s ease-out;
+    }
+    @keyframes slideIn {
+        0% {opacity: 0; transform: translateY(30px);}
+        100% {opacity: 1; transform: translateY(0);}
+    }
+    [data-testid="stSidebar"], [data-testid="stToolbar"] {
+        display: none;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -68,35 +68,34 @@ def toast(msg):
     st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
     st.audio("https://www.soundjay.com/buttons/sounds/button-3.mp3", autoplay=True)
 
-# -------------- SESSION STATE --------------
+# ---------------- AUTO REFRESH ----------------
+st_autorefresh(interval=5000, limit=None, key="auto_refresh")
+
+# ---------------- SESSION STATE ----------------
 st.session_state.setdefault("cart", {})
 st.session_state.setdefault("table_number", "")
 
-# -------------- AUTO REFRESH --------------
-st_autorefresh(interval=5000, limit=None, key="auto_refresh")
-
-# -------------- LOAD MENU --------------
+# ---------------- LOAD MENU ----------------
 menu = load_menu()
 st.title("🍽️ Smart Table Ordering")
 
 if not menu:
-    st.error("❌ Menu is empty or not loaded properly.")
+    st.error("❌ Menu is empty or failed to load. Please contact admin.")
     st.stop()
 
-# -------------- TABS --------------
-tab_menu, tab_cart, tab_track = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track Order"])
+# ---------------- TABS ----------------
+tab1, tab2, tab3 = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track Order"])
 
-# -------------- MENU TAB --------------
-with tab_menu:
+# ---------------- MENU TAB ----------------
+with tab1:
     for category, items in menu.items():
-        st.markdown(f"### 🍽️ {category}")
+        st.subheader(f"🍱 {category}")
         for item in items:
             col1, col2 = st.columns([4, 1])
             with col1:
-                veg_icon = "🟢" if item.get("veg") else "🔴"
-                spice_icon = "🌶️" if item.get("spicy") else ""
+                icons = ("🟢" if item.get("veg") else "🔴") + (" 🌶️" if item.get("spicy") else "")
                 st.markdown(f"**{item['name']}**")
-                st.caption(f"₹{item['price']} {veg_icon} {spice_icon}")
+                st.caption(f"₹{item['price']} {icons}")
             with col2:
                 qty = st.number_input(f"Qty - {item['id']}", min_value=0, step=1, key=f"qty_{item['id']}")
                 if qty > 0:
@@ -108,8 +107,8 @@ with tab_menu:
                 elif item['id'] in st.session_state.cart:
                     del st.session_state.cart[item['id']]
 
-# -------------- CART TAB --------------
-with tab_cart:
+# ---------------- CART TAB ----------------
+with tab2:
     st.subheader("🛒 Your Cart")
     if not st.session_state.cart:
         st.info("Your cart is empty.")
@@ -120,7 +119,7 @@ with tab_cart:
             total += item['qty'] * item['price']
         st.success(f"Total: ₹{total}")
 
-        table_input = st.text_input("Enter your table number", key="table_input")
+        table_input = st.text_input("Enter your table number")
         if table_input:
             st.session_state.table_number = table_input
 
@@ -140,14 +139,14 @@ with tab_cart:
                 st.session_state.cart = {}
                 toast("✅ Order placed successfully!")
 
-# -------------- TRACKING TAB --------------
-with tab_track:
+# ---------------- TRACK TAB ----------------
+with tab3:
     st.subheader("📦 Track Your Order")
     if not st.session_state.table_number:
         st.info("Please enter your table number in the Cart tab.")
     else:
-        orders = load_orders()
-        user_orders = [o for o in orders if o["table"] == st.session_state.table_number]
+        all_orders = load_orders()
+        user_orders = [o for o in all_orders if o['table'] == st.session_state.table_number]
         user_orders = sorted(user_orders, key=lambda x: x['timestamp'], reverse=True)
 
         if not user_orders:
@@ -157,5 +156,5 @@ with tab_track:
             st.write(f"🧾 Order ID: `{latest['id']}` | Status: **{latest['status']}**")
             order_time = datetime.fromtimestamp(latest['timestamp']).strftime("%I:%M %p")
             st.caption(f"🕒 Placed at {order_time}")
-            status_index = ["Pending", "Preparing", "Ready", "Served"].index(latest['status'])
-            st.progress(status_index / 3)
+            progress_map = ["Pending", "Preparing", "Ready", "Served"]
+            st.progress(progress_map.index(latest['status']) / 3)
