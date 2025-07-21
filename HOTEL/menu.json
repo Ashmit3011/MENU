@@ -1,92 +1,92 @@
 [
   {
-    "id": "1",
-    "name": "Paneer Butter Masala",
-    "price": 180,
+    "id": "m1",
+    "name": "Margherita Pizza",
+    "price": 250,
     "category": "Main Course",
     "veg": true,
     "spicy": false,
-    "popular": true
+    "description": "Classic cheese and tomato pizza."
   },
   {
-    "id": "2",
-    "name": "Chicken Biryani",
+    "id": "m2",
+    "name": "Paneer Butter Masala",
     "price": 220,
+    "category": "Main Course",
+    "veg": true,
+    "spicy": true,
+    "description": "Rich creamy curry with paneer cubes."
+  },
+  {
+    "id": "m3",
+    "name": "Chicken Biryani",
+    "price": 270,
     "category": "Main Course",
     "veg": false,
     "spicy": true,
-    "popular": true
+    "description": "Aromatic basmati rice with spiced chicken."
   },
   {
-    "id": "3",
-    "name": "French Fries",
-    "price": 90,
+    "id": "m4",
+    "name": "Veg Manchurian",
+    "price": 180,
+    "category": "Appetizers",
+    "veg": true,
+    "spicy": true,
+    "description": "Fried veggie balls in spicy Indo-Chinese sauce."
+  },
+  {
+    "id": "m5",
+    "name": "Spring Rolls",
+    "price": 150,
     "category": "Appetizers",
     "veg": true,
     "spicy": false,
-    "popular": true
+    "description": "Crispy rolls stuffed with veggies."
   },
   {
-    "id": "4",
-    "name": "Veg Spring Rolls",
-    "price": 110,
+    "id": "m6",
+    "name": "Tandoori Chicken",
+    "price": 280,
     "category": "Appetizers",
-    "veg": true,
-    "spicy": false,
-    "popular": false
+    "veg": false,
+    "spicy": true,
+    "description": "Grilled chicken marinated in spices."
   },
   {
-    "id": "5",
-    "name": "Chocolate Brownie",
-    "price": 130,
-    "category": "Desserts",
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "6",
+    "id": "m7",
     "name": "Gulab Jamun",
-    "price": 70,
+    "price": 90,
     "category": "Desserts",
     "veg": true,
     "spicy": false,
-    "popular": false
+    "description": "Sweet deep-fried balls soaked in sugar syrup."
   },
   {
-    "id": "7",
+    "id": "m8",
+    "name": "Ice Cream (Vanilla)",
+    "price": 80,
+    "category": "Desserts",
+    "veg": true,
+    "spicy": false,
+    "description": "Classic vanilla scoop."
+  },
+  {
+    "id": "m9",
     "name": "Cold Coffee",
-    "price": 100,
+    "price": 110,
     "category": "Drinks",
     "veg": true,
     "spicy": false,
-    "popular": true
+    "description": "Chilled coffee with milk and ice."
   },
   {
-    "id": "8",
+    "id": "m10",
     "name": "Masala Chai",
     "price": 40,
     "category": "Drinks",
     "veg": true,
     "spicy": true,
-    "popular": false
-  },
-  {
-    "id": "9",
-    "name": "Chicken Lollipop",
-    "price": 160,
-    "category": "Appetizers",
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "10",
-    "name": "Dal Tadka",
-    "price": 140,
-    "category": "Main Course",
-    "veg": true,
-    "spicy": false,
-    "popular": false
+    "description": "Spiced Indian tea."
   }
 ]
