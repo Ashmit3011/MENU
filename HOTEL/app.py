@@ -4,20 +4,20 @@ import os
 from datetime import datetime
 import time
 
-# Hide Streamlit sidebar (prevents customer access to other pages like admin)
-st.set_page_config(page_title="Smart Table Ordering", layout="wide")
-hide_sidebar = """
-    <style>
-        [data-testid="stSidebar"] { display: none; }
-        [data-testid="stSidebarNav"] { display: none; }
-    </style>
-"""
-st.markdown(hide_sidebar, unsafe_allow_html=True)
-
-# Base directory
+# File paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDER_FILE = os.path.join(BASE_DIR, "orders.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
+
+# Page setup
+st.set_page_config(page_title="Smart Table Ordering", layout="wide")
+hide_sidebar = """
+    <style>
+    [data-testid="stSidebar"] { display: none !important; }
+    </style>
+"""
+st.markdown(hide_sidebar, unsafe_allow_html=True)
 
 # Utility functions
 def load_json(file):
@@ -39,7 +39,7 @@ def generate_order_id():
     orders = load_json(ORDER_FILE)
     return len(orders) + 1
 
-# Session state initialization
+# Session state
 if "cart" not in st.session_state:
     st.session_state.cart = []
 if "table" not in st.session_state:
@@ -48,8 +48,10 @@ if "order_id" not in st.session_state:
     st.session_state.order_id = None
 if "last_status" not in st.session_state:
     st.session_state.last_status = None
+if "feedback_given" not in st.session_state:
+    st.session_state.feedback_given = False
 
-# Title
+# Header
 st.title("🍽️ Smart Table Ordering")
 st.info("🎉 Get a Free Donut!\n\nOrder above ₹200 and enjoy a delicious free donut 🍩 with your meal!")
 
@@ -60,22 +62,21 @@ st.text_input("Enter Table Number", key="table", value=st.session_state.table)
 menu = load_json(MENU_FILE)
 categories = sorted(set(item.get("category", "Uncategorized") for item in menu if "category" in item))
 
-# Menu tabs
+# Show menu
 if categories:
     tabs = st.tabs(categories)
-    for index, category in enumerate(categories):
-        with tabs[index]:
+    for i, category in enumerate(categories):
+        with tabs[i]:
             st.subheader(f"{category} Menu")
             for item in [m for m in menu if m.get("category") == category]:
                 tags = ""
                 if item.get("spicy"): tags += " 🌶️"
                 if item.get("veg"): tags += " 🥦"
                 if item.get("popular"): tags += " ⭐"
-
                 with st.container():
                     st.markdown(f"**{item['name']}** {tags}")
                     st.caption(f"₹{item['price']}")
-                    qty = st.number_input(f"Quantity for {item['name']}", min_value=0, step=1, key=f"qty_{item['id']}")
+                    qty = st.number_input(f"Qty - {item['name']}", min_value=0, step=1, key=f"qty_{item['id']}")
                     if qty > 0:
                         existing = next((c for c in st.session_state.cart if c['id'] == item['id']), None)
                         if existing:
@@ -121,11 +122,12 @@ if st.session_state.cart:
             st.success(f"🎉 Order placed successfully! Table: {new_order['table']}")
             st.balloons()
             st.session_state.cart = []
+            st.session_state.feedback_given = False
             st.rerun()
 else:
     st.info("Your cart is empty. Add items from the menu.")
 
-# Track Order
+# Order tracking
 if st.session_state.order_id:
     st.markdown("---")
     st.header("🔍 Track Your Order")
@@ -141,19 +143,33 @@ if st.session_state.order_id:
         st.markdown(f"**Status:** `{order['status']}`")
 
         # Progress bar
-        status_stages = ["Pending", "Preparing", "Served", "Completed"]
-        current_index = status_stages.index(order["status"]) if order["status"] in status_stages else 0
-        progress = (current_index + 1) / len(status_stages)
-        st.progress(progress, text=f"{order['status']}")
+        stages = ["Pending", "Preparing", "Served", "Completed"]
+        current = stages.index(order["status"]) if order["status"] in stages else 0
+        st.progress((current + 1) / len(stages), text=order["status"])
 
-        with st.expander("🧾 View Your Order"):
+        with st.expander("🧾 View Order"):
             total = 0
             for item in order["cart"]:
-                line = f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}"
-                st.markdown(line)
+                st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
                 total += item['qty'] * item['price']
             st.markdown(f"**Total: ₹{total}**")
 
-    # Auto-refresh after 5 seconds
+        # Feedback form
+        if order["status"] == "Completed" and not st.session_state.feedback_given:
+            st.markdown("### 💬 Leave Feedback")
+            rating = st.slider("How would you rate your experience?", 1, 5, 4)
+            comments = st.text_area("Any comments?")
+            if st.button("Submit Feedback"):
+                feedback = load_json(FEEDBACK_FILE)
+                feedback.append({
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "table": order["table"],
+                    "rating": rating,
+                    "comments": comments
+                })
+                save_json(FEEDBACK_FILE, feedback)
+                st.success("✅ Thank you for your feedback!")
+                st.session_state.feedback_given = True
+
     time.sleep(5)
     st.rerun()
