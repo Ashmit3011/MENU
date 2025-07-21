@@ -47,7 +47,7 @@ st.markdown("""
             position: fixed;
             bottom: 70px;
             right: 20px;
-            background-color: #444;
+            background-color: #222;
             color: white;
             padding: 16px;
             border-radius: 10px;
@@ -88,7 +88,8 @@ tab_menu, tab_cart, tab_track = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track O
 
 # -------------- MENU TAB --------------
 with tab_menu:
-    for category, items in menu.items():
+    for category in menu:
+        items = menu[category]
         st.markdown(f"### 🍽️ {category}")
         for item in items:
             col1, col2 = st.columns([4, 1])
