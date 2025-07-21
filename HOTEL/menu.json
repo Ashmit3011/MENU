@@ -8,23 +8,51 @@
   },
   {
     "id": "2",
-    "name": "French Fries",
-    "price": 99,
-    "description": "Crispy golden fries",
-    "category": "Appetizers"
+    "name": "Veggie Burger",
+    "price": 149,
+    "description": "Grilled patty with lettuce, tomato, and cheese",
+    "category": "Main Course"
   },
   {
     "id": "3",
-    "name": "Chocolate Lava Cake",
-    "price": 149,
-    "description": "Hot gooey chocolate cake",
-    "category": "Desserts"
+    "name": "French Fries",
+    "price": 99,
+    "description": "Crispy golden fries with seasoning",
+    "category": "Appetizers"
   },
   {
     "id": "4",
-    "name": "Mojito",
+    "name": "Paneer Tikka",
+    "price": 179,
+    "description": "Spicy grilled paneer cubes",
+    "category": "Appetizers"
+  },
+  {
+    "id": "5",
+    "name": "Chocolate Lava Cake",
+    "price": 149,
+    "description": "Warm chocolate cake with molten center",
+    "category": "Desserts"
+  },
+  {
+    "id": "6",
+    "name": "Gulab Jamun",
     "price": 79,
-    "description": "Refreshing mint drink",
+    "description": "Traditional Indian dessert in rose syrup",
+    "category": "Desserts"
+  },
+  {
+    "id": "7",
+    "name": "Mojito",
+    "price": 89,
+    "description": "Refreshing lime and mint drink",
+    "category": "Drinks"
+  },
+  {
+    "id": "8",
+    "name": "Cold Coffee",
+    "price": 99,
+    "description": "Chilled coffee with whipped cream",
     "category": "Drinks"
   }
 ]
