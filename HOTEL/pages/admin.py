@@ -28,19 +28,19 @@ def save_orders(orders):
 st.markdown("""
     <style>
         .order-card {
-            background-color: #1e1e1e;
+            background-color: #fff;
+            color: #000;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            color: white;
-            box-shadow: 0 0 8px rgba(0,0,0,0.4);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         .order-header {
             font-weight: bold;
             font-size: 18px;
         }
         .completed {
-            opacity: 0.4;
+            opacity: 0.5;
         }
         .toast {
             position: fixed;
@@ -111,21 +111,21 @@ for i, order in enumerate(orders):
             if new_status != order["status"]:
                 orders[i]["status"] = new_status
                 save_orders(orders)
-                st.experimental_rerun()
+                st.rerun()
 
         with col2:
-            if order["status"] == "Served"]:
+            if order["status"] == "Served":
                 if st.button("🗑️ Delete", key=f"del_{i}"):
                     orders.pop(i)
                     save_orders(orders)
                     toast("✅ Order deleted")
-                    st.experimental_rerun()
+                    st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------- AUTO REFRESH ----------
 st.markdown("""
 <script>
-    setTimeout(() => window.location.reload(), 3000);
+    setTimeout(() => window.location.reload(), 10000);
 </script>
 """, unsafe_allow_html=True)
