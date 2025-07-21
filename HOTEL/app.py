@@ -17,9 +17,7 @@ ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 def load_menu():
     try:
         with open(MENU_FILE, "r") as f:
-            menu = json.load(f)
-            assert isinstance(menu, list)
-            return menu
+            return json.load(f)
     except:
         return []
 
@@ -40,7 +38,7 @@ def load_orders():
     except:
         return []
 
-# ---------- TOAST CSS ----------
+# ---------- STYLES ----------
 st.markdown("""
     <style>
         .toast {
@@ -58,15 +56,16 @@ st.markdown("""
             0% {opacity: 0; transform: translateY(20px);}
             100% {opacity: 1; transform: translateY(0);}
         }
-        [data-testid="stSidebar"] { display: none; }
-        [data-testid="stToolbar"] { display: none; }
+        [data-testid="stSidebar"], [data-testid="stToolbar"] {
+            display: none;
+        }
     </style>
 """, unsafe_allow_html=True)
 
 def toast(msg):
     st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
 
-# ---------- SESSION ----------
+# ---------- SESSION STATE ----------
 st.session_state.setdefault("cart", {})
 st.session_state.setdefault("table_number", "")
 
@@ -78,25 +77,32 @@ if not menu:
     st.error("❌ Menu is empty or not loaded properly.")
     st.stop()
 
-# ---------- UI TABS ----------
+# ---------- TABS ----------
 tab_menu, tab_cart, tab_track = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track Order"])
 
 # ---------- MENU TAB ----------
 with tab_menu:
-    selected_category = st.selectbox("Select a category", sorted(set(i["category"] for i in menu)))
+    categories = sorted(set(i["category"] for i in menu))
+    selected_category = st.selectbox("🍴 Select a category", categories)
     filtered_menu = [item for item in menu if item["category"] == selected_category]
 
     for item in filtered_menu:
         col1, col2 = st.columns([4, 1])
         with col1:
+            veg_icon = "🟢" if item["veg"] else "🔴"
+            spice_icon = "🌶️" if item["spicy"] else ""
             st.markdown(f"**{item['name']}**")
-            st.caption(f"₹{item['price']} | {'🌶️' if item['spicy'] else ''} {'🟢' if item['veg'] else '🔴'}")
+            st.caption(f"₹{item['price']} {veg_icon} {spice_icon}")
         with col2:
             qty = st.number_input(f"Qty - {item['id']}", min_value=0, step=1, key=f"qty_{item['id']}")
             if qty > 0:
-                st.session_state.cart[item['id']] = {"name": item['name'], "qty": qty, "price": item['price']}
-            elif item['id'] in st.session_state.cart:
-                del st.session_state.cart[item['id']]
+                st.session_state.cart[item['id']] = {
+                    "name": item["name"],
+                    "qty": qty,
+                    "price": item["price"]
+                }
+            elif item["id"] in st.session_state.cart:
+                del st.session_state.cart[item["id"]]
 
 # ---------- CART TAB ----------
 with tab_cart:
@@ -133,7 +139,8 @@ with tab_track:
     if not st.session_state.table_number:
         st.info("Please enter your table number in the Cart tab.")
     else:
-        user_orders = [o for o in load_orders() if o['table'] == st.session_state.table_number]
+        orders = load_orders()
+        user_orders = [o for o in orders if o["table"] == st.session_state.table_number]
         user_orders = sorted(user_orders, key=lambda x: x['timestamp'], reverse=True)
 
         if not user_orders:
@@ -142,11 +149,10 @@ with tab_track:
             latest = user_orders[0]
             st.write(f"🧾 Order ID: `{latest['id']}` | Status: **{latest['status']}**")
             order_time = datetime.fromtimestamp(latest['timestamp']).strftime("%I:%M %p")
-            st.caption(f"Placed at {order_time}")
+            st.caption(f"🕒 Placed at {order_time}")
             status_index = ["Pending", "Preparing", "Ready", "Served"].index(latest['status'])
             st.progress(status_index / 3)
 
 # ---------- AUTO REFRESH ----------
-import time
 time.sleep(7)
-st.rerun()
+st.experimental_rerun()
