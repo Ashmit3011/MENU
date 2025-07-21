@@ -3,22 +3,23 @@ import json
 import uuid
 import time
 from datetime import datetime
-import os
+from pathlib import Path
 
 # ---------- CONFIG ----------
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 
 # ---------- FILE PATHS ----------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+BASE_DIR = Path(__file__).resolve().parent
+MENU_FILE = BASE_DIR / "menu.json"
+ORDERS_FILE = BASE_DIR / "orders.json"
 
 # ---------- DATA FUNCTIONS ----------
 def load_menu():
     try:
-        with open(MENU_FILE, "r") as f:
+        with open(MENU_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    except:
+    except Exception as e:
+        st.error(f"Failed to load menu: {e}")
         return []
 
 def save_order(order):
@@ -150,14 +151,8 @@ with tab_track:
             st.write(f"🧾 Order ID: `{latest['id']}` | Status: **{latest['status']}**")
             order_time = datetime.fromtimestamp(latest['timestamp']).strftime("%I:%M %p")
             st.caption(f"🕒 Placed at {order_time}")
+            status_index = ["Pending", "Preparing", "Ready", "Served"].index(latest['status'])
+            st.progress(status_index / 3)
 
-            status_list = ["Pending", "Preparing", "Ready", "Served"]
-            status_index = status_list.index(latest['status'])
-            st.progress(status_index / (len(status_list) - 1))
-
-            # Refresh every 7 seconds
-            st.markdown("""
-                <script>
-                    setTimeout(() => window.location.reload(), 7000);
-                </script>
-            """, unsafe_allow_html=True)
+# ---------- AUTO REFRESH ----------
+st.query_params["refresh"] = str(time.time())
