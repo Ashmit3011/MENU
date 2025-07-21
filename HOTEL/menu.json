@@ -1,90 +1,92 @@
-{
-  "Main Course": [
-    {
-      "id": "m1",
-      "name": "Margherita Pizza",
-      "price": 250,
-      "veg": true,
-      "spicy": false,
-      "description": "Classic cheese and tomato pizza."
-    },
-    {
-      "id": "m2",
-      "name": "Paneer Butter Masala",
-      "price": 220,
-      "veg": true,
-      "spicy": true,
-      "description": "Rich creamy curry with paneer cubes."
-    },
-    {
-      "id": "m3",
-      "name": "Chicken Biryani",
-      "price": 270,
-      "veg": false,
-      "spicy": true,
-      "description": "Aromatic basmati rice with spiced chicken."
-    }
-  ],
-  "Appetizers": [
-    {
-      "id": "m4",
-      "name": "Veg Manchurian",
-      "price": 180,
-      "veg": true,
-      "spicy": true,
-      "description": "Fried veggie balls in spicy Indo-Chinese sauce."
-    },
-    {
-      "id": "m5",
-      "name": "Spring Rolls",
-      "price": 150,
-      "veg": true,
-      "spicy": false,
-      "description": "Crispy rolls stuffed with veggies."
-    },
-    {
-      "id": "m6",
-      "name": "Tandoori Chicken",
-      "price": 280,
-      "veg": false,
-      "spicy": true,
-      "description": "Grilled chicken marinated in spices."
-    }
-  ],
-  "Desserts": [
-    {
-      "id": "m7",
-      "name": "Gulab Jamun",
-      "price": 90,
-      "veg": true,
-      "spicy": false,
-      "description": "Sweet deep-fried balls soaked in sugar syrup."
-    },
-    {
-      "id": "m8",
-      "name": "Ice Cream (Vanilla)",
-      "price": 80,
-      "veg": true,
-      "spicy": false,
-      "description": "Classic vanilla scoop."
-    }
-  ],
-  "Drinks": [
-    {
-      "id": "m9",
-      "name": "Cold Coffee",
-      "price": 110,
-      "veg": true,
-      "spicy": false,
-      "description": "Chilled coffee with milk and ice."
-    },
-    {
-      "id": "m10",
-      "name": "Masala Chai",
-      "price": 40,
-      "veg": true,
-      "spicy": true,
-      "description": "Spiced Indian tea."
-    }
-  ]
-}
+[
+  {
+    "id": "m1",
+    "name": "Margherita Pizza",
+    "price": 250,
+    "category": "Main Course",
+    "veg": true,
+    "spicy": false,
+    "description": "Classic cheese and tomato pizza."
+  },
+  {
+    "id": "m2",
+    "name": "Paneer Butter Masala",
+    "price": 220,
+    "category": "Main Course",
+    "veg": true,
+    "spicy": true,
+    "description": "Rich creamy curry with paneer cubes."
+  },
+  {
+    "id": "m3",
+    "name": "Chicken Biryani",
+    "price": 270,
+    "category": "Main Course",
+    "veg": false,
+    "spicy": true,
+    "description": "Aromatic basmati rice with spiced chicken."
+  },
+  {
+    "id": "m4",
+    "name": "Veg Manchurian",
+    "price": 180,
+    "category": "Appetizers",
+    "veg": true,
+    "spicy": true,
+    "description": "Fried veggie balls in spicy Indo-Chinese sauce."
+  },
+  {
+    "id": "m5",
+    "name": "Spring Rolls",
+    "price": 150,
+    "category": "Appetizers",
+    "veg": true,
+    "spicy": false,
+    "description": "Crispy rolls stuffed with veggies."
+  },
+  {
+    "id": "m6",
+    "name": "Tandoori Chicken",
+    "price": 280,
+    "category": "Appetizers",
+    "veg": false,
+    "spicy": true,
+    "description": "Grilled chicken marinated in spices."
+  },
+  {
+    "id": "m7",
+    "name": "Gulab Jamun",
+    "price": 90,
+    "category": "Desserts",
+    "veg": true,
+    "spicy": false,
+    "description": "Sweet deep-fried balls soaked in sugar syrup."
+  },
+  {
+    "id": "m8",
+    "name": "Ice Cream (Vanilla)",
+    "price": 80,
+    "category": "Desserts",
+    "veg": true,
+    "spicy": false,
+    "description": "Classic vanilla scoop."
+  },
+  {
+    "id": "m9",
+    "name": "Cold Coffee",
+    "price": 110,
+    "category": "Drinks",
+    "veg": true,
+    "spicy": false,
+    "description": "Chilled coffee with milk and ice."
+  },
+  {
+    "id": "m10",
+    "name": "Masala Chai",
+    "price": 40,
+    "category": "Drinks",
+    "veg": true,
+    "spicy": true,
+    "description": "Spiced Indian tea."
+  }
+]
