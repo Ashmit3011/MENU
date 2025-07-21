@@ -1,10 +1,12 @@
 [
-  { "id": "f1", "name": "Paneer Tikka", "price": 180, "category": "Appetizers" },
-  { "id": "f2", "name": "Spring Rolls", "price": 120, "category": "Appetizers" },
-  { "id": "f3", "name": "Veg Biryani", "price": 200, "category": "Main Course" },
-  { "id": "f4", "name": "Butter Naan", "price": 40, "category": "Main Course" },
-  { "id": "f5", "name": "Brownie", "price": 100, "category": "Desserts" },
-  { "id": "f6", "name": "Ice Cream", "price": 90, "category": "Desserts" },
-  { "id": "f7", "name": "Mango Lassi", "price": 70, "category": "Drinks" },
-  { "id": "f8", "name": "Cold Coffee", "price": 90, "category": "Drinks" }
+  {"id": "1", "name": "Paneer Butter Masala", "category": "Main Course", "price": 180, "veg": true},
+  {"id": "2", "name": "Chicken Biryani", "category": "Main Course", "price": 220, "veg": false},
+  {"id": "3", "name": "Tandoori Roti", "category": "Main Course", "price": 20, "veg": true},
+  {"id": "4", "name": "French Fries", "category": "Appetizers", "price": 70, "veg": true},
+  {"id": "5", "name": "Chicken Wings", "category": "Appetizers", "price": 130, "veg": false},
+  {"id": "6", "name": "Chocolate Brownie", "category": "Desserts", "price": 90, "veg": true},
+  {"id": "7", "name": "Ice Cream Sundae", "category": "Desserts", "price": 100, "veg": true},
+  {"id": "8", "name": "Lemon Soda", "category": "Drinks", "price": 40, "veg": true},
+  {"id": "9", "name": "Mojito", "category": "Drinks", "price": 60, "veg": true},
+  {"id": "10", "name": "Veg Manchurian", "category": "Main Course", "price": 160, "veg": true}
 ]
