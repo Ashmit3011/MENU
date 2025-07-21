@@ -1,17 +1,24 @@
 import streamlit as st
 import json
 import os
-import time
 from datetime import datetime
+import uuid
+from pathlib import Path
 
-# === File paths ===
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+BASE_DIR = Path(__file__).resolve().parent
+MENU_FILE = BASE_DIR / "menu.json"
+ORDERS_FILE = BASE_DIR / "orders.json"
 
-# === Helper functions ===
+st.set_page_config(page_title="Admin Panel", layout="centered")
+st.markdown("""
+    <style>
+    body { background-color: #111; color: #fff; }
+    .stButton>button { border-radius: 10px; }
+    </style>
+""", unsafe_allow_html=True)
+
 def load_orders():
-    if not os.path.exists(ORDERS_FILE):
-        return []
+    if not ORDERS_FILE.exists(): return []
     with open(ORDERS_FILE, "r") as f:
         return json.load(f)
 
@@ -19,56 +26,41 @@ def save_orders(data):
     with open(ORDERS_FILE, "w") as f:
         json.dump(data, f, indent=2)
 
-# === UI config ===
-st.set_page_config(page_title="📋 Admin Dashboard", layout="wide")
-st.markdown("""
-    <style>
-        .order-card {
-            background-color: #1a1a1a;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #333;
-        }
-        .status-selectbox {
-            background-color: #111;
-            color: white;
-            border-radius: 5px;
-        }
-    </style>
-""", unsafe_allow_html=True)
+def get_status_color(status):
+    return {
+        "Pending": "orange",
+        "Preparing": "gold",
+        "Ready": "deepskyblue",
+        "Served": "limegreen"
+    }.get(status, "gray")
 
-st.title("📦 Live Orders Admin Panel")
+st.title("🛠️ Admin Dashboard")
 orders = load_orders()
-updated = False
 
 if not orders:
-    st.info("No orders yet.")
+    st.info("No orders found.")
 else:
-    for i, order in enumerate(reversed(orders)):
+    for order in sorted(orders, key=lambda x: x['timestamp'], reverse=True):
         with st.container():
-            st.markdown("<div class='order-card'>", unsafe_allow_html=True)
-            st.subheader(f"🧾 Order ID: {order['id']} | Table: {order['table']}")
-            st.markdown(f"**Placed:** {order['time']}")
-            st.markdown("### Items:")
-            for item in order['items']:
-                st.markdown(f"- {item['name']} x {item['qty']} — ₹{item['qty'] * item['price']}")
-            st.markdown(f"**Total:** ₹{order['total']}")
+            st.markdown("---")
+            st.markdown(f"### 🧾 Order ID: `{order['id']}` | Table: **{order['table']}**")
+            status_color = get_status_color(order['status'])
+            st.markdown(f"**Status:** <span style='color:{status_color}; font-weight:bold'>{order['status']}</span>", unsafe_allow_html=True)
 
-            status_options = ["Pending", "Preparing", "Ready", "Served"]
-            current_status = order.get("status", "Pending")
-            new_status = st.selectbox("Update Status", status_options, index=status_options.index(current_status), key=f"status_{i}")
+            with st.expander("View Items"):
+                for pid, qty in order['items'].items():
+                    st.write(f"🔸 Product ID: {pid}, Qty: {qty}")
 
-            if new_status != current_status:
-                orders[len(orders)-1 - i]['status'] = new_status
-                updated = True
-                st.success(f"Status updated to {new_status}")
+            new_status = st.selectbox("Update Status", ["Pending", "Preparing", "Ready", "Served"], index=["Pending", "Preparing", "Ready", "Served"].index(order['status']), key=order['id'])
+            if st.button("Update", key=f"update_{order['id']}"):
+                order['status'] = new_status
+                save_orders(orders)
+                st.success("Status updated successfully!")
+                st.rerun()
 
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    if updated:
-        save_orders(orders)
-
-# === Real-time refresh ===
-time.sleep(5)
-st.rerun()
+# Auto Refresh Every 5 seconds
+st.markdown("""
+<script>
+    setTimeout(() => window.location.reload(), 5000);
+</script>
+""", unsafe_allow_html=True)
