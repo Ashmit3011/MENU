@@ -1,74 +1,47 @@
-{
-  "Main Course": [
-    {
-      "id": "mc01",
-      "name": "Paneer Butter Masala",
-      "price": 180,
-      "veg": true,
-      "spicy": true,
-      "popular": true
-    },
-    {
-      "id": "mc02",
-      "name": "Chicken Biryani",
-      "price": 220,
-      "veg": false,
-      "spicy": true,
-      "popular": true
-    }
-  ],
-  "Appetizers": [
-    {
-      "id": "ap01",
-      "name": "Spring Rolls",
-      "price": 90,
-      "veg": true,
-      "spicy": false,
-      "popular": true
-    },
-    {
-      "id": "ap02",
-      "name": "Chicken Tikka",
-      "price": 150,
-      "veg": false,
-      "spicy": true,
-      "popular": true
-    }
-  ],
-  "Desserts": [
-    {
-      "id": "ds01",
-      "name": "Gulab Jamun",
-      "price": 60,
-      "veg": true,
-      "spicy": false,
-      "popular": true
-    },
-    {
-      "id": "ds02",
-      "name": "Ice Cream",
-      "price": 80,
-      "veg": true,
-      "spicy": false,
-      "popular": false
-    }
-  ],
-  "Drinks": [
-    {
-      "id": "dr01",
-      "name": "Masala Chai",
-      "price": 30,
-      "veg": true,
-      "spicy": false,
-      "popular": true
-    },
-    {
-      "id": "dr02",
-      "name": "Cold Coffee",
-      "price": 60,
-      "veg": true,
-      "spicy": false,
-      "popular": false
-    }
-  ]
-}
+[
+  {
+    "id": "m001",
+    "name": "Paneer Tikka",
+    "category": "Appetizers",
+    "price": 180,
+    "veg": true,
+    "spicy": true,
+    "popular": true
+  },
+  {
+    "id": "m002",
+    "name": "Chicken Biryani",
+    "category": "Main Course",
+    "price": 250,
+    "veg": false,
+    "spicy": true,
+    "popular": true
+  },
+  {
+    "id": "m003",
+    "name": "Tandoori Roti",
+    "category": "Main Course",
+    "price": 25,
+    "veg": true,
+    "spicy": false,
+    "popular": false
+  },
+  {
+    "id": "m004",
+    "name": "Gulab Jamun",
+    "category": "Desserts",
+    "price": 60,
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  },
+  {
+    "id": "m005",
+    "name": "Masala Lemonade",
+    "category": "Drinks",
+    "price": 45,
+    "veg": true,
+    "spicy": false,
+    "popular": false
+  }
+]
