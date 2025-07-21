@@ -81,7 +81,7 @@ else:
             order["status"] = new_status
             save_orders(orders)
             st.success(f"✅ Order #{order['id']} updated to {new_status}")
-            st.experimental_rerun()
+            st.rerun()
 
 # Cleanup
 st.markdown("---")
@@ -89,7 +89,7 @@ if st.button("🧹 Delete Completed Orders"):
     orders = [o for o in orders if o["status"] != "Completed"]
     save_orders(orders)
     st.success("✅ Completed orders removed.")
-    st.experimental_rerun()
+    st.rerun()
 
 # Auto-refresh every 5 seconds
 time.sleep(5)
