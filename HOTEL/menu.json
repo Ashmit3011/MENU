@@ -1,20 +1,92 @@
 [
   {
     "id": "1",
-    "name": "Margherita Pizza",
+    "name": "Paneer Butter Masala",
+    "price": 180,
     "category": "Main Course",
-    "price": 249,
     "veg": true,
     "spicy": false,
-    "description": "Classic cheese and tomato pizza."
+    "popular": true
   },
   {
     "id": "2",
-    "name": "Paneer Tikka",
+    "name": "Chicken Biryani",
+    "price": 220,
+    "category": "Main Course",
+    "veg": false,
+    "spicy": true,
+    "popular": true
+  },
+  {
+    "id": "3",
+    "name": "French Fries",
+    "price": 90,
     "category": "Appetizers",
-    "price": 199,
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  },
+  {
+    "id": "4",
+    "name": "Veg Spring Rolls",
+    "price": 110,
+    "category": "Appetizers",
+    "veg": true,
+    "spicy": false,
+    "popular": false
+  },
+  {
+    "id": "5",
+    "name": "Chocolate Brownie",
+    "price": 130,
+    "category": "Desserts",
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  },
+  {
+    "id": "6",
+    "name": "Gulab Jamun",
+    "price": 70,
+    "category": "Desserts",
+    "veg": true,
+    "spicy": false,
+    "popular": false
+  },
+  {
+    "id": "7",
+    "name": "Cold Coffee",
+    "price": 100,
+    "category": "Drinks",
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  },
+  {
+    "id": "8",
+    "name": "Masala Chai",
+    "price": 40,
+    "category": "Drinks",
     "veg": true,
     "spicy": true,
-    "description": "Spicy grilled cottage cheese cubes."
+    "popular": false
+  },
+  {
+    "id": "9",
+    "name": "Chicken Lollipop",
+    "price": 160,
+    "category": "Appetizers",
+    "veg": false,
+    "spicy": true,
+    "popular": true
+  },
+  {
+    "id": "10",
+    "name": "Dal Tadka",
+    "price": 140,
+    "category": "Main Course",
+    "veg": true,
+    "spicy": false,
+    "popular": false
   }
 ]
