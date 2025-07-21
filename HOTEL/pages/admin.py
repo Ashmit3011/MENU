@@ -85,6 +85,8 @@ for order in orders:
         for item in order['items'].values():
             st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
 
+        st.caption("🕒 Placed at: " + datetime.fromtimestamp(order['timestamp']).strftime("%I:%M %p"))
+
         st.write("---")
         status = st.selectbox("Update Status", status_options, index=status_options.index(order['status']), key=order['id'])
         if status != order['status']:
