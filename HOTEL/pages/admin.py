@@ -1,95 +1,103 @@
 import streamlit as st
 import json
 import os
-from datetime import datetime
 import time
+from datetime import datetime
+from pathlib import Path
 
-# Paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-ORDER_FILE = os.path.join(BASE_DIR, "../orders.json")
+# File paths
+BASE_DIR = Path(__file__).parent.resolve()
+ORDER_FILE = BASE_DIR / "orders.json"
+FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
-# Load orders
-def load_orders():
-    if not os.path.exists(ORDER_FILE):
-        return []
-    with open(ORDER_FILE, 'r', encoding='utf-8') as f:
+st.set_page_config(page_title="Admin Panel", layout="wide")
+
+# Load data
+def load_json(file):
+    if not file.exists():
+        file.write_text("[]", encoding="utf-8")
+    with open(file, "r", encoding="utf-8") as f:
         try:
             return json.load(f)
-        except:
+        except json.JSONDecodeError:
             return []
 
-# Save orders
-def save_orders(orders):
-    with open(ORDER_FILE, 'w', encoding='utf-8') as f:
-        json.dump(orders, f, indent=2, ensure_ascii=False)
+def save_json(file, data):
+    with open(file, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-# App config
-st.set_page_config(page_title="Admin Dashboard", layout="wide")
-st.title("🛠️ Admin Dashboard - Smart Restaurant")
+# Session init
+if "last_order_count" not in st.session_state:
+    st.session_state.last_order_count = 0
+if "seen_orders" not in st.session_state:
+    st.session_state.seen_orders = []
 
-# Session state to track order count
-if "order_count" not in st.session_state:
-    st.session_state.order_count = 0
+# Admin panel
+st.title("🛠️ Admin Panel – Smart Table Ordering")
 
-# Load and sort orders
-orders = load_orders()
-orders = sorted(orders, key=lambda x: x.get("timestamp", ""), reverse=True)
+orders = load_json(ORDER_FILE)
+feedbacks = load_json(FEEDBACK_FILE)
 
-# 🔔 Play sound and show toast if new order received
-if len(orders) > st.session_state.order_count:
-    st.audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg", autoplay=True)
-    st.toast("🆕 New order received!", icon="🔔")
+# Sound and toast on new order
+if len(orders) > st.session_state.last_order_count:
+    st.toast("🔔 New Order Received!", icon="🔔")
+    st.audio("https://www.myinstants.com/media/sounds/bell.mp3", format="audio/mp3")
+    st.session_state.last_order_count = len(orders)
 
-# Update tracked count
-st.session_state.order_count = len(orders)
-
-# Display orders
-if not orders:
-    st.info("📭 No orders received yet.")
-else:
-    for order in orders:
-        color = {
-            "Pending": "#facc15",
-            "Preparing": "#38bdf8",
-            "Served": "#4ade80",
-            "Completed": "#d4d4d8"
-        }.get(order["status"], "#e2e8f0")
+# Show orders
+if orders:
+    for order in reversed(orders):
+        status = order.get("status", "Pending")
+        status_color = {
+            "Pending": "#ffeeba",
+            "Preparing": "#bee5eb",
+            "Served": "#d4edda",
+            "Completed": "#e2e3e5"
+        }.get(status, "#f8f9fa")
 
         with st.container():
             st.markdown(
-                f"""
-                <div style="border-left: 8px solid {color}; padding: 1rem; margin-bottom: 1rem; background-color: #1f2937; border-radius: 10px;">
-                    <h4 style="margin:0;">🧾 Order #{order['id']} | Table: {order['table']}</h4>
-                    <p style="margin:0; font-size: 14px; color: #9ca3af;">🕒 {order['timestamp']}</p>
-                    <ul>
-                        {''.join([f"<li>{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}</li>" for item in order['cart']])}
-                    </ul>
-                    <b>Total: ₹{sum([item['qty'] * item['price'] for item in order['cart']])}</b>
-                </div>
-                """,
+                f"<div style='background-color: {status_color}; padding: 1rem; border-radius: 1rem;'>",
                 unsafe_allow_html=True
             )
+            st.subheader(f"Order #{order['id']} – Table {order['table']}")
+            st.markdown(f"**Status:** `{status}`")
+            st.caption(f"Placed at {order['timestamp']}")
 
-        new_status = st.selectbox(
-            f"Update status for Order #{order['id']}",
-            ["Pending", "Preparing", "Served", "Completed"],
-            index=["Pending", "Preparing", "Served", "Completed"].index(order["status"]),
-            key=f"status_{order['id']}"
-        )
+            with st.expander("🧾 View Items"):
+                total = 0
+                for item in order["cart"]:
+                    st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+                    total += item['qty'] * item['price']
+                st.write(f"**Total: ₹{total}**")
 
-        if new_status != order["status"]:
-            order["status"] = new_status
-            save_orders(orders)
-            st.success(f"✅ Order #{order['id']} updated to {new_status}")
-            st.rerun()
+            new_status = st.selectbox(
+                f"Update Status for Order #{order['id']}",
+                ["Pending", "Preparing", "Served", "Completed"],
+                index=["Pending", "Preparing", "Served", "Completed"].index(status),
+                key=f"status_{order['id']}"
+            )
+            if new_status != status:
+                order["status"] = new_status
+                save_json(ORDER_FILE, orders)
+                st.success(f"✅ Status updated to {new_status}")
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+else:
+    st.info("No orders yet.")
 
-# Cleanup
+# Feedback section
 st.markdown("---")
-if st.button("🧹 Delete Completed Orders"):
-    orders = [o for o in orders if o["status"] != "Completed"]
-    save_orders(orders)
-    st.success("✅ Completed orders removed.")
-    st.rerun()
+st.header("💬 Customer Feedback")
+if feedbacks:
+    for fb in reversed(feedbacks):
+        with st.container():
+            st.markdown("-----")
+            st.write(f"🕒 {fb['timestamp']} | Table: {fb['table']}")
+            st.write(f"⭐ Rating: {fb['rating']} / 5")
+            st.write(f"💬 {fb['comments']}")
+else:
+    st.info("No feedback received yet.")
 
 # Auto-refresh every 5 seconds
 time.sleep(5)
