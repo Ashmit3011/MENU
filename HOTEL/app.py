@@ -107,4 +107,4 @@ with st.form("order_form"):
         st.toast("🎉 Thank you! Your order is now being prepared.")
         st.audio("https://www.soundjay.com/button/beep-07.wav", autoplay=True)
         st.session_state.cart.clear()
-        st.experimental_rerun()
+        st.rerun()
