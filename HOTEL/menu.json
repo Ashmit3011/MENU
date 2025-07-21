@@ -1,115 +1,65 @@
 [
   {
-  "Main Course": [
-    {
-      "id": 1,
-      "name": "Paneer Butter Masala",
-      "price": 220,
-      "veg": true,
-      "spicy": false
-    },
-    {
-      "id": 2,
-      "name": "Chicken Curry",
-      "price": 250,
-      "veg": false,
-      "spicy": true
-    },
-    {
-      "id": 3,
-      "name": "Veg Biryani",
-      "price": 180,
-      "veg": true,
-      "spicy": true
-    },
-    {
-      "id": 4,
-      "name": "Mutton Rogan Josh",
-      "price": 280,
-      "veg": false,
-      "spicy": true
-    }
-  ],
-  "Appetizers": [
-    {
-      "id": 5,
-      "name": "Spring Rolls",
-      "price": 100,
-      "veg": true,
-      "spicy": false
-    },
-    {
-      "id": 6,
-      "name": "Chicken Tikka",
-      "price": 150,
-      "veg": false,
-      "spicy": true
-    },
-    {
-      "id": 7,
-      "name": "Hara Bhara Kabab",
-      "price": 120,
-      "veg": true,
-      "spicy": false
-    },
-    {
-      "id": 8,
-      "name": "Fish Fingers",
-      "price": 160,
-      "veg": false,
-      "spicy": false
-    }
-  ],
-  "Desserts": [
-    {
-      "id": 9,
-      "name": "Gulab Jamun",
-      "price": 80,
-      "veg": true,
-      "spicy": false
-    },
-    {
-      "id": 10,
-      "name": "Chocolate Brownie",
-      "price": 110,
-      "veg": true,
-      "spicy": false
-    },
-    {
-      "id": 11,
-      "name": "Rasmalai",
-      "price": 100,
-      "veg": true,
-      "spicy": false
-    }
-  ],
-  "Drinks": [
-    {
-      "id": 12,
-      "name": "Mango Lassi",
-      "price": 70,
-      "veg": true,
-      "spicy": false
-    },
-    {
-      "id": 13,
-      "name": "Masala Chai",
-      "price": 40,
-      "veg": true,
-      "spicy": true
-    },
-    {
-      "id": 14,
-      "name": "Cold Coffee",
-      "price": 90,
-      "veg": true,
-      "spicy": false
-    },
-    {
-      "id": 15,
-      "name": "Lemon Soda",
-      "price": 50,
-      "veg": true,
-      "spicy": false
-    }
-  ]
+    "id": "101",
+    "name": "Margherita Pizza",
+    "category": "Main Course",
+    "price": 199,
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  },
+  {
+    "id": "102",
+    "name": "Paneer Butter Masala",
+    "category": "Main Course",
+    "price": 249,
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  },
+  {
+    "id": "201",
+    "name": "Tandoori Chicken",
+    "category": "Appetizers",
+    "price": 299,
+    "veg": false,
+    "spicy": true,
+    "popular": true
+  },
+  {
+    "id": "301",
+    "name": "Gulab Jamun",
+    "category": "Desserts",
+    "price": 80,
+    "veg": true,
+    "spicy": false,
+    "popular": false
+  },
+  {
+    "id": "302",
+    "name": "Ice Cream (Vanilla)",
+    "category": "Desserts",
+    "price": 90,
+    "veg": true,
+    "spicy": false,
+    "popular": false
+  },
+  {
+    "id": "401",
+    "name": "Coca-Cola",
+    "category": "Drinks",
+    "price": 40,
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  },
+  {
+    "id": "402",
+    "name": "Lassi",
+    "category": "Drinks",
+    "price": 60,
+    "veg": true,
+    "spicy": false,
+    "popular": true
+  }
+]
