@@ -3,12 +3,16 @@ import json
 import os
 from datetime import datetime
 from uuid import uuid4
+import time
 
 st.set_page_config(page_title="🍽️ Admin Panel", layout="wide")
 
-# === Auto-refresh without blinking ===
+# === Paths ===
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+orders_file = os.path.join(BASE_DIR, "orders.json")
+
+# === Styling ===
 st.markdown("""
-    <meta http-equiv="refresh" content="3">
     <style>
         [data-testid="stSidebar"] { display: none; }
         .order-card {
@@ -24,9 +28,13 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# === Paths ===
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-orders_file = os.path.join(BASE_DIR, "orders.json")
+# === Auto-refresh logic (no blinking) ===
+if "last_refresh" not in st.session_state:
+    st.session_state.last_refresh = time.time()
+
+if time.time() - st.session_state.last_refresh > 3:
+    st.session_state.last_refresh = time.time()
+    st.experimental_rerun()
 
 # === Load orders ===
 if os.path.exists(orders_file):
@@ -46,7 +54,6 @@ status_colors = {
 # === Show orders ===
 if orders:
     orders = sorted(orders, key=lambda x: x["timestamp"], reverse=True)
-
     updated = False
 
     for order in orders:
