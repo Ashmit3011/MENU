@@ -80,7 +80,7 @@ else:
             st.caption(datetime.fromtimestamp(order['timestamp']).strftime("%b %d, %I:%M %p"))
             for item in order['items'].values():
                 st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-            st.success(f"Total: ₹{order['total']}")
+            st.success(f"Total: ₹{total}")
 
             col1, col2 = st.columns([2, 1])
             with col1:
