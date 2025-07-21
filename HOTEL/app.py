@@ -61,10 +61,7 @@ st.markdown("""
         width: 40px;
         height: 40px;
         border: none;
-        margin-right: 5px;
-    }
-    .minus-btn {
-        background-color: #ff3b30;
+        margin: 0 5px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -95,7 +92,12 @@ for i, category in enumerate(categories):
     with tabs[i]:
         for item in menu[category]:
             with st.container():
-                col1, col2 = st.columns([4, 1])
+                qty = 0
+                for c in st.session_state.cart:
+                    if c['id'] == item['id']:
+                        qty = c['qty']
+                
+                col1, col2 = st.columns([4, 2])
                 with col1:
                     st.markdown(f"""
                         <div class='food-card'>
@@ -112,8 +114,7 @@ for i, category in enumerate(categories):
                                 if c['qty'] <= 0:
                                     st.session_state.cart = [x for x in st.session_state.cart if x['id'] != item['id']]
                                 break
-                        st.rerun()
-
+                    st.write(f"Qty: {qty}")
                     if st.button("➕", key=f"plus_{item['id']}"):
                         found = False
                         for c in st.session_state.cart:
@@ -123,8 +124,6 @@ for i, category in enumerate(categories):
                                 break
                         if not found:
                             st.session_state.cart.append({"id": item['id'], "name": item['name'], "price": item['price'], "qty": 1})
-                        st.toast(f"Added {item['name']}", icon="✅")
-                        st.rerun()
 
 # === Cart Summary ===
 if st.session_state.cart:
@@ -136,8 +135,7 @@ if st.session_state.cart:
         with col1:
             st.markdown(f"**{item['name']}**")
         with col2:
-            qty = st.number_input("Qty", value=item['qty'], min_value=1, key=f"qty_{item['id']}")
-            item['qty'] = qty
+            st.markdown(f"Qty: {item['qty']}")
         with col3:
             if st.button("❌", key=f"remove_{item['id']}"):
                 st.session_state.cart = [c for c in st.session_state.cart if c['id'] != item['id']]
