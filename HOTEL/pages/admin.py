@@ -106,7 +106,7 @@ for i, order in enumerate(orders):
         if status != order["status"]:
             order["status"] = status
             save_orders(orders)
-            st.experimental_rerun()
+            st.rerun()
 
         # Delete button if order is served
         if order["status"] == "Served":
