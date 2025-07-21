@@ -2,95 +2,94 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
+from streamlit_extras.stylable_container import stylable_container
+from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="Admin Dashboard", layout="centered")
+# Refresh every 3 seconds (3000 milliseconds)
+st_autorefresh(interval=3000, key="refresh")
 
-# Inject auto-refresh every 3 seconds
+st.set_page_config(layout="wide", page_title="Admin Panel")
+
+# Hide sidebar and default elements
 st.markdown("""
-    <meta http-equiv="refresh" content="3">
+    <style>
+        [data-testid="stSidebar"] { display: none; }
+        .st-emotion-cache-1avcm0n { padding: 1rem; }
+        .order-card {
+            background-color: #f7f7f7;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.08);
+        }
+        .feedback {
+            background-color: #fff7d9;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
 """, unsafe_allow_html=True)
 
-orders_file = os.path.join("..", "orders.json")
-feedback_file = os.path.join("..", "feedback.json")
+st.title("📟 Live Orders")
 
-st.title("📋 Live Orders")
+orders_file = "orders.json"
+feedback_file = "feedback.json"
 
+# Load orders
 if os.path.exists(orders_file):
     with open(orders_file, "r") as f:
         orders = json.load(f)
 else:
     orders = []
 
-status_colors = {
-    "Pending": "orange",
-    "Preparing": "gold",
-    "Ready": "limegreen",
-    "Cancelled": "red"
-}
-
-updated_orders = []
-
+# Display orders
 for order in orders:
-    status = order.get("status", "Pending")
-    status_color = status_colors.get(status, "white")
-
-    with st.container():
-        st.markdown(
-            f"""
-            <div style="background-color: #2a2a2a; padding: 1rem; border-radius: 1rem; 
-                        box-shadow: 0 0 10px rgba(255,255,255,0.05); margin-bottom: 1rem;">
-                <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem;">
-                    🧾 <strong>Order #{order['order_id']}</strong> —
-                    <span style="color: {status_color};">{status}</span><br>
-                    ⏰ {order.get('timestamp', '')}
-                </p>
-            </div>
-            """, unsafe_allow_html=True
-        )
+    with stylable_container("order-card", key=order["timestamp"]):
+        st.markdown(f"🪑 **Table {order['table']}** — *{order['status']}*")
+        st.caption(f"⏰ {order['timestamp']}")
 
         for item in order.get("cart", []):
-            st.write(f"- {item['name']} × {item['quantity']} = ₹{item['price'] * item['quantity']}")
+            try:
+                name = item['name']
+                qty = item['quantity']
+                price = item['price']
+                st.write(f"- {name} × {qty} = ₹{price * qty}")
+            except KeyError:
+                continue
 
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            if st.button("🍳 Start Preparing", key=f"prepare_{order['order_id']}"):
+        col1, col2, col3, col4 = st.columns([1,1,1,1])
+
+        if order["status"] == "Pending":
+            if col1.button("🍳 Start Preparing", key=f"prep_{order['timestamp']}"):
                 order["status"] = "Preparing"
-        with col2:
-            if st.button("✅ Mark Ready", key=f"ready_{order['order_id']}"):
+        if order["status"] == "Preparing":
+            if col2.button("✅ Mark Ready", key=f"ready_{order['timestamp']}"):
                 order["status"] = "Ready"
-        with col3:
-            if st.button("❌ Cancel", key=f"cancel_{order['order_id']}"):
+        if order["status"] in ["Pending", "Preparing"]:
+            if col3.button("❌ Cancel", key=f"cancel_{order['timestamp']}"):
                 order["status"] = "Cancelled"
-        with col4:
-            if st.button("🗑️ Delete", key=f"delete_{order['order_id']}"):
-                continue  # Skip adding to updated list
+        if col4.button("🗑️ Delete", key=f"del_{order['timestamp']}"):
+            orders.remove(order)
+            break
 
-    updated_orders.append(order)
-
-# Save updated order status
+# Save updated orders
 with open(orders_file, "w") as f:
-    json.dump(updated_orders, f, indent=4)
+    json.dump(orders, f, indent=2)
 
 st.markdown("---")
 st.subheader("📝 Customer Feedback")
 
+# Load feedback
 if os.path.exists(feedback_file):
     with open(feedback_file, "r") as f:
-        feedback_list = json.load(f)
+        feedbacks = json.load(f)
 else:
-    feedback_list = []
+    feedbacks = []
 
-if not feedback_list:
-    st.info("No feedback yet.")
-
-for entry in reversed(feedback_list):
-    st.markdown(
-        f"""
-        <div style="background-color: #fef3c7; color: #111827; padding: 1rem; margin-bottom: 1rem;
-                    border-radius: 1rem; box-shadow: 0 0 5px rgba(0,0,0,0.1);">
-            <p><strong>Table {entry['table']}</strong> said:</p>
-            <p>“{entry['message']}”</p>
-            <small>{entry['timestamp']}</small>
-        </div>
-        """, unsafe_allow_html=True
-    )
+# Display feedback
+for feedback in reversed(feedbacks):
+    with stylable_container("feedback", key=feedback['timestamp']):
+        st.markdown(f"**Table {feedback['table']} said:**")
+        st.write(f"“{feedback['message']}”")
+        st.caption(f"{feedback['timestamp']}")
