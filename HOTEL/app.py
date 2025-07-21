@@ -2,121 +2,128 @@ import streamlit as st
 import json
 from pathlib import Path
 from datetime import datetime
+import uuid
 
 # Set page config
-st.set_page_config(page_title="Smart Menu", layout="wide")
+st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 
 # File paths
-BASE_DIR = Path("/mnt/data")
+BASE_DIR = Path(__file__).parent.resolve()
 MENU_FILE = BASE_DIR / "menu.json"
 ORDERS_FILE = BASE_DIR / "orders.json"
 FEEDBACK_FILE = BASE_DIR / "feedback.json"
 
-# Load menu
-def load_menu():
-    if MENU_FILE.exists():
-        with open(MENU_FILE, "r", encoding="utf-8") as f:
+# Load JSON safely
+def load_json(path):
+    if not path.exists():
+        path.write_text("[]", encoding="utf-8")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
-    return []
+    except json.JSONDecodeError:
+        return []
 
-# Save order
-def save_order(order):
-    orders = []
-    if ORDERS_FILE.exists():
-        try:
-            with open(ORDERS_FILE, "r", encoding="utf-8") as f:
-                orders = json.load(f)
-        except json.JSONDecodeError:
-            orders = []
-    order["id"] = len(orders) + 1
-    order["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    order["status"] = "Pending"
-    orders.append(order)
-    with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(orders, f, indent=2, ensure_ascii=False)
+def save_json(path, data):
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
-# Save feedback
-def save_feedback(feedback):
-    feedbacks = []
-    if FEEDBACK_FILE.exists():
-        try:
-            with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
-                feedbacks = json.load(f)
-        except json.JSONDecodeError:
-            feedbacks = []
-    feedback["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    feedbacks.append(feedback)
-    with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
-        json.dump(feedbacks, f, indent=2, ensure_ascii=False)
+# Load menu
+menu = load_json(MENU_FILE)
 
-# UI
-st.title("🍽️ Smart Restaurant Ordering")
-menu_data = load_menu()
+# Title
+st.title("🍽️ Smart Table Ordering System")
 
-# Filter categories
-categories = sorted(list(set(item["category"] for item in menu_data)))
-selected_category = st.selectbox("Select Category", categories)
+# Get table number
+table_number = st.text_input("Enter your Table Number:", key="table_input")
+if not table_number:
+    st.warning("Please enter your table number to start ordering.")
+    st.stop()
 
-# Table number
-table_number = st.text_input("Enter Your Table Number", "")
+# Initialize cart
+if "cart" not in st.session_state:
+    st.session_state.cart = []
 
-# Cart management
-cart = []
-st.subheader("Menu Items")
+# Food categories
+categories = sorted(set(item.get("category", "Others") for item in menu))
+selected_category = st.selectbox("Choose Category", ["All"] + categories)
 
-for item in menu_data:
-    if item["category"] != selected_category:
-        continue
-    cols = st.columns([3, 1, 1])
-    with cols[0]:
-        st.write(f"**{item['name']}** - ₹{item['price']}")
-        st.caption(f"{item.get('description', '')}")
-    with cols[1]:
-        qty = st.number_input(
-            f"Qty for {item['name']}", min_value=0, max_value=10, step=1, key=f"qty_{item['name']}"
-        )
-    with cols[2]:
-        if qty > 0:
-            cart.append({
-                "name": item["name"],
-                "price": item["price"],
-                "qty": qty
-            })
+# Search bar
+search_query = st.text_input("🔍 Search Menu")
 
-# Show cart
+# Filter menu
+filtered_menu = [
+    item for item in menu
+    if (selected_category == "All" or item.get("category") == selected_category)
+    and (search_query.lower() in item.get("name", "").lower())
+]
+
+# Display menu items
+st.subheader("🍔 Menu")
+if not filtered_menu:
+    st.info("No items match your filter.")
+else:
+    for item in filtered_menu:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown(f"**{item['name']}**  — ₹{item['price']}")
+            labels = []
+            if item.get("is_veg"):
+                labels.append("🥦 Veg")
+            else:
+                labels.append("🍗 Non-Veg")
+            if item.get("spicy"):
+                labels.append("🌶 Spicy")
+            if item.get("popular"):
+                labels.append("🔥 Popular")
+            st.caption(" • ".join(labels))
+        with col2:
+            qty = st.number_input(f"Qty for {item['name']}", min_value=0, max_value=10, value=0, key=item['name'])
+            if qty > 0:
+                st.session_state.cart.append({
+                    "name": item["name"],
+                    "price": item["price"],
+                    "qty": qty
+                })
+
+# Cart Summary
 st.markdown("---")
 st.subheader("🛒 Your Cart")
-if cart:
-    total = sum(item["price"] * item["qty"] for item in cart)
-    for item in cart:
-        st.write(f"- {item['name']} x {item['qty']} = ₹{item['price'] * item['qty']}")
+
+if st.session_state.cart:
+    total = 0
+    for item in st.session_state.cart:
+        st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+        total += item['qty'] * item['price']
     st.write(f"**Total: ₹{total}**")
 
-    if table_number.strip() == "":
-        st.warning("Please enter your table number before placing the order.")
-    elif st.button("✅ Place Order"):
-        save_order({
+    if st.button("✅ Place Order"):
+        new_order = {
+            "id": str(uuid.uuid4())[:8],
             "table": table_number,
-            "cart": cart,
-        })
-        st.success("🎉 Order placed successfully!")
-        st.experimental_rerun()
-else:
-    st.info("No items in cart yet.")
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "cart": st.session_state.cart,
+            "status": "Pending"
+        }
+        existing_orders = load_json(ORDERS_FILE)
+        existing_orders.append(new_order)
+        save_json(ORDERS_FILE, existing_orders)
+        st.success("✅ Order Placed Successfully!")
+        st.session_state.cart = []
 
-# Feedback section
-st.markdown("---")
-st.subheader("💬 Give Feedback")
-with st.form("feedback_form"):
-    rating = st.slider("Rate your experience (1 to 5)", 1, 5, 4)
-    comments = st.text_area("Additional comments")
-    if st.form_submit_button("Submit Feedback"):
-        if table_number.strip() == "":
-            st.warning("Enter table number to submit feedback.")
-        else:
-            save_feedback({
+        # Optionally ask for feedback
+        st.markdown("---")
+        st.header("💬 Leave Feedback")
+        rating = st.slider("Rate your experience", 1, 5, 4)
+        comments = st.text_area("Comments (optional)")
+        if st.button("Submit Feedback"):
+            feedbacks = load_json(FEEDBACK_FILE)
+            feedbacks.append({
                 "table": table_number,
                 "rating": rating,
-                "comments": comments
+                "comments": comments,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             })
-            st.success("🙏 Thanks for your feedback!")
+            save_json(FEEDBACK_FILE, feedbacks)
+            st.success("🙌 Thank you for your feedback!")
+else:
+    st.info("Your cart is empty.")
