@@ -1,16 +1,47 @@
 [
   {
-    "id": "1",
-    "name": "Paneer Butter Masala",
-    "price": 180,
+    "id": "item001",
+    "name": "Margherita Pizza",
     "category": "Main Course",
-    "description": "Creamy tomato gravy with soft paneer cubes"
+    "price": 250,
+    "veg": true,
+    "spicy": false,
+    "popular": true
   },
   {
-    "id": "2",
-    "name": "Masala Dosa",
-    "price": 90,
+    "id": "item002",
+    "name": "Paneer Tikka",
     "category": "Appetizers",
-    "description": "Crispy dosa filled with spiced potato mash"
+    "price": 180,
+    "veg": true,
+    "spicy": true,
+    "popular": true
+  },
+  {
+    "id": "item003",
+    "name": "Butter Chicken",
+    "category": "Main Course",
+    "price": 320,
+    "veg": false,
+    "spicy": true,
+    "popular": true
+  },
+  {
+    "id": "item004",
+    "name": "Chocolate Brownie",
+    "category": "Desserts",
+    "price": 150,
+    "veg": true,
+    "spicy": false,
+    "popular": false
+  },
+  {
+    "id": "item005",
+    "name": "Masala Lemonade",
+    "category": "Drinks",
+    "price": 90,
+    "veg": true,
+    "spicy": false,
+    "popular": false
   }
 ]
