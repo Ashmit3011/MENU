@@ -97,10 +97,10 @@ else:
                     orders = [o for o in orders if o['id'] != order['id']]
                     save_orders(orders)
                     st.success("Order deleted.")
-                    st.experimental_rerun()
+                    st.rerun()
 
 # ---------- AUTO REFRESH ----------
-st.experimental_set_query_params(dummy=str(time.time()))
+st.query_params["refresh"] = str(time.time())
 
 
 # --------- app.py ---------
@@ -260,4 +260,4 @@ with tab_track:
             st.progress(status_index / 3)
 
 # ---------- AUTO REFRESH ----------
-st.experimental_set_query_params(dummy=str(time.time()))
+st.query_params["refresh"] = str(time.time())
