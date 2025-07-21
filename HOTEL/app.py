@@ -76,7 +76,6 @@ for item in menu:
         <div class='item-card'>
         <h4>{item['name']} - ₹{item['price']}</h4>
         <p style='color: gray;'>{item['category']} | {'🌶️' if item.get('spicy') else ''} {'🥗' if item.get('veg') else '🍗'}</p>
-        <form action="" method="post">
         """, unsafe_allow_html=True)
 
         col1, col2 = st.columns([2, 1])
@@ -114,12 +113,17 @@ if st.session_state.cart:
         st.markdown("<div class='cart-card'>", unsafe_allow_html=True)
         total = 0
         for item in st.session_state.cart:
-            col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
+            col1, col2, col3, col4, col5 = st.columns([3, 1, 1, 1, 1])
             col1.markdown(f"**{item['name']}**")
-            col2.markdown(f"Qty: {item['quantity']}")
-            col3.markdown(f"₹{item['price'] * item['quantity']}")
-            if col4.button("❌", key=f"remove_{item['id']}"):
-                st.session_state.cart.remove(item)
+            if col2.button("➖", key=f"minus_{item['id']}"):
+                item['quantity'] -= 1
+                if item['quantity'] <= 0:
+                    st.session_state.cart.remove(item)
+            col3.markdown(f"Qty: {item['quantity']}")
+            if col4.button("➕", key=f"plus_{item['id']}"):
+                item['quantity'] += 1
+            col5.markdown(f"₹{item['price'] * item['quantity']}")
+
         total = sum([item['price'] * item['quantity'] for item in st.session_state.cart])
         st.markdown(f"**Total: ₹{total}**")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -170,7 +174,4 @@ if st.button("Send Feedback"):
                 feedbacks = json.load(f)
         else:
             feedbacks = []
-        feedbacks.append(entry)
-        with open(feedback_file, "w") as f:
-            json.dump(feedbacks, f, indent=2)
-        st.success("✅ Feedback submitted")
+        fee
