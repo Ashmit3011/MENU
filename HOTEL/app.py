@@ -10,7 +10,7 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 st_autorefresh(interval=5000, limit=None, key="customer_refresh")
 
-# ---------------- FILE PATHS ----------------
+# ---------------- FILE PATHS ---------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
