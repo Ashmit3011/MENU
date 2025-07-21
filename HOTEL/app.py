@@ -4,12 +4,22 @@ import os
 from datetime import datetime
 import time
 
-# Get base directory
+# Hide Streamlit sidebar (prevents customer access to other pages like admin)
+st.set_page_config(page_title="Smart Table Ordering", layout="wide")
+hide_sidebar = """
+    <style>
+        [data-testid="stSidebar"] { display: none; }
+        [data-testid="stSidebarNav"] { display: none; }
+    </style>
+"""
+st.markdown(hide_sidebar, unsafe_allow_html=True)
+
+# Base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDER_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# Utilities
+# Utility functions
 def load_json(file):
     if not os.path.exists(file):
         with open(file, 'w', encoding='utf-8') as f:
@@ -17,9 +27,7 @@ def load_json(file):
     with open(file, 'r', encoding='utf-8') as f:
         try:
             content = f.read().strip()
-            if not content:
-                return []
-            return json.loads(content)
+            return json.loads(content) if content else []
         except json.JSONDecodeError:
             return []
 
@@ -31,10 +39,7 @@ def generate_order_id():
     orders = load_json(ORDER_FILE)
     return len(orders) + 1
 
-# Streamlit config
-st.set_page_config(page_title="Smart Table Ordering", layout="wide")
-
-# Session state
+# Session state initialization
 if "cart" not in st.session_state:
     st.session_state.cart = []
 if "table" not in st.session_state:
@@ -44,7 +49,7 @@ if "order_id" not in st.session_state:
 if "last_status" not in st.session_state:
     st.session_state.last_status = None
 
-# Header
+# Title
 st.title("🍽️ Smart Table Ordering")
 st.info("🎉 Get a Free Donut!\n\nOrder above ₹200 and enjoy a delicious free donut 🍩 with your meal!")
 
@@ -55,7 +60,7 @@ st.text_input("Enter Table Number", key="table", value=st.session_state.table)
 menu = load_json(MENU_FILE)
 categories = sorted(set(item.get("category", "Uncategorized") for item in menu if "category" in item))
 
-# Menu display
+# Menu tabs
 if categories:
     tabs = st.tabs(categories)
     for index, category in enumerate(categories):
@@ -111,10 +116,6 @@ if st.session_state.cart:
             orders = load_json(ORDER_FILE)
             orders.append(new_order)
             save_json(ORDER_FILE, orders)
-
-            # ✅ Debug log for Streamlit Cloud
-            print(f"✅ Order saved: {new_order}")
-
             st.session_state.order_id = new_order["id"]
             st.session_state.last_status = "Pending"
             st.success(f"🎉 Order placed successfully! Table: {new_order['table']}")
@@ -124,7 +125,7 @@ if st.session_state.cart:
 else:
     st.info("Your cart is empty. Add items from the menu.")
 
-# Track order
+# Track Order
 if st.session_state.order_id:
     st.markdown("---")
     st.header("🔍 Track Your Order")
@@ -148,14 +149,11 @@ if st.session_state.order_id:
         with st.expander("🧾 View Your Order"):
             total = 0
             for item in order["cart"]:
-                st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+                line = f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}"
+                st.markdown(line)
                 total += item['qty'] * item['price']
             st.markdown(f"**Total: ₹{total}**")
 
-    # Auto-refresh for live tracking
+    # Auto-refresh after 5 seconds
     time.sleep(5)
     st.rerun()
-
-# 🧪 Debug: View saved orders directly
-with st.expander("🛠 Debug Orders File"):
-    st.json(load_json(ORDER_FILE))
