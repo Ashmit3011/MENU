@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 from uuid import uuid4
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="🍽️ Smart Menu", layout="wide")
 
@@ -11,10 +12,19 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 menu_file = os.path.join(BASE_DIR, "menu.json")
 orders_file = os.path.join(BASE_DIR, "orders.json")
 
+# Auto refresh every 3 seconds (only the tracking section refreshes)
+st_autorefresh(interval=3000, key="autorefresh")
+
 # === Load Menu ===
 if os.path.exists(menu_file):
     with open(menu_file, "r") as f:
-        menu = json.load(f)
+        try:
+            menu = json.load(f)
+            if not isinstance(menu, dict):
+                raise ValueError
+        except Exception:
+            st.error("Invalid menu format. Expected a dictionary.")
+            st.stop()
 else:
     st.error("Menu not found!")
     st.stop()
@@ -48,7 +58,6 @@ st.markdown("""
         .success-toast {
             color: green;
         }
-        .autorefresh {animation: none;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -76,19 +85,16 @@ def get_total():
     return sum(item["price"] * item["quantity"] for item in st.session_state.cart)
 
 # === Display Menu ===
-if isinstance(menu, dict):
-    for category, items in menu.items():
-        st.markdown(f"## {category}")
-        for item in items:
-            with st.container():
-                st.markdown("<div class='menu-card'>", unsafe_allow_html=True)
-                st.markdown(f"**{item['name']}**  ")
-                st.markdown(f"₹{item['price']}  ")
-                if st.button(f"➕ Add", key=f"add_{item['id']}"):
-                    add_to_cart(item)
-                st.markdown("</div>", unsafe_allow_html=True)
-else:
-    st.error("Invalid menu format. Expected a dictionary.")
+for category, items in menu.items():
+    st.markdown(f"## {category}")
+    for item in items:
+        with st.container():
+            st.markdown("<div class='menu-card'>", unsafe_allow_html=True)
+            st.markdown(f"**{item['name']}**  ")
+            st.markdown(f"₹{item['price']}  ")
+            if st.button(f"➕ Add", key=f"add_{item['id']}"):
+                add_to_cart(item)
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # === Cart ===
 if st.session_state.cart:
@@ -118,7 +124,10 @@ if st.session_state.cart:
             }
             if os.path.exists(orders_file):
                 with open(orders_file, "r") as f:
-                    all_orders = json.load(f)
+                    try:
+                        all_orders = json.load(f)
+                    except:
+                        all_orders = []
             else:
                 all_orders = []
             all_orders.append(order_data)
@@ -136,7 +145,10 @@ if st.session_state.order_status:
     st.markdown("## 🚚 Track Your Order")
     if os.path.exists(orders_file):
         with open(orders_file, "r") as f:
-            orders = json.load(f)
+            try:
+                orders = json.load(f)
+            except:
+                orders = []
         for o in orders:
             if o["id"] == st.session_state.order_id:
                 st.markdown(f"**Status:** `{o['status']}`")
@@ -144,10 +156,3 @@ if st.session_state.order_status:
                     st.success("✅ Your food is served! Enjoy!")
                     st.session_state.order_status = ""
                 break
-
-# Auto-refresh order tracking section without blinking
-st.markdown("""
-<script>
-    setTimeout(() => window.location.reload(), 3000);
-</script>
-""", unsafe_allow_html=True)
