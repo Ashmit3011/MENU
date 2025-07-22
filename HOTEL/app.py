@@ -38,9 +38,9 @@ if not menu_data:
 
 categories = list(menu_data.keys())
 
-# Read category from query params
-query_params = st.experimental_get_query_params()
-selected_category = query_params.get("category", [categories[0]])[0]
+# Query param category selection (Streamlit v1.35+)
+qp = st.query_params
+selected_category = qp.get("category", categories[0])
 
 # Table Number Input (Top Bar)
 if "table_number" not in st.session_state:
@@ -57,7 +57,7 @@ with category_container:
     cols = st.columns(len(categories))
     for i, cat in enumerate(categories):
         if cols[i].button(cat):
-            st.experimental_set_query_params(category=cat, t=str(int(time.time())))
+            st.query_params(category=cat, t=int(time.time()))
             selected_category = cat
 
 st.markdown("---")
@@ -77,7 +77,7 @@ for item in menu_data[selected_category]:
                 }
             else:
                 st.session_state.cart[item["name"]]["quantity"] += 1
-            st.experimental_set_query_params(category=selected_category, t=str(int(time.time())))
+            st.query_params(category=selected_category, t=int(time.time()))
 
 # Divider
 st.markdown("---")
@@ -100,7 +100,7 @@ else:
         with col4:
             if st.button("❌ Remove", key=f"remove_{item}"):
                 del st.session_state.cart[item]
-                st.experimental_rerun()
+                st.rerun()
 
         total += info["price"] * info["quantity"]
 
