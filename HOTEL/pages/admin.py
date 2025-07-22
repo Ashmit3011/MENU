@@ -31,7 +31,7 @@ def custom_toast(message: str, duration: int = 3000):
         unsafe_allow_html=True
     )
 
-# 📁 Paths
+# 📁 File paths
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MENU_FILE = os.path.join(ROOT_DIR, "menu.json")
 ORDERS_FILE = os.path.join(ROOT_DIR, "orders.json")
@@ -44,23 +44,51 @@ else:
     st.error(f"❌ Menu file not found at {MENU_FILE}")
     st.stop()
 
-# 🧾 Load orders
+# 📄 Load orders
 if os.path.exists(ORDERS_FILE):
     with open(ORDERS_FILE, "r") as f:
         orders = json.load(f)
 else:
     orders = []
 
-# 🔄 Auto-refresh every 5 seconds
+# 🔁 Auto-refresh
 st_autorefresh(interval=5000, key="admin_autorefresh")
 
-# 🛠️ Admin Panel
-st.markdown("### 🛠️ Admin Panel - Order Management")
-st.subheader("📦 All Orders")
+# 🧠 CSS styles for dark theme
+st.markdown("""
+    <style>
+    .order-card {
+        border: 1px solid #444;
+        padding: 16px;
+        border-radius: 12px;
+        background-color: #1e1e1e;
+        margin-bottom: 20px;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.05);
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-weight: bold;
+        font-size: 12px;
+        color: white;
+        text-transform: capitalize;
+    }
+    .stButton button {
+        padding: 0.4rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        margin: 6px 0;
+    }
+    @keyframes fadeIn {
+        from {opacity: 0; transform: translateY(10px);}
+        to {opacity: 1; transform: translateY(0);}
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-changed = False
-
-# 🕒 Helper: Human-readable time ago
+# 💬 Human-readable time
 def time_ago(timestamp_str):
     try:
         t = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
@@ -76,68 +104,78 @@ def time_ago(timestamp_str):
     except:
         return timestamp_str
 
+# 🎨 Status color mapping
+def get_status_color(status):
+    return {
+        "Pending": "#f59e0b",      # amber
+        "Preparing": "#3b82f6",    # blue
+        "Completed": "#22c55e",    # green
+        "Cancelled": "#ef4444",    # red
+    }.get(status, "#888")
+
 # 🔃 Sort orders: Pending > Preparing > Others
 status_priority = {"Pending": 0, "Preparing": 1, "Completed": 2, "Cancelled": 3}
 orders = sorted(orders, key=lambda x: (status_priority.get(x["status"], 99), x["timestamp"]), reverse=True)
+
+# 🧠 Panel Header
+st.markdown("### 🛠️ Admin Panel - Order Management")
+st.subheader("📦 All Orders")
+
+changed = False
 
 if not orders:
     st.info("No orders yet.")
 else:
     for idx, order in enumerate(orders):
-        with st.container():
-            status = order["status"]
-            color = {
-                "Pending": "orange",
-                "Preparing": "#facc15",
-                "Completed": "green",
-                "Cancelled": "red"
-            }.get(status, "gray")
+        status = order["status"]
+        color = get_status_color(status)
 
-            st.markdown(
-                f"""
-                <div style="border:1px solid #ccc; padding:16px; border-radius:10px; margin-bottom:16px;">
-                    <div style="display:flex; justify-content:space-between;">
-                        <strong>Table {order['table']}</strong>
-                        <span style="color: {color}; font-weight: bold;">{status}</span>
-                    </div>
-                    <small>⏰ {time_ago(order['timestamp'])}</small>
+        st.markdown(f"""
+        <div class="order-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div><strong>🍽️ Table {order['table']}</strong></div>
+                <div class="status-badge" style="background-color:{color};">{status}</div>
+            </div>
+            <div style="font-size: 13px; color: #aaa;">⏱️ {time_ago(order['timestamp'])}</div>
+            <hr style="border: none; border-top: 1px solid #333; margin: 10px 0;">
+        """, unsafe_allow_html=True)
+
+        for name, item in order["items"].items():
+            st.markdown(f"""
+                <div style="padding-left: 10px; margin-bottom: 5px;">
+                    🍴 <b>{name}</b> x {item['quantity']} = ₹{item['price'] * item['quantity']}
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+            """, unsafe_allow_html=True)
 
-            for name, item in order["items"].items():
-                st.markdown(f"- {name} x {item['quantity']} = ₹{item['price'] * item['quantity']}")
+        col1, col2, col3, col4 = st.columns(4)
 
-            col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            if status == "Pending" and st.button("👨‍🍳 Preparing", key=f"prep-{idx}"):
+                orders[idx]["status"] = "Preparing"
+                changed = True
+                custom_toast(f"🍳 Table {order['table']} is now Preparing")
 
-            with col1:
-                if status == "Pending" and st.button("👨‍🍳 Preparing", key=f"prep-{idx}"):
-                    orders[idx]["status"] = "Preparing"
-                    changed = True
-                    custom_toast(f"🍳 Table {order['table']} is now Preparing")
+        with col2:
+            if status == "Preparing" and st.button("✅ Complete", key=f"comp-{idx}"):
+                orders[idx]["status"] = "Completed"
+                changed = True
+                custom_toast(f"✅ Table {order['table']} marked as Completed")
 
-            with col2:
-                if status == "Preparing" and st.button("✅ Complete", key=f"comp-{idx}"):
-                    orders[idx]["status"] = "Completed"
-                    changed = True
-                    custom_toast(f"✅ Table {order['table']} marked as Completed")
+        with col3:
+            if status not in ["Completed", "Cancelled"] and st.button("❌ Cancel", key=f"cancel-{idx}"):
+                orders[idx]["status"] = "Cancelled"
+                changed = True
+                custom_toast(f"❌ Table {order['table']} Cancelled")
 
-            with col3:
-                if status not in ["Completed", "Cancelled"] and st.button("❌ Cancel", key=f"cancel-{idx}"):
-                    orders[idx]["status"] = "Cancelled"
-                    changed = True
-                    custom_toast(f"❌ Table {order['table']} Cancelled")
+        with col4:
+            if status == "Completed" and st.button("🗑️ Delete", key=f"delete-{idx}"):
+                del orders[idx]
+                with open(ORDERS_FILE, "w") as f:
+                    json.dump(orders, f, indent=2)
+                custom_toast(f"🗑️ Deleted completed order for Table {order['table']}")
+                st.rerun()
 
-            with col4:
-                if status == "Completed" and st.button("🗑️ Delete", key=f"delete-{idx}"):
-                    del orders[idx]
-                    with open(ORDERS_FILE, "w") as f:
-                        json.dump(orders, f, indent=2)
-                    custom_toast(f"🗑️ Deleted completed order for Table {order['table']}")
-                    st.rerun()
-
-            st.markdown("---")
+        st.markdown("</div>", unsafe_allow_html=True)  # close order-card div
 
 # 💾 Save updates
 if changed:
