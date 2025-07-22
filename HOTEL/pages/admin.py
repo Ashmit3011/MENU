@@ -3,9 +3,10 @@ import json
 import os
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
+import streamlit.components.v1 as components
 
 # 🔄 Auto-refresh every 5 seconds
-count = st_autorefresh(interval=5000, key="admin_autorefresh")
+count = st_autorefresh(interval=5000, key="admin_autorefresh", max_runs=-1)
 
 # File paths
 ORDERS_FILE = os.path.join(os.path.dirname(__file__), "..", "orders.json")
@@ -29,9 +30,9 @@ st.markdown("""
 
 st.title("🛠️ Admin Panel - Order Management")
 
-# Toast function
+# Toast function (working version)
 def toast(message: str, duration=3000):
-    st.markdown(f"""
+    components.html(f"""
         <script>
         const toast = document.createElement("div");
         toast.textContent = "{message}";
@@ -50,7 +51,7 @@ def toast(message: str, duration=3000):
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), {duration});
         </script>
-    """, unsafe_allow_html=True)
+    """, height=0)
 
 # Load helpers
 def load_json(path, default):
@@ -82,7 +83,7 @@ status_flow = ["Pending", "Preparing", "Ready", "Completed"]
 
 # Handle empty state
 if not orders:
-    st.info("📬 No orders yet.")
+    st.info("📫 No orders yet.")
 
 # Display orders
 for idx, order in reversed(list(enumerate(orders))):
@@ -92,12 +93,17 @@ for idx, order in reversed(list(enumerate(orders))):
         st.caption(f"🕒 {order.get('timestamp', 'Unknown')}")
 
         if "items" in order:
+            st.markdown("#### 🧾 Ordered Items")
+            total = 0
             for item in order["items"]:
                 if isinstance(item, dict):
                     name = item.get("name", "Unnamed")
                     qty = item.get("quantity", 0)
                     price = item.get("price", 0)
-                    st.markdown(f"🍽️ **{name}** x {qty} = ₹{price * qty}")
+                    subtotal = price * qty
+                    total += subtotal
+                    st.markdown(f"- **{name}** × {qty} = ₹{subtotal}")
+            st.markdown(f"**💵 Total: ₹{total}**")
 
         st.markdown("---")
 
