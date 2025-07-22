@@ -60,7 +60,7 @@ if not st.session_state.table_number:
     table_input = st.text_input("Enter Your Table Number to Start Ordering:", key="table_input")
     if table_input:
         st.session_state.table_number = table_input
-        st.experimental_rerun()
+        st.rerun()
     st.stop()
 
 # --- Load Menu Data ---
@@ -76,7 +76,7 @@ for i, cat in enumerate(categories):
     style_class = "category-btn active-category" if cat == selected_category else "category-btn"
     if cols[i].button(cat, key=f"cat_{cat}"):
         st.query_params(category=cat, t=int(time.time()))
-        st.experimental_rerun()
+        st.rerun()
 
 # --- Display Items for Selected Category ---
 st.markdown("## 🧾 Menu")
@@ -94,7 +94,7 @@ if selected_category in menu_data:
                     st.session_state.cart[name]["qty"] += 1
                 else:
                     st.session_state.cart[name] = {"price": price, "qty": 1}
-                st.experimental_rerun()
+                st.rerun()
 else:
     st.warning("No items found in this category.")
 
@@ -133,7 +133,7 @@ else:
         st.success("Order Placed!")
         st.session_state.cart = {}
         st.session_state.feedback_ready = True
-        st.experimental_rerun()
+        st.rerun()
 
 # --- Feedback Section ---
 if st.session_state.get("feedback_ready"):
