@@ -1,8 +1,42 @@
-{
-  "1": {"name": "Margherita Pizza", "price": 200, "category": "Pizza"},
-  "2": {"name": "Veg Burger", "price": 120, "category": "Burger"},
-  "3": {"name": "Masala Dosa", "price": 90, "category": "South Indian"},
-  "4": {"name": "Paneer Butter Masala", "price": 180, "category": "Main Course"},
-  "5": {"name": "Cold Coffee", "price": 60, "category": "Beverages"},
-  "6": {"name": "French Fries", "price": 100, "category": "Snacks"}
-}
+[
+    {
+        "name": "Paneer Butter Masala",
+        "price": 180,
+        "category": "Main Course"
+    },
+    {
+        "name": "Butter Naan",
+        "price": 25,
+        "category": "Breads"
+    },
+    {
+        "name": "Masala Dosa",
+        "price": 60,
+        "category": "South Indian"
+    },
+    {
+        "name": "Idli Sambar",
+        "price": 40,
+        "category": "South Indian"
+    },
+    {
+        "name": "Fried Rice",
+        "price": 100,
+        "category": "Chinese"
+    },
+    {
+        "name": "Manchurian",
+        "price": 120,
+        "category": "Chinese"
+    },
+    {
+        "name": "Gulab Jamun",
+        "price": 30,
+        "category": "Desserts"
+    },
+    {
+        "name": "Ice Cream",
+        "price": 50,
+        "category": "Desserts"
+    }
+]
