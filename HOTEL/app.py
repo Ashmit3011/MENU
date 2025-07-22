@@ -64,7 +64,7 @@ if st.sidebar.button("Place Order"):
         with open(orders_file, "w") as f:
             json.dump(cleaned_orders, f, indent=4)
         st.success("✅ Order placed successfully!")
-        st.experimental_rerun()
+        st.rerun()
     else:
         st.warning("Please select at least one item to place an order.")
 
