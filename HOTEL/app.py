@@ -44,6 +44,7 @@ if "table_number" not in st.session_state or not st.session_state.table_number:
         st.session_state.cart = {}
         st.rerun()
     st.stop()
+
 else:
     st.title(f"🍽️ Smart Table Ordering — Table {st.session_state.table_number}")
 
@@ -73,14 +74,12 @@ for category, items in menu.items():
 st.subheader("🛒 Cart")
 if st.session_state.cart:
     total = 0
-    total_items = 0
     for name, item in list(st.session_state.cart.items()):
         subtotal = item["price"] * item["quantity"]
         total += subtotal
-        total_items += item["quantity"]
-        col1, col2, col3 = st.columns([6, 1, 1])
+        col1, col2, col3 = st.columns([8, 1, 1])
         with col1:
-            st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
+            st.markdown(f"**{name} x {item['quantity']} = ₹{subtotal}**")
         with col2:
             if st.button("➖", key=f"decrease-{name}"):
                 st.session_state.cart[name]["quantity"] -= 1
@@ -91,7 +90,8 @@ if st.session_state.cart:
             if st.button("❌", key=f"remove-{name}"):
                 del st.session_state.cart[name]
                 st.rerun()
-    st.markdown(f"### 🧾 Total: ₹{total} ({total_items} items)")
+
+    st.markdown(f"### 🧾 Total: ₹{total}")
 
     if st.button("✅ Place Order"):
         # Remove old orders for this table
@@ -109,11 +109,6 @@ if st.session_state.cart:
             json.dump(orders, f, indent=2)
 
         st.success("✅ Order Placed!")
-        st.markdown("""
-            <audio autoplay>
-                <source src="https://www.soundjay.com/buttons/sounds/button-16.mp3" type="audio/mpeg">
-            </audio>
-        """, unsafe_allow_html=True)
         del st.session_state.cart
         st.rerun()
 else:
@@ -122,21 +117,11 @@ else:
 # Show order history
 st.subheader("📦 Your Orders")
 found = False
-status_colors = {
-    "Pending": "red",
-    "Preparing": "orange",
-    "Completed": "green",
-    "Cancelled": "gray"
-}
 for order in reversed(orders):
     if order["table"] == st.session_state.table_number:
         found = True
         status = order["status"]
-        color = status_colors.get(status, "black")
-        st.markdown(
-            f"🕒 *{order['timestamp']}* — **Status:** <span style='color:{color};'>{status}</span>",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"🕒 *{order['timestamp']}* — **Status:** `{status}`")
         for name, item in order["items"].items():
             line = f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}"
             if status == "Cancelled":
