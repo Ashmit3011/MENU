@@ -36,7 +36,7 @@ st.markdown("""
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
-QR_IMAGE = os.path.join(BASE_DIR, "qr.png")
+QR_IMAGE = os.path.join(BASE_DIR, "qr.jpg")
 FONT_PATH = os.path.join(BASE_DIR, "DejaVuSans.ttf")
 
 # -------------- Helper: Generate Invoice --------------
