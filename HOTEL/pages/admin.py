@@ -39,7 +39,7 @@ def update_order_status(order_id, new_status):
             order["status"] = new_status
             break
     save_orders(orders)
-    st.experimental_rerun()
+    st.rerun()
 
 # Admin UI
 orders = load_orders()
