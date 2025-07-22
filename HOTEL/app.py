@@ -68,15 +68,17 @@ def render_menu():
         return
 
     # --- Category Filter ---
-    categories = sorted(set(item.get("category", "Uncategorized").strip().title()
-                            for item in menu if item.get("category")))
+    categories = sorted(set(item.get("category", "Uncategorized").strip().title() for item in menu))
     st.subheader("🍽️ Select Category")
     selected_category = st.selectbox("Filter by Category", ["All"] + categories, index=0)
     st.session_state.category_filter = selected_category
 
     # --- Menu Items ---
-    filtered_menu = [item for item in menu if selected_category == "All"
-                     or item.get("category", "").strip().title() == selected_category]
+    st.subheader("📟 Menu Items")
+    filtered_menu = [
+        item for item in menu
+        if selected_category == "All" or item.get("category", "").strip().title() == selected_category
+    ]
 
     for item in filtered_menu:
         with st.container():
@@ -90,6 +92,7 @@ def render_menu():
                     st.session_state.cart.append(item)
                     st.toast(f"✅ {item.get('name')} added to cart")
             st.markdown("---")
+
 # ---------- Cart Display ----------
 def render_cart():
     st.sidebar.title("🛒 Your Cart")
