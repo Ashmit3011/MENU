@@ -1,14 +1,15 @@
+# Save as admin.py
 import streamlit as st
 import json
 import os
-from datetime import datetime
 import time
+from datetime import datetime
 
-# File path
-ORDERS_FILE = os.path.join(os.path.dirname(__file__), '..', 'orders.json')
+# Setup
+st.set_page_config(page_title="🧑‍🍳 Admin Panel", layout="wide")
+st.title("🧑‍🍳 Live Orders Dashboard")
 
-st.set_page_config(page_title="Admin Panel", layout="wide")
-st.title("🧑‍🍳 Admin Panel - Live Orders")
+ORDERS_FILE = os.path.join(os.path.dirname(__file__), "orders.json")
 
 # Load orders
 def load_orders():
@@ -25,83 +26,84 @@ def save_orders(orders):
     with open(ORDERS_FILE, 'w') as f:
         json.dump(orders, f, indent=2)
 
-# Handle delete served orders
-def delete_served_orders():
-    orders = load_orders()
-    orders = [o for o in orders if o.get("status") != "Served"]
-    save_orders(orders)
+# Status flow
+status_flow = ["Pending", "Preparing", "Ready", "Served"]
+status_color = {
+    "Pending": "#f39c12",
+    "Preparing": "#3498db",
+    "Ready": "#2ecc71",
+    "Served": "#95a5a6"
+}
 
-# Update status for a specific order ID
-def update_order_status(order_id, new_status):
-    orders = load_orders()
-    for order in orders:
-        if order.get("id") == order_id:
-            order["status"] = new_status
-            break
-    save_orders(orders)
-    st.rerun()
-
-# Admin UI
+# Load current orders
 orders = load_orders()
+orders = sorted(orders, key=lambda x: x.get("timestamp", 0), reverse=True)
+
 if not orders:
-    st.info("No orders yet.")
+    st.info("No orders placed yet.")
     st.stop()
 
-# Sort orders by time
-orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
+updated = False
 
-# Delete button
-if st.button("🗑️ Delete All Served Orders"):
-    delete_served_orders()
-    st.success("Deleted all served orders.")
-    st.experimental_rerun()
-
-# Show orders
-for order in orders:
-    order_id = order.get("id", "N/A")
-    table = order.get("table", "N/A")
-    timestamp = datetime.fromtimestamp(order.get("timestamp", time.time())).strftime('%I:%M %p')
-    status = order.get("status", "Preparing")
-    items = order.get("items", {})
-
-    status_color = {
-        "Preparing": "#3498db",
-        "Ready": "#f39c12",
-        "Served": "#2ecc71"
-    }.get(status, "gray")
-
+# Display all orders
+for idx, order in enumerate(orders):
     st.markdown(f"""
         <div style='
-            border: 2px solid {status_color}; 
+            border: 2px solid {status_color.get(order['status'], 'gray')}; 
             border-radius: 12px; 
             padding: 16px; 
-            margin-bottom: 16px; 
+            margin-bottom: 20px; 
             background-color: #1e1e1e;
             color: white;
         '>
-            <strong>🧾 Order ID:</strong> {order_id}<br>
-            <strong>🪑 Table:</strong> {table}<br>
-            <strong>⏰ Time:</strong> {timestamp}<br>
-            <strong>Status:</strong> <span style='color:{status_color}; font-weight:bold'>{status}</span><br>
-            <strong>Items:</strong><br>
     """, unsafe_allow_html=True)
 
-    for item in items.values():
-        st.markdown(
-            f"<span style='color:white'>- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}</span>",
-            unsafe_allow_html=True
-        )
-
-    # Status buttons
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns([4, 1])
     with col1:
-        if st.button("🛠 Preparing", key=f"prep_{order_id}"):
-            update_order_status(order_id, "Preparing")
+        st.markdown(f"""
+        🧾 **Order ID:** `{order['id']}`  
+        🪑 **Table:** {order['table']}  
+        ⏰ **Time:** {datetime.fromtimestamp(order['timestamp']).strftime('%I:%M %p')}  
+        📦 **Status:** <span style='color:{status_color[order['status']]}; font-weight:bold'>{order['status']}</span>
+        """, unsafe_allow_html=True)
+
+        st.markdown("📝 **Items Ordered:**")
+        items = order.get("items", {})
+        if isinstance(items, dict):
+            for item in items.values():
+                st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+        else:
+            st.warning("❌ Item format invalid.")
+
+        progress = (status_flow.index(order["status"]) + 1) / len(status_flow)
+        st.progress(progress)
+
     with col2:
-        if st.button("✅ Ready", key=f"ready_{order_id}"):
-            update_order_status(order_id, "Ready")
-    with col3:
-        if st.button("🍽️ Served", key=f"served_{order_id}"):
-            update_order_status(order_id, "Served")
+        if order["status"] != "Served":
+            next_index = status_flow.index(order["status"]) + 1
+            if next_index < len(status_flow):
+                next_status = status_flow[next_index]
+                if st.button(f"➡️ Set to {next_status}", key=f"{order['id']}_next"):
+                    orders[idx]["status"] = next_status
+                    save_orders(orders)
+                    updated = True
+                    st.rerun()
+        else:
+            if st.button("🗑️ Delete", key=f"{order['id']}_delete"):
+                del orders[idx]
+                save_orders(orders)
+                updated = True
+                st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+# Play sound if updated
+if updated and os.path.exists("notification.wav"):
+    st.audio("notification.wav", autoplay=True)
+
+# Auto-refresh every 5 seconds
+st.markdown("""
+<script>
+    setTimeout(() => window.location.reload(), 5000);
+</script>
+""", unsafe_allow_html=True)
