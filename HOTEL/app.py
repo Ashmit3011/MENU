@@ -1,141 +1,154 @@
 import streamlit as st
 import json
-import uuid
 import os
+import uuid
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
-# ---------- INIT ----------
-st.set_page_config(page_title="Smart Menu", page_icon="🍽️", layout="centered")
+st.set_page_config(page_title="Smart Menu", page_icon="🍽️", layout="wide")
 
-if 'cart' not in st.session_state:
-    st.session_state.cart = []
-if 'order_id' not in st.session_state:
-    st.session_state.order_id = None
-if 'table_number' not in st.session_state:
-    st.session_state.table_number = None
+# ---------- JSON Helpers ----------
+def load_json(path, fallback=[]):
+    if not os.path.exists(path):
+        return fallback
+    try:
+        with open(path, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        st.error(f"Error loading {path}: {e}")
+        return fallback
 
-# ---------- LOAD DATA ----------
+def save_json(path, data):
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=2)
+
+# ---------- Menu Load ----------
 def load_menu():
-    with open('menu.json', 'r') as f:
-        return json.load(f)
+    menu_file = os.path.join(os.getcwd(), "menu.json")
+    if not os.path.exists(menu_file):
+        st.error("❌ menu.json not found at path: " + menu_file)
+        return []
+    try:
+        with open(menu_file, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        st.error(f"Failed to load menu.json: {e}")
+        return []
 
-def load_orders():
-    if not os.path.exists('orders.json'):
-        with open('orders.json', 'w') as f:
-            json.dump([], f)
-    with open('orders.json', 'r') as f:
-        return json.load(f)
+# ---------- Session Init ----------
+if "cart" not in st.session_state:
+    st.session_state.cart = []
 
-def save_order(order_data):
-    orders = load_orders()
-    orders.append(order_data)
-    with open('orders.json', 'w') as f:
-        json.dump(orders, f, indent=2)
+if "order_id" not in st.session_state:
+    st.session_state.order_id = None
 
-def get_order_status(order_id):
-    orders = load_orders()
-    for order in orders:
-        if order["order_id"] == order_id:
-            return order["status"]
-    return "Not Found"
-
-# ---------- UI FUNCTIONS ----------
-def add_to_cart(item):
-    st.session_state.cart.append(item)
-    st.toast(f"✅ Added {item['name']} to cart", icon="🛒")
-
+# ---------- Menu Display ----------
 def render_menu():
+    st.title("📋 Smart Restaurant Menu")
+    st.subheader("Select items to add to your cart")
     menu = load_menu()
+
     categories = sorted(set(item["category"] for item in menu))
-    st.header("📋 Menu")
     for cat in categories:
-        st.subheader(f"🍽️ {cat}")
-        for item in filter(lambda x: x['category'] == cat, menu):
-            col1, col2 = st.columns([0.8, 0.2])
-            with col1:
-                st.text(f"{item['name']} - ${item['price']:.2f}")
-            with col2:
-                if st.button("Add", key=item["id"]):
-                    add_to_cart(item)
-
-def render_cart():
-    st.header("🛒 Your Cart")
-    if not st.session_state.cart:
-        st.info("Your cart is empty.")
-        return
-
-    total = 0
-    for idx, item in enumerate(st.session_state.cart):
-        col1, col2, col3 = st.columns([0.6, 0.2, 0.2])
+        st.markdown(f"### 🍴 {cat}")
+        col1, col2 = st.columns(2)
         with col1:
-            st.write(item["name"])
+            for item in [m for m in menu if m["category"] == cat][:len(menu)//2]:
+                st.markdown(f"**{item['name']}** - ${item['price']:.2f}")
+                if st.button(f"Add {item['name']}", key=f"add_{item['id']}"):
+                    st.session_state.cart.append(item)
+                    st.toast(f"🛒 {item['name']} added to cart", icon="✅")
         with col2:
-            st.write(f"${item['price']:.2f}")
-        with col3:
-            if st.button("❌ Remove", key=f"remove_{idx}"):
-                st.session_state.cart.pop(idx)
-                st.experimental_rerun()
-        total += item["price"]
+            for item in [m for m in menu if m["category"] == cat][len(menu)//2:]:
+                st.markdown(f"**{item['name']}** - ${item['price']:.2f}")
+                if st.button(f"Add {item['name']}", key=f"add_{item['id']}"):
+                    st.session_state.cart.append(item)
+                    st.toast(f"🛒 {item['name']} added to cart", icon="✅")
 
-    st.markdown(f"### Total: ${total:.2f}")
-    
-    st.session_state.table_number = st.number_input("Enter Table Number", min_value=1, max_value=50, step=1, key="table_input")
-    if st.button("✅ Place Order"):
-        if not st.session_state.table_number:
-            st.warning("Please enter a table number.")
-        else:
-            order_id = str(uuid.uuid4())[:8].upper()
-            order = {
-                "order_id": order_id,
-                "table": st.session_state.table_number,
-                "items": st.session_state.cart,
-                "status": "Pending",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            save_order(order)
-            st.session_state.order_id = order_id
-            st.session_state.cart = []
-            st.success(f"🎉 Order placed successfully! Order ID: {order_id}")
-            st.balloons()
-            st.experimental_rerun()
-
-def render_status_tracker():
-    st.header("📡 Track Your Order")
-    if not st.session_state.order_id:
-        st.info("No active order to track.")
+# ---------- Cart Display ----------
+def render_cart():
+    st.sidebar.title("🛒 Your Cart")
+    cart = st.session_state.cart
+    if not cart:
+        st.sidebar.info("Your cart is empty.")
         return
-    
-    st_autorefresh(interval=5000, limit=None, key="status_refresh")
-    status = get_order_status(st.session_state.order_id)
-    
-    st.write(f"Order ID: `{st.session_state.order_id}`")
-    with st.spinner("Checking order status..."):
-        st.success(f"📦 Order Status: **{status}**")
-        status_stages = ["Pending", "Preparing", "Ready", "Served"]
-        current_stage = status_stages.index(status) if status in status_stages else -1
 
-        for i, stage in enumerate(status_stages):
-            if i <= current_stage:
-                st.markdown(f"✅ {stage}")
-            else:
-                st.markdown(f"🔲 {stage}")
+    total = sum(item["price"] for item in cart)
+    for item in cart:
+        st.sidebar.markdown(f"- {item['name']} (${item['price']:.2f})")
+
+    st.sidebar.markdown(f"**Total: ${total:.2f}**")
+    table_number = st.sidebar.number_input("Enter Table Number", min_value=1, step=1)
+
+    if st.sidebar.button("✅ Place Order"):
+        order = {
+            "order_id": str(uuid.uuid4())[:8],
+            "table": int(table_number),
+            "items": cart,
+            "status": "Pending",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        orders = load_json("orders.json")
+        orders.append(order)
+        save_json("orders.json", orders)
+
+        st.toast("🎉 Order placed successfully", icon="✅")
+        st.session_state.order_id = order["order_id"]
+        st.session_state.cart = []
+        st.rerun()
+
+# ---------- Order Tracking ----------
+def render_tracking():
+    if not st.session_state.order_id:
+        return
+
+    st.divider()
+    st.subheader("📡 Order Tracking")
+    orders = load_json("orders.json")
+    current = next((o for o in orders if o["order_id"] == st.session_state.order_id), None)
+
+    if not current:
+        st.warning("Your order could not be found.")
+        return
+
+    status = current["status"]
+    st.info(f"Order ID: {current['order_id']} | Table: {current['table']}")
+
+    progress_map = {
+        "Pending": 0.25,
+        "Preparing": 0.5,
+        "Ready": 0.75,
+        "Served": 1.0
+    }
+
+    st.progress(progress_map.get(status, 0.0), text=f"Status: {status}")
     
     if status == "Served":
-        if st.button("Give Feedback"):
-            st.session_state.order_id = None
-            st.experimental_rerun()
+        st.success("✅ Your food has been served! Enjoy your meal 🍽️")
 
-# ---------- MAIN ----------
-st.title("🍽️ Smart Menu System")
+        # Optional feedback form
+        with st.expander("💬 Leave Feedback"):
+            rating = st.slider("Rate your experience (1-5)", 1, 5, 5)
+            comment = st.text_area("Comments")
+            if st.button("Submit Feedback"):
+                feedback = load_json("feedback.json")
+                feedback.append({
+                    "order_id": current["order_id"],
+                    "table": current["table"],
+                    "rating": rating,
+                    "comment": comment
+                })
+                save_json("feedback.json", feedback)
+                st.toast("✅ Feedback submitted", icon="💬")
 
-page = st.sidebar.radio("Navigate", ["Menu", "Cart", "Order Status"])
-
-if page == "Menu":
+# ---------- Main App ----------
+def main():
     render_menu()
-
-elif page == "Cart":
     render_cart()
+    render_tracking()
 
-elif page == "Order Status":
-    render_status_tracker()
+    # Auto-refresh every 10 seconds
+    st_autorefresh(interval=10 * 1000, key="track_refresh")
+
+if __name__ == "__main__":
+    main()
