@@ -4,4 +4,20 @@
   {"name": "Pasta", "price": 200},
   {"name": "Coffee", "price": 100},
   {"name": "French Fries", "price": 120}
-]
+{
+  "Starters": {
+    "m1": {"name": "French Fries", "price": 90},
+    "m2": {"name": "Spring Rolls", "price": 120}
+  },
+  "Main Course": {
+    "m3": {"name": "Veg Burger", "price": 120},
+    "m4": {"name": "Paneer Butter Masala", "price": 180}
+  },
+  "Drinks": {
+    "m5": {"name": "Coke", "price": 50},
+    "m6": {"name": "Mango Shake", "price": 70}
+  },
+  "Desserts": {
+    "m7": {"name": "Brownie", "price": 90},
+    "m8": {"name": "Ice Cream", "price": 60}
+  }
