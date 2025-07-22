@@ -101,7 +101,7 @@ else:
 
 # Real-time auto-refresh for status tracking
 if "table_number" in st.session_state:
-    st.experimental_set_query_params(t=int(time.time()))  # Force rerun
+    st.query_params(t=int(time.time()))  # Force rerun
     time.sleep(5)  # Refresh every 5 seconds
     st.rerun()
 
