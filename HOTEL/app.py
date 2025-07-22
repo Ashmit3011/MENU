@@ -44,7 +44,6 @@ if "table_number" not in st.session_state or not st.session_state.table_number:
         st.session_state.cart = {}
         st.rerun()
     st.stop()
-
 else:
     st.title(f"🍽️ Smart Table Ordering — Table {st.session_state.table_number}")
 
@@ -77,7 +76,7 @@ if st.session_state.cart:
     for name, item in list(st.session_state.cart.items()):
         subtotal = item["price"] * item["quantity"]
         total += subtotal
-        col1, col2, col3 = st.columns([8, 1, 1])
+        col1, col2, col3 = st.columns([5, 1, 1])
         with col1:
             st.markdown(f"**{name} x {item['quantity']} = ₹{subtotal}**")
         with col2:
@@ -94,10 +93,8 @@ if st.session_state.cart:
     st.markdown(f"### 🧾 Total: ₹{total}")
 
     if st.button("✅ Place Order"):
-        # Remove old orders for this table
         orders = [o for o in orders if o["table"] != st.session_state.table_number]
 
-        # Add new order
         order = {
             "table": st.session_state.table_number,
             "items": st.session_state.cart,
