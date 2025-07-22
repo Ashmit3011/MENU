@@ -1,17 +1,5 @@
 [
-    {
-        "id": "burger",
-        "name": "Cheese Burger",
-        "price": 120
-    },
-    {
-        "id": "pizza",
-        "name": "Veg Pizza",
-        "price": 200
-    },
-    {
-        "id": "coffee",
-        "name": "Cold Coffee",
-        "price": 90
-    }
+  { "id": "burger", "name": "Cheese Burger", "price": 120 },
+  { "id": "pizza", "name": "Veg Pizza", "price": 200 },
+  { "id": "coffee", "name": "Cold Coffee", "price": 90 }
 ]
