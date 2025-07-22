@@ -37,27 +37,31 @@ def manage_orders():
         st.info("No orders found.")
         return
 
-    for i, order in enumerate(orders):
-        order_id = order.get("order_id", f"unknown_{i}")
+    updated = False
+    for index, order in enumerate(orders):
+        order_id = order.get("order_id", "Unknown")
         table = order.get("table", "N/A")
         status = order.get("status", "Pending")
 
         with st.expander(f"🧾 Order {order_id} - Table {table} - Status: {status}"):
             for item in order.get('items', []):
-                st.markdown(f"- **{item.get('name', 'Unknown')}** (${item.get('price', 0.00):.2f})")
+                st.markdown(f"- **{item.get('name', 'Unnamed')}** (${item.get('price', 0.0):.2f})")
 
-            new_status = st.selectbox(
-                "Update Status",
-                status_options,
-                index=status_options.index(status) if status in status_options else 0,
-                key=f"status_{order_id}"
-            )
+            new_status = st.selectbox("Update Status", status_options, index=status_options.index(status), key=order_id)
             if new_status != status:
                 order['status'] = new_status
                 order['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                save_json(ORDERS_PATH, orders)
+                updated = True
                 st.toast(f"✅ Status updated to {new_status}", icon="🔄")
+
+            if status == "Served" and st.button("🗑️ Delete Order", key=f"delete_{order_id}"):
+                del orders[index]
+                save_json(ORDERS_PATH, orders)
+                st.toast("🗑️ Order deleted", icon="❌")
                 st.rerun()
+
+    if updated:
+        save_json(ORDERS_PATH, orders)
 
 # ---------- Menu Management ----------
 def manage_menu():
@@ -75,25 +79,6 @@ def manage_menu():
         st.toast("✅ Menu updated", icon="🍽️")
         st.rerun()
 
-    st.divider()
-    st.subheader("➕ Add New Menu Item")
-    new_name = st.text_input("New Item Name")
-    new_price = st.number_input("New Item Price", min_value=0.0, format="%.2f")
-    new_cat = st.text_input("New Item Category")
-    if st.button("Add Item"):
-        if new_name and new_cat:
-            menu.append({
-                "id": str(len(menu) + 1),
-                "name": new_name,
-                "price": new_price,
-                "category": new_cat
-            })
-            save_json(MENU_PATH, menu)
-            st.toast("✅ Item added", icon="🆕")
-            st.rerun()
-        else:
-            st.warning("Name and category required.")
-
 # ---------- Feedback Viewer ----------
 def view_feedback():
     st.subheader("💬 Customer Feedback")
@@ -104,8 +89,8 @@ def view_feedback():
         return
 
     for fb in feedback:
-        with st.expander(f"📝 Table {fb.get('table', '?')} | Order {fb.get('order_id', '?')} | ⭐ {fb.get('rating', '?')}"):
-            st.write(fb.get('comment', ''))
+        with st.expander(f"📝 Table {fb['table']} | Order {fb['order_id']} | ⭐ {fb['rating']}"):
+            st.write(fb['comment'])
 
 # ---------- Render Everything ----------
 def main():
