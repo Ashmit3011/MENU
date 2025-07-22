@@ -4,21 +4,17 @@ import os
 import time
 from datetime import datetime
 
-# Page config and hide sidebar/menu
+# Page config and hide sidebar/menu/footer
 st.set_page_config(page_title="Smart Table Order", layout="wide")
 st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none; }
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        .stButton>button {
-            padding: 0.3em 0.6em;
-            font-size: 0.9em;
-        }
+        #MainMenu, footer {visibility: hidden;}
+        .css-1aumxhk {padding-top: 1rem;}
     </style>
 """, unsafe_allow_html=True)
 
-# File paths
+# Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
@@ -47,14 +43,14 @@ if "table_number" not in st.session_state or not st.session_state.table_number:
         st.session_state.cart = {}
         st.rerun()
     st.stop()
-else:
-    st.title(f"🍽️ Smart Table Ordering — Table {st.session_state.table_number}")
+
+st.title(f"🍽️ Smart Table Ordering — Table {st.session_state.table_number}")
 
 # Init cart
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
-# Show menu
+# Show Menu
 st.subheader("📋 Menu")
 for category, items in menu.items():
     with st.expander(category):
@@ -72,7 +68,7 @@ for category, items in menu.items():
                         st.session_state.cart[name]["quantity"] += 1
                     st.rerun()
 
-# Cart display
+# Show Cart
 st.subheader("🛒 Cart")
 if st.session_state.cart:
     total = 0
@@ -80,19 +76,18 @@ if st.session_state.cart:
         subtotal = item["price"] * item["quantity"]
         total += subtotal
 
-        # Line with text and buttons side-by-side
-        item_col, button_col = st.columns([8, 4])
-        with item_col:
-            st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
-        with button_col:
-            b1, b2 = st.columns(2)
-            with b1:
+        # 💡 Horizontal layout for cart item & buttons (Mobile Optimized)
+        with st.container():
+            cart_cols = st.columns([6, 2, 2])
+            with cart_cols[0]:
+                st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
+            with cart_cols[1]:
                 if st.button("➖", key=f"decrease-{name}"):
                     st.session_state.cart[name]["quantity"] -= 1
                     if st.session_state.cart[name]["quantity"] <= 0:
                         del st.session_state.cart[name]
                     st.rerun()
-            with b2:
+            with cart_cols[2]:
                 if st.button("❌", key=f"remove-{name}"):
                     del st.session_state.cart[name]
                     st.rerun()
@@ -100,8 +95,9 @@ if st.session_state.cart:
     st.markdown(f"### 🧾 Total: ₹{total}")
 
     if st.button("✅ Place Order"):
-        # Remove old orders for this table
+        # Remove previous order for same table
         orders = [o for o in orders if o["table"] != st.session_state.table_number]
+
         order = {
             "table": st.session_state.table_number,
             "items": st.session_state.cart,
@@ -111,13 +107,14 @@ if st.session_state.cart:
         orders.append(order)
         with open(ORDERS_FILE, "w") as f:
             json.dump(orders, f, indent=2)
+
         st.success("✅ Order Placed!")
         del st.session_state.cart
         st.rerun()
 else:
     st.info("🛍️ Your cart is empty.")
 
-# Order history
+# Order History
 st.subheader("📦 Your Orders")
 found = False
 for order in reversed(orders):
