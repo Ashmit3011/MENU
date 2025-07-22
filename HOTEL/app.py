@@ -98,19 +98,31 @@ if "cart" not in st.session_state:
     st.session_state.cart = {}
 
 # -------------- Display Menu --------------
-st.subheader("📋 Menu")
-for category, items in menu.items():
-    with st.expander(category):
+st.subheader("📋 Browse Menu")
+
+menu_container = st.container()
+with menu_container:
+    for category, items in menu.items():
+        st.markdown(f"### 🍽️ {category}")
         for item in items:
-            col1, col2 = st.columns([6, 1])
-            with col1:
-                st.markdown(f"**{item['name']}** — ₹{item['price']}")
-            with col2:
-                if st.button("➕", key=f"{category}-{item['name']}"):
-                    name, price = item["name"], item["price"]
-                    st.session_state.cart[name] = st.session_state.cart.get(name, {"price": price, "quantity": 0})
-                    st.session_state.cart[name]["quantity"] += 1
-                    st.rerun()
+            with st.container():
+                col1, col2, col3 = st.columns([6, 2, 1])
+                with col1:
+                    st.markdown(f"""
+                        <div style='padding: 0.5rem 0.75rem; background-color: #f1faee; border-radius: 10px;'>
+                            <strong style='font-size: 1rem; color: #1d3557;'>{item['name']}</strong><br>
+                            <span style='color: #6c757d; font-size: 0.85rem;'>{item.get('description', '')}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                with col2:
+                    st.markdown(f"<div style='margin-top: 0.75rem;'><strong>₹{item['price']}</strong></div>", unsafe_allow_html=True)
+                with col3:
+                    if st.button("➕", key=f"{category}-{item['name']}"):
+                        name, price = item["name"], item["price"]
+                        st.session_state.cart[name] = st.session_state.cart.get(name, {"price": price, "quantity": 0})
+                        st.session_state.cart[name]["quantity"] += 1
+                        st.rerun()
+            st.markdown("---")
 
 # -------------- Display Cart --------------
 st.subheader("🛒 Cart")
