@@ -36,13 +36,14 @@ else:
     orders = []
 
 # Ask for table number (shown on main page)
-if "table_number" not in st.session_state:
+if "table_number" not in st.session_state or not st.session_state.table_number:
     st.title("🍽️ Smart Table Ordering System")
     table_number = st.text_input("🔢 Enter your Table Number")
     if table_number:
         st.session_state.table_number = table_number
         st.session_state.cart = {}
         st.rerun()
+    st.stop()  # Prevent rest of the app from running
 else:
     st.title(f"🍽️ Smart Table Ordering — Table {st.session_state.table_number}")
 
