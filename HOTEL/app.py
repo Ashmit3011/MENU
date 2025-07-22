@@ -37,45 +37,71 @@ def save_order(order):
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
 
+# ---------- Session Init ----------
+if "cart" not in st.session_state:
+    st.session_state.cart = {}
+if "selected_category" not in st.session_state:
+    st.session_state.selected_category = None
+
 # ---------- UI ----------
 st.title("🍽 Smart Table Ordering System")
 
 table_num = st.text_input("Enter your Table Number", key="table_input")
 
 if table_num:
-    order = {}
-    total = 0
 
-    st.markdown("### 🧾 Select Your Items")
+    # ---------- Category Navigation ----------
+    st.sidebar.title("📂 Categories")
+    for category in menu.keys():
+        if st.sidebar.button(category):
+            st.session_state.selected_category = category
 
-    # ---------- Menu Display by Categories ----------
-    for category, items in menu.items():
-        with st.expander(f"📂 {category}"):
-            for item_id, item in items.items():
-                qty = st.number_input(
-                    f"{item['name']} - ₹{item['price']}",
-                    min_value=0,
-                    step=1,
-                    key=item_id
-                )
-                if qty > 0:
-                    order[item_id] = {
-                        "name": item["name"],
-                        "qty": qty,
-                        "price": item["price"]
-                    }
-                    total += qty * item["price"]
+    selected_category = st.session_state.selected_category or next(iter(menu))
+
+    st.subheader(f"📦 Browse: {selected_category}")
+
+    for item_id, item in menu[selected_category].items():
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.write(f"**{item['name']}** - ₹{item['price']}")
+        with col2:
+            qty = st.number_input(
+                f"Qty for {item['name']}",
+                min_value=0,
+                max_value=20,
+                step=1,
+                key=f"qty_{item_id}"
+            )
+            if qty > 0:
+                st.session_state.cart[item_id] = {
+                    "name": item["name"],
+                    "qty": qty,
+                    "price": item["price"]
+                }
+            elif item_id in st.session_state.cart:
+                del st.session_state.cart[item_id]
+
+    # ---------- Cart System ----------
+    st.markdown("## 🛒 Your Cart")
+    if st.session_state.cart:
+        total = 0
+        for item_id, item in st.session_state.cart.items():
+            st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+            total += item['qty'] * item['price']
+        st.success(f"**Total: ₹{total}**")
+    else:
+        st.info("Your cart is empty.")
 
     # ---------- Feedback ----------
-    feedback = st.text_area("💬 Any feedback or special instructions?", placeholder="E.g. Less spicy, no onions, etc.")
+    feedback = st.text_area("💬 Any feedback or special instructions?", placeholder="E.g. Less spicy, extra plates, etc.")
 
     # ---------- Place Order ----------
     if st.button("✅ Place Order"):
-        if order:
+        if st.session_state.cart:
             new_order = {
                 "id": str(uuid.uuid4()),
                 "table": table_num,
-                "items": order,
+                "items": st.session_state.cart,
                 "total": total,
                 "status": "Pending",
                 "feedback": feedback.strip(),
@@ -83,8 +109,9 @@ if table_num:
             }
             save_order(new_order)
             st.success("🟢 Order Placed Successfully!")
+            st.session_state.cart = {}
         else:
-            st.warning("⚠️ Please select at least one item.")
+            st.warning("⚠️ Please add items to your cart.")
 
 # ---------- Auto Refresh ----------
-st_autorefresh(interval=5000, key="app_refresh")
+st_autorefresh(interval=7000, key="app_refresh")
