@@ -82,17 +82,17 @@ if st.session_state.cart:
         total += subtotal
 
         # Horizontal layout for cart item & buttons
-        cart_cols = st.columns([6, 1, 1])
+        cart_cols = st.columns([10, 1, 1])
         with cart_cols[0]:
             st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
         with cart_cols[1]:
-            if st.button("➖", key=f"decrease-{name}", help="Decrease", use_container_width=True):
+            if st.button("➖", key=f"decrease-{name}"):
                 st.session_state.cart[name]["quantity"] -= 1
                 if st.session_state.cart[name]["quantity"] <= 0:
                     del st.session_state.cart[name]
                 st.rerun()
         with cart_cols[2]:
-            if st.button("❌", key=f"remove-{name}", help="Remove", use_container_width=True):
+            if st.button("❌", key=f"remove-{name}"):
                 del st.session_state.cart[name]
                 st.rerun()
 
