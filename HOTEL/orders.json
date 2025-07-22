@@ -1,9 +1,1 @@
-{
-  "order_id": "XYZ123",
-  "table": 4,
-  "items": [
-    { "name": "Pizza", "price": 9.99 }
-  ],
-  "status": "Pending",
-  "timestamp": "2025-07-22 14:01:00"
-}
+[]
