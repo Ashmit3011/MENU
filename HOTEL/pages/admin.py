@@ -150,33 +150,37 @@ else:
                 <div class="order-item">🍴 <b>{name}</b> x {item['quantity']} = ₹{item['price'] * item['quantity']}</div>
             """, unsafe_allow_html=True)
 
-        col1, col2, col3, col4 = st.columns(4)
+                col1, col2, col3 = st.columns(3)
 
+        # Status change buttons
         with col1:
-            if order["status"] == "Pending" and st.button("👨‍🍳 Preparing", key=f"prep-{idx}"):
-                orders[idx]["status"] = "Preparing"
-                changed = True
-                custom_toast(f"🍳 Table {order['table']} is now Preparing")
+            if order["status"] == "Pending":
+                if st.button("👨‍🍳 Preparing", key=f"prep-{idx}"):
+                    orders[idx]["status"] = "Preparing"
+                    changed = True
+                    custom_toast(f"🍳 Table {order['table']} is now Preparing")
+
+            elif order["status"] == "Preparing":
+                if st.button("✅ Complete", key=f"comp-{idx}"):
+                    orders[idx]["status"] = "Completed"
+                    changed = True
+                    custom_toast(f"✅ Table {order['table']} Completed")
 
         with col2:
-            if order["status"] == "Preparing" and st.button("✅ Complete", key=f"comp-{idx}"):
-                orders[idx]["status"] = "Completed"
-                changed = True
-                custom_toast(f"✅ Table {order['table']} Completed")
+            if order["status"] in ["Pending", "Preparing"]:
+                if st.button("❌ Cancel", key=f"cancel-{idx}"):
+                    orders[idx]["status"] = "Cancelled"
+                    changed = True
+                    custom_toast(f"❌ Table {order['table']} Cancelled")
 
         with col3:
-            if order["status"] not in ["Completed", "Cancelled"] and st.button("❌ Cancel", key=f"cancel-{idx}"):
-                orders[idx]["status"] = "Cancelled"
-                changed = True
-                custom_toast(f"❌ Table {order['table']} Cancelled")
-
-        with col4:
-            if order["status"] == "Completed" and st.button("🗑️ Delete", key=f"delete-{idx}"):
-                del orders[idx]
-                with open(ORDERS_FILE, "w") as f:
-                    json.dump(orders, f, indent=2)
-                custom_toast(f"🗑️ Deleted order for Table {order['table']}")
-                st.rerun()
+            if order["status"] in ["Completed", "Cancelled"]:
+                if st.button("🗑️ Delete", key=f"delete-{idx}"):
+                    del orders[idx]
+                    with open(ORDERS_FILE, "w") as f:
+                        json.dump(orders, f, indent=2)
+                    custom_toast(f"🗑️ Deleted order for Table {order['table']}")
+                    st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
