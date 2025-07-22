@@ -7,7 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title="Smart Table Order", layout="wide")
 st.title("🍽️ Smart Table Ordering System")
 
-# Get absolute paths
+# Absolute paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
@@ -27,7 +27,7 @@ if os.path.exists(ORDERS_FILE):
 else:
     orders = []
 
-# Handle table number input
+# Prompt for table number
 if "table_number" not in st.session_state:
     table_number = st.text_input("Enter your Table Number")
     if table_number:
@@ -36,14 +36,14 @@ if "table_number" not in st.session_state:
         st.rerun()
 else:
     st.sidebar.success(f"🪑 Table: {st.session_state.table_number}")
-    
+
     if "cart" not in st.session_state:
         st.session_state.cart = {}
 
     if st.sidebar.button("🔄 Change Table"):
-        del st.session_state.table_number
+        del st.session_state["table_number"]
         if "cart" in st.session_state:
-            del st.session_state.cart
+            del st.session_state["cart"]
         st.rerun()
 
 # Show menu
@@ -57,9 +57,9 @@ for category, items in menu.items():
                 st.markdown(f"**{item['name']}** — ₹{item['price']}")
             with col2:
                 if st.button("➕", key=f"{category}-{item['name']}"):
+                    cart = st.session_state.get("cart", {})
                     name = item["name"]
                     price = item["price"]
-                    cart = st.session_state.get("cart", {})
                     if name not in cart:
                         cart[name] = {"price": price, "quantity": 1}
                     else:
@@ -70,27 +70,31 @@ for category, items in menu.items():
 # Show cart
 st.subheader("🛒 Cart")
 
-if st.session_state.get("cart"):
+cart = st.session_state.get("cart", {})
+if cart:
     total = 0
-    for name, item in st.session_state.cart.items():
+    for name, item in cart.items():
         subtotal = item["price"] * item["quantity"]
         total += subtotal
         st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
     st.markdown(f"### Total: ₹{total}")
 
     if st.button("✅ Place Order"):
-        order = {
-            "table": st.session_state.table_number,
-            "items": st.session_state.cart,
-            "status": "Pending",
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        orders.append(order)
-        with open(ORDERS_FILE, "w") as f:
-            json.dump(orders, f, indent=2)
-        st.success("✅ Order Placed!")
-        del st.session_state.cart
-        st.rerun()
+        if "table_number" not in st.session_state:
+            st.error("❗ Please enter your table number before placing the order.")
+        else:
+            order = {
+                "table": st.session_state.get("table_number"),
+                "items": cart,
+                "status": "Pending",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            orders.append(order)
+            with open(ORDERS_FILE, "w") as f:
+                json.dump(orders, f, indent=2)
+            st.success("✅ Order placed!")
+            del st.session_state["cart"]
+            st.rerun()
 else:
     st.info("🛍️ Your cart is empty.")
 
@@ -100,7 +104,7 @@ st.subheader("📦 Your Orders")
 if "table_number" in st.session_state:
     found = False
     for order in reversed(orders):
-        if order["table"] == st.session_state.table_number:
+        if order["table"] == st.session_state["table_number"]:
             found = True
             status = order["status"]
             st.markdown(f"🕒 *{order['timestamp']}* — **Status:** `{status}`")
@@ -111,7 +115,7 @@ if "table_number" in st.session_state:
                 else:
                     st.markdown(line)
             if status not in ["Completed", "Cancelled"]:
-                if st.button(f"❌ Cancel Order ({order['timestamp']})", key=order["timestamp"]):
+                if st.button(f"❌ Cancel Order ({order['timestamp']})", key=f"cancel-{order['timestamp']}"):
                     order["status"] = "Cancelled"
                     with open(ORDERS_FILE, "w") as f:
                         json.dump(orders, f, indent=2)
