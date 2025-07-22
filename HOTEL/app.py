@@ -40,26 +40,6 @@ QR_IMAGE = os.path.join(BASE_DIR, "qr.png")
 INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
 
 # -------------- Helper: Generate Invoice --------------
-✅ Step-by-Step Update
-1. Rename the file for simplicity
-Avoid spaces in filenames for stability across systems. Rename:
-
-css
-Copy
-Edit
-qr code.jpg ➜ qr.jpg
-2. Update or add this line in your app.py:
-
-python
-Copy
-Edit
-QR_IMAGE = os.path.join(BASE_DIR, "qr.jpg")
-3. Here’s the updated code snippet to generate invoice with QR (inside your existing "if order is completed" block):
-
-python
-Copy
-Edit
-from fpdf import FPDF
 
 def generate_invoice(order):
     pdf = FPDF()
