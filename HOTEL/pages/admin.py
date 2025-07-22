@@ -5,7 +5,7 @@ from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
 # 🔄 Auto-refresh every 5 seconds
-count = st_autorefresh(interval=5000, key="admin_autorefresh", max_runs=-1)
+count = st_autorefresh(interval=5000, key="admin_autorefresh")
 
 # File paths
 ORDERS_FILE = os.path.join(os.path.dirname(__file__), "..", "orders.json")
@@ -82,7 +82,7 @@ status_flow = ["Pending", "Preparing", "Ready", "Completed"]
 
 # Handle empty state
 if not orders:
-    st.info("📫 No orders yet.")
+    st.info("📬 No orders yet.")
 
 # Display orders
 for idx, order in reversed(list(enumerate(orders))):
