@@ -30,12 +30,20 @@ def save_json(path, data):
 
 # ---------- Menu Load ----------
 def load_menu():
-    if not os.path.exists(MENU_FILE):
-        st.error("❌ menu.json not found at path: " + MENU_FILE)
-        return []
     try:
+        if not os.path.exists(MENU_FILE):
+            st.error(f"❌ menu.json not found at {MENU_FILE}")
+            return []
+
         with open(MENU_FILE, "r") as f:
-            return json.load(f)
+            menu_data = json.load(f)
+
+        if not isinstance(menu_data, list):
+            st.error("⚠️ menu.json format is incorrect. Expected a list.")
+            return []
+
+        return menu_data
+
     except Exception as e:
         st.error(f"Failed to load menu.json: {e}")
         return []
@@ -61,12 +69,12 @@ def render_menu():
 
     # --- Category Filter ---
     categories = sorted(set(item.get("category", "Uncategorized") for item in menu))
-    st.subheader("🍴 Select Category")
+    st.subheader("🍽️ Select Category")
     selected_category = st.selectbox("Filter by Category", ["All"] + categories, index=0)
     st.session_state.category_filter = selected_category
 
     # --- Menu Items ---
-    st.subheader("🧾 Menu Items")
+    st.subheader("📟 Menu Items")
     filtered_menu = [item for item in menu if selected_category == "All" or item.get("category") == selected_category]
 
     for item in filtered_menu:
