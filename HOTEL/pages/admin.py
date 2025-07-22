@@ -147,3 +147,25 @@ else:
                     st.rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
+# Feedback Viewer Section
+FEEDBACK_FILE = os.path.join(os.path.dirname(__file__), "..", "feedback.json")
+feedbacks = load_json(FEEDBACK_FILE, [])
+
+st.markdown("---")
+st.subheader("📝 Customer Feedback")
+
+if not feedbacks:
+    st.info("No feedback received yet.")
+else:
+    for fb in reversed(feedbacks):
+        table = fb.get("table", "Unknown")
+        message = fb.get("message", "No message")
+        timestamp = fb.get("timestamp", "Unknown")
+
+        st.markdown(f"""
+            <div style='padding:1rem; margin-bottom:1rem; background:#1f2937; border-radius:10px; color:white;'>
+                <strong>🪑 Table {table}</strong>  
+                <div style='font-size: 0.9rem; color: #9ca3af;'>🕒 {timestamp}</div>
+                <div style='margin-top: 0.5rem;'>{message}</div>
+            </div>
+        """, unsafe_allow_html=True)
