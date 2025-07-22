@@ -1,9 +1,3 @@
-[
-  {"name": "Pizza", "price": 250},
-  {"name": "Burger", "price": 150},
-  {"name": "Pasta", "price": 200},
-  {"name": "Coffee", "price": 100},
-  {"name": "French Fries", "price": 120}
 {
   "Starters": {
     "m1": {"name": "French Fries", "price": 90},
@@ -21,3 +15,4 @@
     "m7": {"name": "Brownie", "price": 90},
     "m8": {"name": "Ice Cream", "price": 60}
   }
+}
