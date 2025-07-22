@@ -13,10 +13,6 @@ st.markdown("""
         [data-testid="stSidebar"] { display: none; }
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
-        body {
-            background-color: #f4f6f8;
-            color: #222;
-        }
         .stButton > button {
             padding: 0.4rem 0.8rem;
             font-size: 0.85rem;
@@ -36,8 +32,8 @@ st.markdown("""
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 QR_IMAGE = os.path.join(BASE_DIR, "qr.jpg")
-FONT_PATH = os.path.join(BASE_DIR, "DejaVuSans.ttf")
 
 # -------------- Helper: Generate Invoice --------------
 def generate_invoice(order):
@@ -77,7 +73,6 @@ def generate_invoice(order):
     pdf.cell(40, 10, f"Rs. {total}", 1)
     pdf.ln(20)
 
-    # Add QR code image (if it exists)
     if os.path.exists(QR_IMAGE):
         pdf.image(QR_IMAGE, x=pdf.get_x(), y=pdf.get_y(), w=40)
 
@@ -88,6 +83,7 @@ def generate_invoice(order):
 # -------------- Load Data --------------
 menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else {}
 orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
+feedback = json.load(open(FEEDBACK_FILE)) if os.path.exists(FEEDBACK_FILE) else []
 
 # -------------- Table Number Session --------------
 if "table_number" not in st.session_state:
@@ -168,8 +164,7 @@ for order in reversed(orders):
         st.markdown(f"🕒 *{order['timestamp']}* — **Status:** `{status}`")
 
         for name, item in order["items"].items():
-            line = f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}"
-            st.markdown(line)
+            st.markdown(f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}")
 
         if status not in ["Completed", "Cancelled"]:
             if st.button(f"❌ Cancel Order ({order['timestamp']})", key=order["timestamp"]):
@@ -191,6 +186,25 @@ for order in reversed(orders):
 
 if not found:
     st.info("📭 No orders found.")
+
+# -------------- Feedback Form --------------
+st.subheader("💬 Feedback")
+name = st.text_input("Your Name")
+rating = st.slider("How was your experience?", 1, 5, 3)
+message = st.text_area("Any comments or suggestions?")
+if st.button("📩 Submit Feedback"):
+    if name and message:
+        feedback.append({
+            "table": st.session_state.table_number,
+            "name": name,
+            "rating": rating,
+            "message": message,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        json.dump(feedback, open(FEEDBACK_FILE, "w"), indent=2)
+        st.success("🎉 Thank you for your feedback!")
+    else:
+        st.warning("Please enter both name and feedback.")
 
 # -------------- Auto-refresh every 10 seconds --------------
 with st.empty():
