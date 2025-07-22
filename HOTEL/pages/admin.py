@@ -147,6 +147,7 @@ else:
                     st.rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
+
 # Feedback Viewer Section
 FEEDBACK_FILE = os.path.join(os.path.dirname(__file__), "..", "feedback.json")
 feedbacks = load_json(FEEDBACK_FILE, [])
@@ -157,7 +158,7 @@ st.subheader("📝 Customer Feedback")
 if not feedbacks:
     st.info("No feedback received yet.")
 else:
-    for fb in reversed(feedbacks):
+    for i, fb in enumerate(reversed(feedbacks)):
         table = fb.get("table", "Unknown")
         message = fb.get("message", "No message")
         timestamp = fb.get("timestamp", "Unknown")
@@ -169,3 +170,9 @@ else:
                 <div style='margin-top: 0.5rem;'>{message}</div>
             </div>
         """, unsafe_allow_html=True)
+
+        if st.button("🗑️ Delete Feedback", key=f"del_feedback_{i}"):
+            feedbacks.pop(len(feedbacks) - 1 - i)  # Correct reverse index
+            save_json(FEEDBACK_FILE, feedbacks)
+            toast("🗑️ Feedback deleted")
+            st.rerun()
