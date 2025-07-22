@@ -3,44 +3,42 @@ import json
 import os
 import time
 from datetime import datetime
+from fpdf import FPDF
 
-# Page config and hide sidebar/menu/footer
-st.set_page_config(page_title="Smart Table Order", layout="wide")
+# --- Page config ---
+st.set_page_config(page_title="Smart Table Order", layout="centered")
+
+# --- Styling ---
 st.markdown("""
     <style>
-        [data-testid="stSidebar"] { display: none; }
-        #MainMenu, footer {visibility: hidden;}
-        .css-1aumxhk {padding-top: 1rem;}
-        .stButton > button {
-            padding: 0.2rem 0.4rem !important;
-            font-size: 0.7rem !important;
-            border-radius: 8px !important;
-        }
+    [data-testid="stSidebar"] { display: none; }
+    #MainMenu, footer {visibility: hidden;}
+    .stButton > button {
+        padding: 0.4rem 1rem !important;
+        font-size: 1rem !important;
+        border-radius: 10px !important;
+        background-color: #4CAF50 !important;
+        color: white;
+    }
+    .invoice {
+        background: #f1f3f4;
+        padding: 1rem;
+        border-radius: 10px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# Paths
+# --- Paths ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# Load menu
-if os.path.exists(MENU_FILE):
-    with open(MENU_FILE, "r") as f:
-        menu = json.load(f)
-else:
-    st.error(f"❌ Menu file not found at {MENU_FILE}")
-    st.stop()
+# --- Load Menu & Orders ---
+menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else {}
+orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
 
-# Load orders
-if os.path.exists(ORDERS_FILE):
-    with open(ORDERS_FILE, "r") as f:
-        orders = json.load(f)
-else:
-    orders = []
-
-# Ask for table number
-if "table_number" not in st.session_state or not st.session_state.table_number:
+# --- Session State Init ---
+if "table_number" not in st.session_state:
     st.title("🍽️ Smart Table Ordering System")
     table_number = st.text_input("🔢 Enter your Table Number")
     if table_number:
@@ -49,13 +47,16 @@ if "table_number" not in st.session_state or not st.session_state.table_number:
         st.rerun()
     st.stop()
 
-st.title(f"🍽️ Smart Table Ordering — Table {st.session_state.table_number}")
-
-# Init cart
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
-# Show Menu
+if "last_status" not in st.session_state:
+    st.session_state.last_status = None
+
+# --- UI Header ---
+st.title(f"🪑 Table {st.session_state.table_number}")
+
+# --- Show Menu ---
 st.subheader("📋 Menu")
 for category, items in menu.items():
     with st.expander(category):
@@ -65,70 +66,61 @@ for category, items in menu.items():
                 st.markdown(f"**{item['name']}** — ₹{item['price']}")
             with col2:
                 if st.button("➕", key=f"{category}-{item['name']}"):
-                    name = item["name"]
-                    price = item["price"]
+                    name, price = item["name"], item["price"]
                     if name not in st.session_state.cart:
                         st.session_state.cart[name] = {"price": price, "quantity": 1}
                     else:
                         st.session_state.cart[name]["quantity"] += 1
                     st.rerun()
 
-# Show Cart
-st.subheader("🛒 Cart")
+# --- Show Cart ---
+st.subheader("🛒 Your Cart")
 if st.session_state.cart:
     total = 0
     for name, item in list(st.session_state.cart.items()):
         subtotal = item["price"] * item["quantity"]
         total += subtotal
-
-        # Changed from [8,1,1] to [6,1,1] for better spacing and put text in same row as buttons
-        item_col, btn1_col, btn2_col = st.columns([6, 1, 1])
-        
-        with item_col:
-            st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
-
-        with btn1_col:
+        col1, col2, col3 = st.columns([6, 1, 1])
+        with col1:
+            st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
+        with col2:
             if st.button("➖", key=f"decrease-{name}"):
-                st.session_state.cart[name]["quantity"] -= 1
-                if st.session_state.cart[name]["quantity"] <= 0:
+                item["quantity"] -= 1
+                if item["quantity"] <= 0:
                     del st.session_state.cart[name]
                 st.rerun()
-
-        with btn2_col:
+        with col3:
             if st.button("❌", key=f"remove-{name}"):
                 del st.session_state.cart[name]
                 st.rerun()
 
     st.markdown(f"### 🧾 Total: ₹{total}")
-
     if st.button("✅ Place Order"):
-        # Remove previous order for same table
         orders = [o for o in orders if o["table"] != st.session_state.table_number]
-
-        order = {
+        new_order = {
             "table": st.session_state.table_number,
             "items": st.session_state.cart,
-            "status": "pending",
+            "status": "Pending",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-        orders.append(order)
-        with open(ORDERS_FILE, "w") as f:
-            json.dump(orders, f, indent=2)
-
+        orders.append(new_order)
+        json.dump(orders, open(ORDERS_FILE, "w"), indent=2)
         st.success("✅ Order Placed!")
         del st.session_state.cart
         st.rerun()
 else:
     st.info("🛍️ Your cart is empty.")
 
-# Order History
-st.subheader("📦 Your Orders")
+# --- Order Status & Invoice ---
+st.subheader("📦 Order Status")
 found = False
 for order in reversed(orders):
     if order["table"] == st.session_state.table_number:
         found = True
         status = order["status"]
         st.markdown(f"🕒 *{order['timestamp']}* — **Status:** `{status}`")
+
+        # Show items
         for name, item in order["items"].items():
             line = f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}"
             if status == "Cancelled":
@@ -136,19 +128,52 @@ for order in reversed(orders):
             else:
                 st.markdown(line)
 
+        # ✅ Invoice on completion
+        if status == "Completed":
+            with st.expander("🧾 Download Invoice"):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", "B", 16)
+                pdf.cell(190, 10, f"Invoice - Table {order['table']}", ln=True)
+                pdf.set_font("Arial", "", 12)
+                pdf.cell(190, 10, f"Time: {order['timestamp']}", ln=True)
+                pdf.cell(190, 10, f"Status: {status}", ln=True)
+                pdf.ln(5)
+                total = 0
+                for name, item in order["items"].items():
+                    qty, price = item["quantity"], item["price"]
+                    subtotal = qty * price
+                    total += subtotal
+                    pdf.cell(190, 10, f"{name} x {qty} = ₹{subtotal}", ln=True)
+                pdf.ln(5)
+                pdf.set_font("Arial", "B", 12)
+                pdf.cell(190, 10, f"Total: ₹{total}", ln=True)
+                invoice_path = os.path.join(BASE_DIR, "invoice.pdf")
+                pdf.output(invoice_path)
+                with open(invoice_path, "rb") as f:
+                    st.download_button("📥 Download Invoice", f, file_name="invoice.pdf")
+
+        if status == "Preparing" and st.session_state.last_status != "Preparing":
+            st.markdown("""
+                <script>
+                const audio = new Audio("https://www.myinstants.com/media/sounds/bell.mp3");
+                audio.play();
+                </script>
+            """, unsafe_allow_html=True)
+
         if status not in ["Completed", "Cancelled"]:
-            if st.button(f"❌ Cancel Order ({order['timestamp']})", key=order["timestamp"]):
+            if st.button("❌ Cancel Order", key=order["timestamp"]):
                 order["status"] = "Cancelled"
-                with open(ORDERS_FILE, "w") as f:
-                    json.dump(orders, f, indent=2)
+                json.dump(orders, open(ORDERS_FILE, "w"), indent=2)
                 st.warning("Order cancelled.")
                 st.rerun()
         st.markdown("---")
+        st.session_state.last_status = status
+        break
 
 if not found:
-    st.info("📭 No orders found.")
+    st.info("📭 No current orders found.")
 
-# Auto-refresh every 10 seconds
-with st.empty():
-    time.sleep(10)
-    st.rerun()
+# --- Auto Refresh ---
+time.sleep(10)
+st.rerun()
