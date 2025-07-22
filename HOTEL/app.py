@@ -21,14 +21,14 @@ else:
     st.error(f"❌ Menu file not found: {MENU_FILE}")
     st.stop()
 
-# Load orders.json
+# Load or initialize orders.json
 if os.path.exists(ORDERS_FILE):
     with open(ORDERS_FILE, "r") as f:
         orders = json.load(f)
 else:
     orders = []
 
-# Setup session state
+# Session setup
 if "table_number" not in st.session_state:
     table_number = st.text_input("Enter your Table Number:")
     if table_number:
@@ -38,7 +38,6 @@ if "table_number" not in st.session_state:
 else:
     st.sidebar.success(f"🪑 Table: {st.session_state.table_number}")
 
-# Ensure cart exists
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
@@ -48,7 +47,7 @@ if st.sidebar.button("🔄 Change Table"):
     del st.session_state["cart"]
     st.rerun()
 
-# Show menu with categories
+# Show menu
 st.subheader("📋 Menu")
 for category, items in menu.items():
     with st.expander(f"🍱 {category}"):
@@ -66,7 +65,7 @@ for category, items in menu.items():
                         st.session_state.cart[name] = {"price": price, "quantity": 1}
                     st.rerun()
 
-# Show cart
+# Cart section
 st.subheader("🛒 Cart")
 cart = st.session_state.get("cart", {})
 if cart:
@@ -93,7 +92,7 @@ if cart:
 else:
     st.info("🛒 Your cart is empty.")
 
-# Show past orders for this table
+# Show this table's orders
 st.subheader("📦 Your Orders")
 has_orders = False
 for order in reversed(orders):
@@ -119,7 +118,6 @@ for order in reversed(orders):
 if not has_orders:
     st.info("📭 No orders yet.")
 
-# Auto-refresh every 5 seconds
-st.query_params(t=int(time.time()))
+# ✅ Correct way to refresh every 5 seconds
 time.sleep(5)
 st.rerun()
