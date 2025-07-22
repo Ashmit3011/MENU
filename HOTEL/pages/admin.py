@@ -1,69 +1,99 @@
 import streamlit as st
-import os, json, time
+import json
+import os
+import time
 from datetime import datetime
 
-# ---------- Setup ----------
+# Set up page
 st.set_page_config(page_title="Admin Panel", layout="wide")
+st.title("🧑‍🍳 Admin Panel - Order Management")
 
+# Auto-refresh every 5 seconds
+time.sleep(5)
+st.rerun()
+
+# File paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# ---------- Auto Refresh ----------
-if 'last_refresh' not in st.session_state or time.time() - st.session_state.last_refresh > 5:
-    st.session_state.last_refresh = time.time()
-    st.rerun()
-
-# ---------- Load Functions ----------
+# Load orders
 def load_orders():
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, "r") as f:
-            return json.load(f)
-    return []
+    if not os.path.exists(ORDERS_FILE):
+        return []
+    with open(ORDERS_FILE, "r") as f:
+        return json.load(f)
 
+# Save orders
 def save_orders(orders):
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
 
-# ---------- UI ----------
-st.title("🛠️ Admin Dashboard")
-orders = load_orders()
+# Update order status
+def update_order_status(order_id, new_status):
+    orders = load_orders()
+    for order in orders:
+        if order["id"] == order_id:
+            order["status"] = new_status
+    save_orders(orders)
 
+# Cancel order
+def cancel_order(order_id):
+    orders = load_orders()
+    for order in orders:
+        if order["id"] == order_id:
+            order["status"] = "Cancelled"
+    save_orders(orders)
+
+# Delete completed orders
+def delete_completed_orders():
+    orders = load_orders()
+    orders = [order for order in orders if order["status"] != "Completed"]
+    save_orders(orders)
+
+# Action to delete all completed
+if st.button("🗑️ Delete Completed Orders"):
+    delete_completed_orders()
+    st.success("✅ Completed orders deleted.")
+    st.rerun()
+
+# Show Orders
+orders = load_orders()
 if not orders:
     st.info("No orders yet.")
-    st.stop()
+else:
+    for order in orders[::-1]:  # Show latest first
+        status_color = {
+            "Pending": "orange",
+            "Preparing": "blue",
+            "Completed": "green",
+            "Cancelled": "red"
+        }.get(order["status"], "black")
 
-for i, order in enumerate(sorted(orders, key=lambda x: x["timestamp"], reverse=True)):
-    st.markdown(f"### Order `{order['id']}` | Table {order['table']}")
-    for name, info in order["items"].items():
-        st.write(f"- {name} x {info['qty']} = ₹{info['qty'] * info['price']}")
-    st.write(f"💵 **Total: ₹{order['total']}**")
-    st.write(f"🕒 Placed: {datetime.fromtimestamp(order['timestamp']).strftime('%d-%b %I:%M %p')}")
+        with st.container():
+            st.markdown(f"### 🧾 Order ID: {order['id']}")
+            st.markdown(f"**Table:** {order['table']} | **Status:** :{status_color}[{order['status']}]")
+            st.markdown(f"_Placed at: {datetime.fromtimestamp(order['timestamp']).strftime('%Y-%m-%d %H:%M:%S')}_")
 
-    status = order["status"]
-    if status == "Cancelled":
-        st.markdown("<span style='color:red'><s>🚫 Cancelled</s></span>", unsafe_allow_html=True)
-    elif status == "Completed":
-        st.success("✅ Completed")
-    elif status == "Preparing":
-        st.info("🍳 Preparing")
-    else:
-        st.warning("⌛ Pending")
+            if order["status"] == "Cancelled":
+                st.markdown("~~This order was cancelled.~~")
+            else:
+                for name, item in order["items"].items():
+                    st.markdown(f"- {name} x {item['quantity']} = ₹{item['price'] * item['quantity']}")
 
-    if status not in ["Completed", "Cancelled"]:
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("🔄 Preparing", key=f"prep_{i}"):
-                orders[i]["status"] = "Preparing"
-                save_orders(orders)
-                st.rerun()
-        with col2:
-            if st.button("✅ Complete", key=f"comp_{i}"):
-                orders[i]["status"] = "Completed"
-                save_orders(orders)
-                st.rerun()
-        with col3:
-            if st.button("❌ Cancel", key=f"admin_cancel_{i}"):
-                orders[i]["status"] = "Cancelled"
-                save_orders(orders)
-                st.rerun()
-    st.markdown("---")
+            st.markdown(f"**Total: ₹{order['total']}**")
+
+            # Buttons for status update
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                if st.button("🔄 Preparing", key=f"prep_{order['id']}"):
+                    update_order_status(order["id"], "Preparing")
+                    st.rerun()
+            with col2:
+                if st.button("✅ Complete", key=f"done_{order['id']}"):
+                    update_order_status(order["id"], "Completed")
+                    st.rerun()
+            with col3:
+                if st.button("❌ Cancel", key=f"cancel_{order['id']}"):
+                    cancel_order(order["id"])
+                    st.rerun()
+            st.markdown("---")
