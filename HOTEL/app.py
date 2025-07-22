@@ -88,7 +88,7 @@ def render_menu():
                 if st.button(f"Add", key=f"add_{item.get('id')}"):
                     st.session_state.cart.append(item)
                     st.toast(f"✅ {item.get('name')} added to cart")
-            st.markdown("---")
+        st.markdown("---")
 
 # ---------- Cart Display ----------
 def render_cart():
