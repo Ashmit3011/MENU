@@ -3,6 +3,7 @@ import json
 import os
 import time
 from datetime import datetime
+from streamlit_autorefresh import st_autorefresh
 
 # === Absolute File Paths ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -123,5 +124,7 @@ if st.session_state.cart:
 else:
     st.info("Your cart is empty.")
 
-# === Auto-refresh workaround using query params ===
-st.query_params(t=int(time.time()))
+from streamlit_autorefresh import st_autorefresh
+
+# Add this near the end of your file
+st_autorefresh(interval=5000, key="refresh")
