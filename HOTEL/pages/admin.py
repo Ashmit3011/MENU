@@ -67,7 +67,7 @@ def admin_panel():
     if updated:
         save_json(ORDERS_FILE, orders)
 
-    # Feedback
+    # View Customer Feedback Only
     st.header("💬 Customer Feedback")
     feedback = load_json(FEEDBACK_FILE)
     if not feedback:
@@ -131,24 +131,25 @@ def customer_panel():
             st.success("✅ Order Placed!")
             st.session_state.cart = []
 
-    st.markdown("---")
-    st.subheader("💬 Leave Feedback")
-    order_id = st.text_input("Order ID")
-    rating = st.slider("Rating", 1, 5, 3)
-    comment = st.text_area("Comment")
-    if st.button("Submit Feedback"):
-        feedback = load_json(FEEDBACK_FILE)
-        feedback.append({
-            "order_id": order_id,
-            "table": table if 'table' in locals() else "N/A",
-            "rating": rating,
-            "comment": comment
-        })
-        save_json(FEEDBACK_FILE, feedback)
-        st.success("✅ Feedback submitted")
+        # Feedback section
+        st.markdown("---")
+        st.subheader("💬 Leave Feedback")
+        order_id = st.text_input("Order ID")
+        rating = st.slider("Rating", 1, 5, 3)
+        comment = st.text_area("Comment")
+        if st.button("Submit Feedback"):
+            feedback = load_json(FEEDBACK_FILE)
+            feedback.append({
+                "order_id": order_id,
+                "table": table,
+                "rating": rating,
+                "comment": comment
+            })
+            save_json(FEEDBACK_FILE, feedback)
+            st.success("✅ Feedback submitted")
 
 # ------------------ Main ------------------
-query_params = st.experimental_get_query_params()
+query_params = st.query_params
 page = query_params.get("page", ["customer"])[0]
 
 if page == "admin":
