@@ -4,134 +4,127 @@ import os
 import time
 from datetime import datetime
 
-# File paths
+# --- Utility functions ---
+def load_json(file_path, default):
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            return json.load(f)
+    return default
+
+def save_json(file_path, data):
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
+
+# --- File paths ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 
-# Utilities
-def load_json(path, default):
-    if not os.path.exists(path):
-        return default
-    with open(path, "r") as f:
-        return json.load(f)
+# --- Page config ---
+st.set_page_config(page_title="Smart Table Menu", layout="wide", initial_sidebar_state="collapsed")
 
-def save_json(path, data):
-    with open(path, "w") as f:
-        json.dump(data, f, indent=4)
-
-# Set Streamlit page config
-st.set_page_config(page_title="Smart Menu", layout="wide")
-hide_sidebar_style = """<style>[data-testid="stSidebar"] {display: none !important;}</style>"""
-st.markdown(hide_sidebar_style, unsafe_allow_html=True)
-
-# App title
-st.markdown("<h1 style='text-align: center;'>🍽️ Smart Table Ordering</h1>", unsafe_allow_html=True)
-
-# Load menu
-menu_data = load_json(MENU_FILE, {})
-
-if not menu_data:
-    st.error("❌ Menu is empty. Please contact admin.")
-    st.stop()
-
-categories = list(menu_data.keys())
-
-# Query param category selection (Streamlit v1.35+)
-qp = st.query_params
-selected_category = qp.get("category", categories[0])
-
-# Table Number Input (Top Bar)
+# --- Table Input UI ---
 if "table_number" not in st.session_state:
-    st.session_state.table_number = st.number_input("Enter Table Number:", min_value=1, step=1, key="table_input")
+    st.session_state.table_number = st.number_input("Enter your table number:", min_value=1, step=1)
 
-# Cart
-if "cart" not in st.session_state:
-    st.session_state.cart = {}
+table_number = st.session_state.table_number
 
-# Category Selector UI
-st.markdown("### 🧾 Choose a Category")
-category_container = st.container()
-with category_container:
-    cols = st.columns(len(categories))
-    for i, cat in enumerate(categories):
-        if cols[i].button(cat):
-            st.query_params(category=cat, t=int(time.time()))
-            selected_category = cat
+# --- Load menu and orders ---
+menu_data = load_json(MENU_FILE, {})
+orders_data = load_json(ORDERS_FILE, [])
+cart = st.session_state.get("cart", {})
 
-st.markdown("---")
+# --- Category filter ---
+query_params = st.query_params
+selected_category = query_params.get("category", [None])[0]
 
-# Display menu for selected category
-st.markdown(f"### 📋 Menu - {selected_category}")
-for item in menu_data[selected_category]:
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        st.markdown(f"**{item['name']}**  \n₹{item['price']}")
-    with col2:
-        if st.button("Add", key=f"add_{item['name']}"):
-            if item["name"] not in st.session_state.cart:
-                st.session_state.cart[item["name"]] = {
-                    "price": item["price"],
-                    "quantity": 1
-                }
-            else:
-                st.session_state.cart[item["name"]]["quantity"] += 1
-            st.query_params(category=selected_category, t=int(time.time()))
+# --- Category UI (Scrollable Buttons) ---
+st.markdown("## 🧾 Menu")
+st.markdown("#### 🍽️ Select Category:")
+cols = st.columns(len(menu_data))
 
-# Divider
-st.markdown("---")
+for i, cat in enumerate(menu_data.keys()):
+    with cols[i]:
+        if st.button(cat, use_container_width=True):
+            st.query_params.update(category=cat, t=int(time.time()))
 
-# Show Cart
-st.markdown("### 🛒 Your Cart")
-if not st.session_state.cart:
-    st.info("Your cart is empty.")
-else:
-    total = 0
-    for item, info in st.session_state.cart.items():
-        col1, col2, col3, col4 = st.columns([4, 2, 2, 2])
+# --- Menu UI Display ---
+if selected_category and selected_category in menu_data:
+    items = menu_data[selected_category]
+    st.markdown(f"### 📋 Items in **{selected_category}**")
+    
+    for item in items:
+        name = item["name"]
+        price = item["price"]
+        col1, col2, col3 = st.columns([4, 1, 2])
         with col1:
-            st.markdown(f"**{item}**")
+            st.write(f"**{name}**")
         with col2:
-            st.markdown(f"₹{info['price']}")
+            st.write(f"₹{price}")
         with col3:
-            qty = st.number_input("Qty", min_value=1, value=info["quantity"], key=f"qty_{item}")
-            st.session_state.cart[item]["quantity"] = qty
-        with col4:
-            if st.button("❌ Remove", key=f"remove_{item}"):
-                del st.session_state.cart[item]
-                st.rerun()
+            qty = st.number_input(f"Qty for {name}", min_value=0, step=1, key=name)
+            if qty > 0:
+                cart[name] = {"price": price, "quantity": qty}
+else:
+    st.info("Please select a category to view items.")
 
-        total += info["price"] * info["quantity"]
+st.session_state.cart = cart
 
-    st.markdown(f"### 💰 Total: ₹{total}")
+# --- Cart Summary ---
+if cart:
+    st.markdown("---")
+    st.markdown("### 🛒 Your Order")
+    total = 0
+    for name, item in cart.items():
+        price = item["price"]
+        qty = item["quantity"]
+        subtotal = price * qty
+        total += subtotal
+        st.write(f"- {name} × {qty} = ₹{subtotal}")
+    
+    st.markdown(f"### 💵 Total: ₹{total}")
 
     if st.button("✅ Place Order"):
         new_order = {
-            "table": st.session_state.table_number,
-            "items": st.session_state.cart,
+            "table": table_number,
+            "items": cart,
             "status": "Pending",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-        orders = load_json(ORDERS_FILE, [])
-        orders.append(new_order)
-        save_json(ORDERS_FILE, orders)
+        orders_data.append(new_order)
+        save_json(ORDERS_FILE, orders_data)
         st.success("✅ Order placed successfully!")
-
-        # Save session table and show feedback
-        table_no = st.session_state.table_number
         st.session_state.cart = {}
 
-        with st.form("feedback_form"):
-            st.markdown("### 💬 Leave Feedback")
-            message = st.text_area("Feedback Message", key="feedback_msg")
-            submitted = st.form_submit_button("Submit Feedback")
-            if submitted:
-                feedbacks = load_json(FEEDBACK_FILE, [])
-                feedbacks.append({
-                    "table": table_no,
-                    "message": message,
-                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                })
-                save_json(FEEDBACK_FILE, feedbacks)
-                st.success("🙏 Thank you for your feedback!")
+# --- Order Status Display ---
+st.markdown("---")
+st.markdown("### 🔄 Your Previous Orders")
+
+table_orders = [o for o in orders_data if o["table"] == table_number]
+
+if not table_orders:
+    st.info("No orders yet.")
+else:
+    for o in reversed(table_orders[-5:]):
+        st.write(f"🕒 {o['timestamp']} - Status: **{o['status']}**")
+
+# --- Feedback Section (Only after order completion) ---
+completed_orders = [o for o in table_orders if o["status"] == "Completed"]
+
+if completed_orders:
+    st.markdown("---")
+    st.markdown("### ✍️ Leave Feedback")
+
+    with st.form("feedback_form"):
+        message = st.text_area("Your feedback:")
+        submitted = st.form_submit_button("Submit Feedback")
+        if submitted and message.strip():
+            feedbacks = load_json(FEEDBACK_FILE, [])
+            feedbacks.append({
+                "table": table_number,
+                "message": message.strip(),
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
+            save_json(FEEDBACK_FILE, feedbacks)
+            st.success("✅ Thank you for your feedback!")
