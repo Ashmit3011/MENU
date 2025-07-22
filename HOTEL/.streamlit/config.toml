@@ -1,0 +1,7 @@
+[theme]
+base = "light"
+primaryColor = "#4F6D7A"         # Soft steel blue
+backgroundColor = "#F5F7FA"      # Light gray-blue
+secondaryBackgroundColor = "#E3E9ED"  # Slightly darker background for widgets
+textColor = "#2C3E50"            # Dark slate gray
+font = "sans serif"              # Clean font
