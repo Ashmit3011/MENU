@@ -82,19 +82,28 @@ if st.session_state.cart:
         total += subtotal
 
         # Horizontal layout for cart item & buttons
-        cart_cols = st.columns([6,1,1])
-        with cart_cols[0]:
-            st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
-        with cart_cols[1]:
-            if st.button("➖", key=f"decrease-{name}"):
-                st.session_state.cart[name]["quantity"] -= 1
-                if st.session_state.cart[name]["quantity"] <= 0:
-                    del st.session_state.cart[name]
-                st.rerun()
-        with cart_cols[2]:
-            if st.button("❌", key=f"remove-{name}"):
+        with st.container():
+    cart_cols = st.columns([6, 1, 1], gap="small")  # Force compact layout
+    with cart_cols[0]:
+        st.markdown(
+            f"<div style='white-space: nowrap; font-size: 0.85rem;'><b>{name}</b> x {item['quantity']} = ₹{subtotal}</div>",
+            unsafe_allow_html=True
+        )
+    with cart_cols[1]:
+        st.markdown("<div style='padding-top: 0.2rem;'>", unsafe_allow_html=True)
+        if st.button("➖", key=f"decrease-{name}"):
+            st.session_state.cart[name]["quantity"] -= 1
+            if st.session_state.cart[name]["quantity"] <= 0:
                 del st.session_state.cart[name]
-                st.rerun()
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with cart_cols[2]:
+        st.markdown("<div style='padding-top: 0.2rem;'>", unsafe_allow_html=True)
+        if st.button("❌", key=f"remove-{name}"):
+            del st.session_state.cart[name]
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown(f"### 🧾 Total: ₹{total}")
 
