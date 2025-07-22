@@ -7,9 +7,10 @@ from datetime import datetime
 st.set_page_config(page_title="Smart Table Order", layout="wide")
 st.title("🍽️ Smart Table Ordering System")
 
-# File paths
-MENU_FILE = "data/menu.json"
-ORDERS_FILE = "data/orders.json"
+# Full paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MENU_FILE = os.path.join(BASE_DIR, "data", "menu.json")
+ORDERS_FILE = os.path.join(BASE_DIR, "data", "orders.json")
 
 # Load menu
 if os.path.exists(MENU_FILE):
@@ -36,7 +37,8 @@ else:
     st.sidebar.success(f"🪑 Table: {st.session_state.table_number}")
     if st.sidebar.button("🔄 Change Table"):
         del st.session_state.table_number
-        del st.session_state.cart
+        if "cart" in st.session_state:
+            del st.session_state.cart
         st.rerun()
 
 # Cart init
