@@ -1,18 +1,7 @@
-{
-    "Starters": {
-        "French Fries": 120,
-        "Spring Rolls": 150
-    },
-    "Main Course": {
-        "Paneer Butter Masala": 250,
-        "Chicken Biryani": 300
-    },
-    "Desserts": {
-        "Gulab Jamun": 80,
-        "Ice Cream": 90
-    },
-    "Drinks": {
-        "Coke": 40,
-        "Lassi": 60
-    }
-}
+[
+  {"name": "Pizza", "price": 250},
+  {"name": "Burger", "price": 150},
+  {"name": "Pasta", "price": 200},
+  {"name": "Coffee", "price": 100},
+  {"name": "French Fries", "price": 120}
+]
