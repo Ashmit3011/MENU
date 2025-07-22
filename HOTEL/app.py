@@ -3,20 +3,21 @@ import json
 import os
 from datetime import datetime
 
-# Set page settings
+# Set page
 st.set_page_config(page_title="Smart Table Order", layout="wide")
 st.title("🍽️ Smart Table Ordering System")
 
-# Paths (ROOT level)
-MENU_FILE = "menu.json"
-ORDERS_FILE = "orders.json"
+# Get absolute path of current file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MENU_FILE = os.path.join(BASE_DIR, "menu.json")
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
 # Load menu
 if os.path.exists(MENU_FILE):
     with open(MENU_FILE, "r") as f:
         menu = json.load(f)
 else:
-    st.error("❌ Menu file not found.")
+    st.error(f"❌ Menu file not found at {MENU_FILE}")
     st.stop()
 
 # Load orders
@@ -26,7 +27,7 @@ if os.path.exists(ORDERS_FILE):
 else:
     orders = []
 
-# Get or ask table number
+# Ask for table number
 if "table_number" not in st.session_state:
     table_number = st.text_input("Enter your Table Number")
     if table_number:
@@ -40,11 +41,11 @@ else:
             del st.session_state.cart
         st.rerun()
 
-# Cart init
+# Init cart
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
-# Display menu
+# Show menu
 st.subheader("📋 Menu")
 
 for category, items in menu.items():
@@ -63,7 +64,7 @@ for category, items in menu.items():
                         st.session_state.cart[name]["quantity"] += 1
                     st.rerun()
 
-# Display cart
+# Show cart
 st.subheader("🛒 Cart")
 
 if st.session_state.cart:
@@ -90,7 +91,7 @@ if st.session_state.cart:
 else:
     st.info("🛍️ Your cart is empty.")
 
-# Order history
+# Show order history
 st.subheader("📦 Your Orders")
 
 if st.session_state.table_number:
@@ -106,7 +107,6 @@ if st.session_state.table_number:
                     st.markdown(f"<s>{line}</s>", unsafe_allow_html=True)
                 else:
                     st.markdown(line)
-            # Allow cancel if not yet completed
             if status not in ["Completed", "Cancelled"]:
                 if st.button(f"❌ Cancel Order ({order['timestamp']})", key=order["timestamp"]):
                     order["status"] = "Cancelled"
