@@ -18,7 +18,7 @@ def login():
         if username == USERNAME and password == PASSWORD:
             st.session_state.admin_logged_in = True
             st.success("✅ Login successful")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("❌ Incorrect credentials")
 
@@ -53,7 +53,7 @@ def manage_orders():
                 order["status"] = new_status
                 save_json('orders.json', orders)
                 st.toast("✅ Order status updated", icon="📦")
-                st.experimental_rerun()
+                st.rerun()
 
 # ---------------- MENU MANAGEMENT ----------------
 def manage_menu():
@@ -67,7 +67,7 @@ def manage_menu():
             menu.remove(item)
             save_json('menu.json', menu)
             st.toast("🗑️ Item deleted", icon="⚠️")
-            st.experimental_rerun()
+            st.rerun()
 
     st.divider()
     st.write("### ➕ Add New Menu Item")
@@ -86,7 +86,7 @@ def manage_menu():
             menu.append(new_item)
             save_json('menu.json', menu)
             st.toast("✅ Item added to menu", icon="🍽️")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.warning("Please fill all fields.")
 
@@ -147,4 +147,4 @@ else:
     elif page == "🚪 Logout":
         st.session_state.admin_logged_in = False
         st.success("Logged out")
-        st.experimental_rerun()
+        st.rerun()
