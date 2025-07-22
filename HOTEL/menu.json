@@ -2,31 +2,49 @@
   {
     "id": "1",
     "name": "Paneer Tikka",
-    "price": 10.00,
-    "category": "Main course"
+    "category": "Main Course",
+    "price": 10.00
   },
   {
     "id": "2",
     "name": "Veg Biryani",
-    "price": 12.50,
-    "category": "Main course"
+    "category": "Main Course",
+    "price": 12.50
   },
   {
     "id": "3",
-    "name": "Spring Rolls",
-    "price": 6.00,
-    "category": "Starters"
+    "name": "Tomato Soup",
+    "category": "Starters",
+    "price": 5.00
   },
   {
     "id": "4",
-    "name": "Gulab Jamun",
-    "price": 4.00,
-    "category": "Desserts"
+    "name": "Spring Rolls",
+    "category": "Starters",
+    "price": 6.50
   },
   {
     "id": "5",
-    "name": "Masala Chai",
-    "price": 3.00,
-    "category": "Beverages"
+    "name": "Gulab Jamun",
+    "category": "Desserts",
+    "price": 4.00
+  },
+  {
+    "id": "6",
+    "name": "Ice Cream",
+    "category": "Desserts",
+    "price": 3.50
+  },
+  {
+    "id": "7",
+    "name": "Masala Dosa",
+    "category": "South Indian",
+    "price": 8.00
+  },
+  {
+    "id": "8",
+    "name": "Idli Sambar",
+    "category": "South Indian",
+    "price": 6.00
   }
 ]
