@@ -78,17 +78,20 @@ for idx, order in reversed(list(enumerate(orders))):
 
         # ✅ Display items
         for item in order.get("items", []):
-            name = item.get("name", "Unnamed")
-            price = item.get("price")
-            quantity = item.get("quantity")
+    if isinstance(item, dict):
+        name = item.get("name", "Unnamed")
+        price = item.get("price", 0)
+        quantity = item.get("quantity", 1)
 
-            try:
-                price = float(price)
-                quantity = int(quantity)
-                total = price * quantity
-                st.markdown(f"🍴 <b>{name}</b> x {quantity} = ₹{total:.2f}", unsafe_allow_html=True)
-            except Exception:
-                st.warning(f"⚠️ Invalid item data: {item}")
+        try:
+            price = float(price)
+            quantity = int(quantity)
+            total = price * quantity
+            st.markdown(f"🍴 <b>{name}</b> x {quantity} = ₹{total:.2f}", unsafe_allow_html=True)
+        except Exception:
+            st.warning(f"⚠️ Invalid item values: {item}")
+    else:
+        st.warning(f"⚠️ Skipping non-dictionary item: {item}")
 
         # ✅ Button logic
         col1, col2, col3, col4 = st.columns(4)
