@@ -4,7 +4,6 @@ import os
 import time
 from datetime import datetime
 from fpdf import FPDF
-from PIL import Image
 
 # -------------- Streamlit Config & Styling --------------
 st.set_page_config(page_title="Smart Table Order", layout="wide")
@@ -12,7 +11,6 @@ st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none; }
         #MainMenu, footer {visibility: hidden;}
-        .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
             padding: 0.4rem 0.8rem;
             font-size: 0.85rem;
@@ -139,6 +137,7 @@ if st.session_state.cart:
     st.markdown(f"### 🧾 Total: ₹{total}")
 
     if st.button("✅ Place Order"):
+        # Remove previous order for same table
         orders = [o for o in orders if o["table"] != st.session_state.table_number]
         new_order = {
             "table": st.session_state.table_number,
