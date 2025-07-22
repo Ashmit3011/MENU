@@ -1,22 +1,8 @@
 {
-  "Margherita Pizza": {
-    "price": 199,
-    "category": "Pizza"
-  },
-  "Paneer Tikka": {
-    "price": 249,
-    "category": "Starter"
-  },
-  "Veg Biryani": {
-    "price": 179,
-    "category": "Main Course"
-  },
-  "Gulab Jamun": {
-    "price": 99,
-    "category": "Dessert"
-  },
-  "Cold Coffee": {
-    "price": 79,
-    "category": "Beverage"
-  }
+  "1": {"name": "Margherita Pizza", "price": 200, "category": "Pizza"},
+  "2": {"name": "Veg Burger", "price": 120, "category": "Burger"},
+  "3": {"name": "Masala Dosa", "price": 90, "category": "South Indian"},
+  "4": {"name": "Paneer Butter Masala", "price": 180, "category": "Main Course"},
+  "5": {"name": "Cold Coffee", "price": 60, "category": "Beverages"},
+  "6": {"name": "French Fries", "price": 100, "category": "Snacks"}
 }
