@@ -2,107 +2,80 @@ import streamlit as st
 import json
 import os
 from datetime import datetime
-from streamlit_autorefresh import st_autorefresh
+from pathlib import Path
 
-# 🚀 Custom toast using HTML
-def custom_toast(message: str, duration: int = 3000):
-    st.markdown(
-        f"""
-        <script>
-        const toast = document.createElement("div");
-        toast.textContent = "{message}";
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #323232;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            font-size: 14px;
-            z-index: 9999;
-            animation: fadein 0.5s, fadeout 0.5s ${duration / 1000 - 0.5}s;
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), {duration});
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
-
-# File paths
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-MENU_FILE = os.path.join(ROOT_DIR, "menu.json")
-ORDERS_FILE = os.path.join(ROOT_DIR, "orders.json")
-
-# Load menu
-if os.path.exists(MENU_FILE):
-    with open(MENU_FILE, "r") as f:
-        menu = json.load(f)
-else:
-    st.error(f"❌ Menu file not found at {MENU_FILE}")
-    st.stop()
+# Paths
+MENU_FILE = os.path.join(os.path.dirname(__file__), "..", "menu.json")
+ORDERS_FILE = os.path.join(os.path.dirname(__file__), "..", "orders.json")
 
 # Load orders
-if os.path.exists(ORDERS_FILE):
-    with open(ORDERS_FILE, "r") as f:
-        orders = json.load(f)
-else:
-    orders = []
+def load_orders():
+    if Path(ORDERS_FILE).exists():
+        with open(ORDERS_FILE, "r") as f:
+            return json.load(f)
+    return []
 
-# Refresh every 5 seconds
-st_autorefresh(interval=5000, key="admin_refresh")
-
-# Page header
-st.markdown("## 🛠️ Admin Panel - Order Management")
-st.markdown("### 📦 All Orders")
-
-changed = False
-
-for idx, order in reversed(list(enumerate(orders))):
-    with st.container():
-        with st.expander(f"🪑 Table {order['table']} — ⏰ {order['timestamp']} — **{order['status']}**", expanded=True):
-            # Order items
-            for name, item in order["items"].items():
-                st.markdown(f"🍴 **{name}** x {item['quantity']} = ₹{item['price'] * item['quantity']}")
-
-            # Action buttons
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                if order["status"] == "Pending":
-                    if st.button("👨‍🍳 Preparing", key=f"prep-{idx}"):
-                        orders[idx]["status"] = "Preparing"
-                        changed = True
-                        custom_toast(f"🍳 Order for Table {order['table']} is now Preparing")
-
-                elif order["status"] == "Preparing":
-                    if st.button("✅ Complete", key=f"comp-{idx}"):
-                        orders[idx]["status"] = "Completed"
-                        changed = True
-                        custom_toast(f"✅ Order for Table {order['table']} marked as Completed")
-
-            with col2:
-                if order["status"] not in ["Completed", "Cancelled"]:
-                    if st.button("❌ Cancel", key=f"cancel-{idx}"):
-                        orders[idx]["status"] = "Cancelled"
-                        changed = True
-                        custom_toast(f"❌ Order for Table {order['table']} Cancelled")
-
-            with col3:
-                if order["status"] in ["Completed", "Cancelled"]:
-                    if st.button("🗑️ Delete", key=f"delete-{idx}"):
-                        del orders[idx]
-                        with open(ORDERS_FILE, "w") as f:
-                            json.dump(orders, f, indent=2)
-                        custom_toast(f"🗑️ Deleted order for Table {order['table']}")
-                        st.rerun()
-
-        st.markdown("---")
-
-# Save updated order statuses
-if changed:
+# Save orders
+def save_orders(data):
     with open(ORDERS_FILE, "w") as f:
-        json.dump(orders, f, indent=2)
-    st.success("✅ Order status updated.")
+        json.dump(data, f, indent=2)
+
+# Emoji icons
+status_colors = {
+    "pending": "gray",
+    "preparing": "orange",
+    "completed": "green",
+    "cancelled": "red"
+}
+
+st.markdown("### 🛠️ Admin Panel - Order Management")
+st.markdown("## 📦 All Orders")
+
+orders = load_orders()
+
+if not orders:
+    st.info("No orders yet.")
+else:
+    for i, order in enumerate(orders):
+        with st.container():
+            st.markdown(
+                f"""
+                <div style='border:1px solid #444; border-radius:10px; padding:10px; margin-bottom:10px; background-color:#1f1f1f;'>
+                    <div style='display:flex; justify-content:space-between; align-items:center;'>
+                        <span>🍽️ <strong>Table {order['table']}</strong></span>
+                        <span style='background-color:{status_colors[order["status"]]}; color:white; padding:2px 10px; border-radius:10px; font-size:12px;'>
+                            {order["status"].capitalize()}
+                        </span>
+                    </div>
+                    <div style='color:gray; font-size:13px; margin-top:2px;'>🕒 {order["timestamp"]}</div>
+                    <hr style='border-top:1px solid #333;'/>
+            """,
+                unsafe_allow_html=True
+            )
+
+            for item in order["items"]:
+                st.markdown(f"🍴 <b>{item['name']}</b> x {item['quantity']} = ₹{item['price'] * item['quantity']}", unsafe_allow_html=True)
+
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                if st.button("🧑‍🍳 Preparing", key=f"prepare_{i}"):
+                    orders[i]["status"] = "preparing"
+                    save_orders(orders)
+                    st.experimental_rerun()
+            with col2:
+                if st.button("✅ Complete", key=f"complete_{i}"):
+                    orders[i]["status"] = "completed"
+                    save_orders(orders)
+                    st.experimental_rerun()
+            with col3:
+                if st.button("❌ Cancel", key=f"cancel_{i}"):
+                    orders[i]["status"] = "cancelled"
+                    save_orders(orders)
+                    st.experimental_rerun()
+            with col4:
+                if st.button("🗑️ Delete", key=f"delete_{i}"):
+                    orders.pop(i)
+                    save_orders(orders)
+                    st.experimental_rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)
