@@ -39,7 +39,7 @@ if "table_number" not in st.session_state:
     table_num = st.number_input("Enter your Table Number", min_value=1, max_value=100, step=1)
     if st.button("Start Ordering"):
         st.session_state.table_number = str(table_num)
-        st.experimental_rerun()
+        st.rerun()
     st.stop()
 
 # Load data
