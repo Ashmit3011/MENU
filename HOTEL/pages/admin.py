@@ -1,83 +1,112 @@
 import streamlit as st
 import json
 import os
-from streamlit_autorefresh import st_autorefresh
+from datetime import datetime
+import time
 
-# ------------------ Setup ------------------
-st.set_page_config(page_title="Admin Panel", layout="wide", page_icon="🛠️")
-BASE_DIR = os.getcwd()
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
-FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
+# Page setup
+st.set_page_config(page_title="Admin Panel", layout="wide")
+st.markdown("<h1>🧑‍🍳 Admin Panel - Live Orders</h1>", unsafe_allow_html=True)
 
-# ------------------ JSON Helpers ------------------
-def load_json(path, fallback=[]):
-    if not os.path.exists(path):
-        return fallback
-    try:
-        with open(path, 'r') as f:
-            return json.load(f)
-    except Exception as e:
-        st.error(f"Error loading {path}: {e}")
-        return fallback
+ORDERS_FILE = os.path.join(os.path.dirname(__file__), '..', 'orders.json')
 
-def save_json(path, data):
-    with open(path, 'w') as f:
-        json.dump(data, f, indent=2)
+# --- Helper functions ---
+def load_orders():
+    if os.path.exists(ORDERS_FILE):
+        with open(ORDERS_FILE, 'r') as f:
+            try:
+                return json.load(f)
+            except:
+                return []
+    return []
 
-# ------------------ Admin Panel ------------------
-def admin_panel():
-    password = st.text_input("Enter admin password", type="password")
-    if password != "admin123":
-        st.warning("Unauthorized access")
-        st.stop()
+def save_orders(orders):
+    with open(ORDERS_FILE, 'w') as f:
+        json.dump(orders, f, indent=2)
 
-    st.title("🛠️ Admin Dashboard")
-
-    # Orders Section
-    st.header("📦 Manage Orders")
-    orders = load_json(ORDERS_FILE)
-    updated = False
-
+def update_status(order_id, new_status):
+    orders = load_orders()
     for order in orders:
-        with st.expander(f"🧾 Order {order.get('order_id')} | Table: {order.get('table')} | Status: {order.get('status')}"):
-            for item in order.get("items", []):
-                st.markdown(f"- {item.get('name')} (${item.get('price'):.2f})")
+        if order.get("id") == order_id:
+            order["status"] = new_status
+            break
+    save_orders(orders)
+    st.experimental_rerun()
 
-            status = st.selectbox(
-                "Update Status",
-                ["Pending", "Preparing", "Ready", "Served"],
-                index=["Pending", "Preparing", "Ready", "Served"].index(order.get("status", "Pending")),
-                key=f"status_{order.get('order_id')}"
-            )
+def delete_completed_orders():
+    orders = load_orders()
+    filtered = [order for order in orders if order.get("status") != "Served"]
+    save_orders(filtered)
+    st.success("✅ Deleted completed orders.")
+    st.rerun()
 
-            if status != order.get("status"):
-                order["status"] = status
-                updated = True
-                st.toast(f"Status updated to {status}", icon="🔄")
+# --- Load and Display Orders ---
+orders = load_orders()
 
-            if status == "Served":
-                if st.button("🗑️ Delete Order", key=f"delete_{order.get('order_id')}"):
-                    orders.remove(order)
-                    updated = True
-                    st.toast("🗑️ Order deleted", icon="⚠️")
-                    st.rerun()
+if not orders:
+    st.info("No orders yet.")
+    st.stop()
 
-    if updated:
-        save_json(ORDERS_FILE, orders)
+# Sort by latest timestamp
+orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
 
-    # Feedback Section
-    st.header("💬 Customer Feedback")
-    feedback = load_json(FEEDBACK_FILE)
-    if not feedback:
-        st.info("No feedback available.")
-    else:
-        for entry in feedback:
-            with st.container():
-                st.markdown(f"**Order ID**: {entry.get('order_id')} | **Table**: {entry.get('table')} | ⭐ {entry.get('rating', 0)}/5")
-                st.markdown(f"_Comment_: {entry.get('comment', '')}")
-                st.markdown("---")
+# Delete button
+if st.button("🗑️ Delete Completed Orders"):
+    delete_completed_orders()
 
-    st_autorefresh(interval=10 * 1000, key="admin_refresh")
+# Display each order
+for order in orders:
+    status = order.get("status", "Unknown")
+    status_color = {
+        "Preparing": "#3498db",
+        "Ready": "#f39c12",
+        "Served": "#2ecc71"
+    }.get(status, "gray")
 
-# ------------------ Run ------------------
-admin_panel()
+    try:
+        timestamp = float(order.get("timestamp", time.time()))
+        time_str = datetime.fromtimestamp(timestamp).strftime('%I:%M %p')
+    except:
+        time_str = "N/A"
+
+    with st.container():
+        st.markdown(f"""
+            <div style='
+                border: 2px solid {status_color}; 
+                border-radius: 12px; 
+                padding: 16px; 
+                margin-bottom: 8px; 
+                background-color: #1e1e1e;
+                color: white;
+            '>
+            <strong>🧾 Order ID:</strong> {order.get('id')}<br>
+            <strong>🪑 Table:</strong> {order.get('table')}<br>
+            <strong>⏰ Time:</strong> {time_str}<br>
+            <strong>Status:</strong> <span style='color:{status_color}; font-weight:bold'>{status}</span><br>
+            <strong>Items:</strong>
+            </div>
+        """, unsafe_allow_html=True)
+
+        items = order.get("items", {})
+        if isinstance(items, dict):
+            for item in items.values():
+                st.markdown(
+                    f"<span style='color:white'>- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}</span>",
+                    unsafe_allow_html=True
+                )
+        else:
+            st.warning("⚠️ Items data is invalid or missing.")
+
+        # Buttons to change status
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if status != "Preparing" and st.button(f"Set Preparing 🧑‍🍳", key=f"prep_{order['id']}"):
+                update_status(order["id"], "Preparing")
+        with col2:
+            if status != "Ready" and st.button(f"Set Ready ✅", key=f"ready_{order['id']}"):
+                update_status(order["id"], "Ready")
+        with col3:
+            if status != "Served" and st.button(f"Set Served 🍽️", key=f"serve_{order['id']}"):
+                update_status(order["id"], "Served")
+
+        st.markdown("---")
