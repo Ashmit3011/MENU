@@ -3,24 +3,22 @@ import json
 import os
 from datetime import datetime
 import time
-import base64
+from streamlit_autorefresh import st_autorefresh
 
+# --- Streamlit page setup ---
 st.set_page_config(page_title="Admin Panel", layout="wide")
 st.markdown("<h1>🧑‍🍳 Admin Panel - Live Orders</h1>", unsafe_allow_html=True)
 
-# Unified file path
+# --- Auto-refresh every 5 seconds ---
+st_autorefresh(interval=5000, key="datarefresh")
+
+# --- File paths ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'menu_files')
 ORDERS_FILE = os.path.join(DATA_DIR, 'orders.json')
 MENU_FILE = os.path.join(DATA_DIR, 'menu.json')
 
-# Auto-refresh
-st_autorefresh = st.experimental_rerun if st.button("🔁 Refresh Now") else None
-st.markdown("""
-    <meta http-equiv="refresh" content="10">
-""", unsafe_allow_html=True)
-
-# Load orders
+# --- Load orders ---
 def load_orders():
     if os.path.exists(ORDERS_FILE):
         with open(ORDERS_FILE, 'r') as f:
@@ -30,7 +28,7 @@ def load_orders():
                 return []
     return []
 
-# Save orders
+# --- Save orders ---
 def save_orders(orders):
     with open(ORDERS_FILE, 'w') as f:
         json.dump(orders, f, indent=2)
@@ -41,30 +39,34 @@ if not orders:
     st.info("No orders yet.")
     st.stop()
 
-# Sort orders by timestamp (latest first)
-orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
-
-# Load menu
+# --- Load menu (optional, in case needed) ---
 if os.path.exists(MENU_FILE):
     with open(MENU_FILE, 'r') as f:
         menu = json.load(f)
 else:
     menu = []
 
-# Status options
-status_options = ["Pending", "Preparing", "Ready", "Served"]
+# --- Sort by time ---
+orders = sorted(orders, key=lambda x: float(x.get("timestamp", 0)), reverse=True)
 
-# Display orders
+# --- Status colors ---
+status_colors = {
+    "Pending": "#f39c12",
+    "Preparing": "#3498db",
+    "Ready": "#2ecc71",
+    "Served": "#95a5a6"
+}
+status_options = list(status_colors.keys())
+
+# --- Track if update is needed ---
 updated = False
+
+# --- Loop through orders ---
 for idx, order in enumerate(orders):
-    status = order.get("status", "Pending")
     order_id = order.get("id", f"ORD{idx}")
-    status_color = {
-        "Pending": "#f39c12",
-        "Preparing": "#3498db",
-        "Ready": "#2ecc71",
-        "Served": "#95a5a6"
-    }.get(status, "gray")
+    table = order.get("table", "N/A")
+    status = order.get("status", "Pending")
+    color = status_colors.get(status, "gray")
 
     timestamp = float(order.get("timestamp", time.time()))
     time_str = datetime.fromtimestamp(timestamp).strftime('%I:%M %p')
@@ -74,18 +76,18 @@ for idx, order in enumerate(orders):
         with col1:
             st.markdown(f"""
                 <div style='
-                    border-left: 5px solid {status_color}; 
-                    padding: 12px; 
-                    margin-bottom: 10px;
+                    border-left: 6px solid {color}; 
+                    padding: 16px; 
+                    margin-bottom: 12px;
                     background-color: #1e1e1e;
-                    border-radius: 8px;
+                    border-radius: 10px;
                     color: white;
                 '>
                     <strong>🧾 Order ID:</strong> {order_id}<br>
-                    <strong>🪑 Table:</strong> {order.get('table', 'N/A')}<br>
+                    <strong>🪑 Table:</strong> {table}<br>
                     <strong>⏰ Time:</strong> {time_str}<br>
-                    <strong>Status:</strong> <span style='color:{status_color}; font-weight:bold'>{status}</span><br>
-                    <strong>Items:</strong>
+                    <strong>Status:</strong> <span style='color:{color}'><b>{status}</b></span><br>
+                    <strong>Items:</strong><br>
             """, unsafe_allow_html=True)
 
             items = order.get("items", {})
@@ -97,6 +99,7 @@ for idx, order in enumerate(orders):
                     )
             else:
                 st.warning("⚠️ Items data is invalid.")
+            st.markdown("</div>", unsafe_allow_html=True)
 
         with col2:
             new_status = st.selectbox("Update Status", status_options, index=status_options.index(status), key=order_id)
@@ -105,21 +108,11 @@ for idx, order in enumerate(orders):
                 updated = True
 
             if st.button("🗑️ Delete", key=f"del_{order_id}"):
-                if st.confirm(f"Delete Order {order_id}?"):
-                    orders.pop(idx)
-                    updated = True
-                    st.rerun()
+                orders.pop(idx)
+                updated = True
+                st.rerun()
 
-# Save updated orders
+# --- Save and refresh if updated ---
 if updated:
     save_orders(orders)
-    st.success("✅ Status updated.")
-    time.sleep(1)
-    st.rerun()
-
-# Optional sound (HTML5 notification)
-st.markdown("""
-<audio autoplay>
-  <source src="https://notificationsounds.com/storage/sounds/file-sounds-1155-pristine.mp3" type="audio/mpeg">
-</audio>
-""", unsafe_allow_html=True)
+    st.success("✅ Order updated.")
