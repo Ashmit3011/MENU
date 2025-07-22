@@ -7,6 +7,12 @@ from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="Smart Menu", page_icon="🍽️", layout="wide")
 
+# ---------- File Paths ----------
+BASE_DIR = os.getcwd()
+MENU_PATH = os.path.join(BASE_DIR, "menu.json")
+ORDERS_PATH = os.path.join(BASE_DIR, "orders.json")
+FEEDBACK_PATH = os.path.join(BASE_DIR, "feedback.json")
+
 # ---------- JSON Helpers ----------
 def load_json(path, fallback=[]):
     if not os.path.exists(path):
@@ -24,12 +30,11 @@ def save_json(path, data):
 
 # ---------- Menu Load ----------
 def load_menu():
-    menu_file = os.path.join(os.getcwd(), "menu.json")
-    if not os.path.exists(menu_file):
-        st.error("❌ menu.json not found at path: " + menu_file)
+    if not os.path.exists(MENU_PATH):
+        st.error("❌ menu.json not found at path: " + MENU_PATH)
         return []
     try:
-        with open(menu_file, "r") as f:
+        with open(MENU_PATH, "r") as f:
             return json.load(f)
     except Exception as e:
         st.error(f"Failed to load menu.json: {e}")
@@ -47,6 +52,10 @@ def render_menu():
     st.title("📋 Smart Restaurant Menu")
     st.subheader("Select items to add to your cart")
     menu = load_menu()
+
+    if not menu:
+        st.warning("⚠️ No menu items available.")
+        return
 
     categories = sorted(set(item["category"] for item in menu))
     for cat in categories:
@@ -88,9 +97,9 @@ def render_cart():
             "status": "Pending",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-        orders = load_json("orders.json")
+        orders = load_json(ORDERS_PATH)
         orders.append(order)
-        save_json("orders.json", orders)
+        save_json(ORDERS_PATH, orders)
 
         st.toast("🎉 Order placed successfully", icon="✅")
         st.session_state.order_id = order["order_id"]
@@ -104,7 +113,7 @@ def render_tracking():
 
     st.divider()
     st.subheader("📡 Order Tracking")
-    orders = load_json("orders.json")
+    orders = load_json(ORDERS_PATH)
     current = next((o for o in orders if o["order_id"] == st.session_state.order_id), None)
 
     if not current:
@@ -131,14 +140,14 @@ def render_tracking():
             rating = st.slider("Rate your experience (1-5)", 1, 5, 5)
             comment = st.text_area("Comments")
             if st.button("Submit Feedback"):
-                feedback = load_json("feedback.json")
+                feedback = load_json(FEEDBACK_PATH)
                 feedback.append({
                     "order_id": current["order_id"],
                     "table": current["table"],
                     "rating": rating,
                     "comment": comment
                 })
-                save_json("feedback.json", feedback)
+                save_json(FEEDBACK_PATH, feedback)
                 st.toast("✅ Feedback submitted", icon="💬")
 
 # ---------- Main App ----------
