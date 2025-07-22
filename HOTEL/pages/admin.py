@@ -169,22 +169,3 @@ else:
                 <div style='margin-top: 0.5rem;'>{message}</div>
             </div>
         """, unsafe_allow_html=True)
-        
-# -------------- View & Delete Feedbacks --------------
-st.subheader("🗑️ Your Submitted Feedbacks")
-my_feedbacks = [fb for fb in feedback if fb["table"] == st.session_state.table_number]
-
-if my_feedbacks:
-    for i, fb in enumerate(reversed(my_feedbacks)):
-        st.markdown(f"**Name:** {fb['name']}")
-        st.markdown(f"**Rating:** {fb['rating']} ⭐")
-        st.markdown(f"**Message:** {fb['message']}")
-        st.markdown(f"**Time:** *{fb['timestamp']}*")
-        if st.button(f"🗑️ Delete Feedback {i+1}", key=f"del-fb-{i}"):
-            feedback.remove(fb)
-            json.dump(feedback, open(FEEDBACK_FILE, "w"), indent=2)
-            st.success("Feedback deleted.")
-            st.rerun()
-        st.markdown("---")
-else:
-    st.info("No feedbacks submitted yet.")
