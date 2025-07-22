@@ -94,7 +94,7 @@ else:
 # Show order history
 st.subheader("📦 Your Orders")
 
-if st.session_state.table_number:
+if "table_number" in st.session_state:
     found = False
     for order in reversed(orders):
         if order["table"] == st.session_state.table_number:
