@@ -1,6 +1,7 @@
 import streamlit as st
 import json
 import os
+import time
 from datetime import datetime
 
 # Set page config
@@ -20,7 +21,7 @@ else:
     st.error(f"❌ Menu file not found at {MENU_FILE}")
     st.stop()
 
-# Load or create orders
+# Load orders
 if os.path.exists(ORDERS_FILE):
     with open(ORDERS_FILE, "r") as f:
         orders = json.load(f)
@@ -97,6 +98,12 @@ if cart:
             st.rerun()
 else:
     st.info("🛍️ Your cart is empty.")
+
+# Real-time auto-refresh for status tracking
+if "table_number" in st.session_state:
+    st.experimental_set_query_params(t=int(time.time()))  # Force rerun
+    time.sleep(5)  # Refresh every 5 seconds
+    st.rerun()
 
 # Show order history
 st.subheader("📦 Your Orders")
