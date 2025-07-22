@@ -37,13 +37,22 @@ def manage_orders():
         st.info("No orders found.")
         return
 
-    for order in orders:
-        with st.expander(f"🧾 Order {order['order_id']} - Table {order['table']} - Status: {order['status']}"):
-            for item in order['items']:
-                st.markdown(f"- **{item['name']}** (${item['price']:.2f})")
+    for i, order in enumerate(orders):
+        order_id = order.get("order_id", f"unknown_{i}")
+        table = order.get("table", "N/A")
+        status = order.get("status", "Pending")
 
-            new_status = st.selectbox("Update Status", status_options, index=status_options.index(order['status']), key=order['order_id'])
-            if new_status != order['status']:
+        with st.expander(f"🧾 Order {order_id} - Table {table} - Status: {status}"):
+            for item in order.get('items', []):
+                st.markdown(f"- **{item.get('name', 'Unknown')}** (${item.get('price', 0.00):.2f})")
+
+            new_status = st.selectbox(
+                "Update Status",
+                status_options,
+                index=status_options.index(status) if status in status_options else 0,
+                key=f"status_{order_id}"
+            )
+            if new_status != status:
                 order['status'] = new_status
                 order['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 save_json(ORDERS_PATH, orders)
@@ -95,8 +104,8 @@ def view_feedback():
         return
 
     for fb in feedback:
-        with st.expander(f"📝 Table {fb['table']} | Order {fb['order_id']} | ⭐ {fb['rating']}"):
-            st.write(fb['comment'])
+        with st.expander(f"📝 Table {fb.get('table', '?')} | Order {fb.get('order_id', '?')} | ⭐ {fb.get('rating', '?')}"):
+            st.write(fb.get('comment', ''))
 
 # ---------- Render Everything ----------
 def main():
