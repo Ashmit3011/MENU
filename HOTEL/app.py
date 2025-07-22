@@ -13,8 +13,8 @@ st.markdown("""
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
             padding: 0.2rem 0.4rem !important;
-            font-size: 0.7rem !important;
-            border-radius: 4px !important;
+            font-size: 0.4rem !important;
+            border-radius: 10px !important;
         }
     </style>
 """, unsafe_allow_html=True)
