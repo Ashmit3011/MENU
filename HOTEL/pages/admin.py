@@ -31,46 +31,53 @@ def manage_orders():
     st.header("📦 Manage Orders")
     orders = load_json(ORDERS_FILE)
     updated = False
+    status_options = ["Pending", "Preparing", "Ready", "Served"]
+
+    updated_orders = []
 
     for order in orders:
-        with st.expander(f"🧾 Order {order.get('order_id', 'N/A')} - Table {order.get('table', 'N/A')} - Status: {order.get('status', 'N/A')}"):
+        with st.expander(f"🧾 Order {order.get('order_id', 'N/A')} - Table {order.get('table', 'N/A')} - Status: {order.get('status', 'Pending')}"):
             for item in order.get("items", []):
                 st.markdown(f"- {item.get('name', 'Unnamed')} (${item.get('price', 0.0):.2f})")
 
             status = st.selectbox(
                 "Update Status",
-                ["Pending", "Preparing", "Ready", "Served"],
-                index=["Pending", "Preparing", "Ready", "Served"].index(order.get("status", "Pending")),
+                status_options,
+                index=status_options.index(order.get("status", "Pending")),
                 key=f"status_{order.get('order_id')}"
             )
 
             if status != order.get("status"):
                 order["status"] = status
+                order["last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 updated = True
                 st.toast(f"Status updated to {status}", icon="🔄")
 
             if status == "Served":
                 if st.button("🗑️ Delete Order", key=f"delete_{order.get('order_id')}"):
-                    orders.remove(order)
-                    updated = True
                     st.toast("🗑️ Order deleted", icon="⚠️")
-                    st.rerun()
+                    continue  # Skip saving this order
+            updated_orders.append(order)
 
     if updated:
-        save_json(ORDERS_FILE, orders)
+        save_json(ORDERS_FILE, updated_orders)
 
 # ---------- View Feedback ----------
 def view_feedback():
     st.header("💬 Customer Feedback")
     feedback = load_json(FEEDBACK_FILE)
+
     if not feedback:
         st.info("No feedback available.")
         return
 
-    for entry in feedback:
+    for entry in reversed(feedback):
         with st.container():
-            st.markdown(f"**Order ID**: {entry.get('order_id', 'N/A')} | **Table**: {entry.get('table', 'N/A')} | ⭐ {entry.get('rating', 0)}/5")
-            st.markdown(f"_Comment_: {entry.get('comment', '')}")
+            st.markdown(f"**Order ID**: `{entry.get('order_id', 'N/A')}` | **Table**: `{entry.get('table', 'N/A')}`")
+            st.markdown(f"⭐ **Rating**: {entry.get('rating', 0)}/5")
+            comment = entry.get("comment", "").strip()
+            if comment:
+                st.markdown(f"💬 _{comment}_")
             st.markdown("---")
 
 # ---------- Main ----------
