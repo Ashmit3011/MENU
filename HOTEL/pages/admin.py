@@ -10,8 +10,6 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MENU_FILE = os.path.join(ROOT_DIR, "menu.json")
 ORDERS_FILE = os.path.join(ROOT_DIR, "orders.json")
 
-st.markdown(f"**Menu file path:** `{MENU_FILE}`")
-st.markdown(f"**Orders file path:** `{ORDERS_FILE}`")
 
 # Load menu
 if os.path.exists(MENU_FILE):
