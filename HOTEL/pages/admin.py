@@ -41,6 +41,11 @@ def manage_orders():
     status_options = ["Pending", "Preparing", "Ready", "Served"]
 
     for order in orders:
+        # ✅ SAFE CHECK
+        if not all(k in order for k in ("order_id", "table", "status", "items")):
+            st.warning("⚠️ Skipping invalid order entry")
+            continue
+
         with st.expander(f"🧾 Order {order['order_id']} - Table {order['table']} - Status: {order['status']}"):
             st.write("**Items:**")
             for item in order["items"]:
@@ -98,29 +103,34 @@ def view_feedback():
         st.info("No feedback received yet.")
         return
     for entry in feedback:
-        with st.expander(f"🧾 Order {entry['order_id']} - Table {entry['table']}"):
-            st.write(f"**Rating:** ⭐ {entry['rating']} / 5")
-            st.write(f"**Comment:** {entry['comment']}")
+        with st.expander(f"🧾 Order {entry.get('order_id', 'N/A')} - Table {entry.get('table', 'N/A')}"):
+            st.write(f"**Rating:** ⭐ {entry.get('rating', '-')}/5")
+            st.write(f"**Comment:** {entry.get('comment', '')}")
 
 # ---------------- REPORTS ----------------
 def sales_reports():
     st.subheader("📊 Sales & Analytics")
     orders = load_json('orders.json')
-    total_revenue = sum(sum(item['price'] for item in order['items']) for order in orders)
+    total_revenue = 0
+    item_counter = Counter()
+    status_counts = Counter()
+
+    for order in orders:
+        if not all(k in order for k in ("status", "items")):
+            continue
+        status_counts[order["status"]] += 1
+        for item in order["items"]:
+            total_revenue += item["price"]
+            item_counter[item["name"]] += 1
+
     st.metric("💰 Total Revenue", f"${total_revenue:.2f}")
 
-    status_counts = Counter(order['status'] for order in orders)
     st.write("### 📦 Order Status Breakdown")
     for status, count in status_counts.items():
         st.write(f"- **{status}**: {count} orders")
 
-    item_counter = Counter()
-    for order in orders:
-        for item in order['items']:
-            item_counter[item['name']] += 1
-    top_items = item_counter.most_common(5)
     st.write("### 🥇 Most Popular Items")
-    for item, count in top_items:
+    for item, count in item_counter.most_common(5):
         st.write(f"- **{item}**: {count} ordered")
 
 # ---------------- MAIN ----------------
