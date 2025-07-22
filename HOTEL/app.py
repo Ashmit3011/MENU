@@ -7,11 +7,11 @@ from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="Smart Menu", page_icon="🍽️", layout="wide")
 
-# ---------- File Paths ----------
+# ---------- Paths ----------
 BASE_DIR = os.getcwd()
-MENU_PATH = os.path.join(BASE_DIR, "menu.json")
-ORDERS_PATH = os.path.join(BASE_DIR, "orders.json")
-FEEDBACK_PATH = os.path.join(BASE_DIR, "feedback.json")
+MENU_FILE = os.path.join(BASE_DIR, "menu.json")
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 
 # ---------- JSON Helpers ----------
 def load_json(path, fallback=[]):
@@ -30,11 +30,11 @@ def save_json(path, data):
 
 # ---------- Menu Load ----------
 def load_menu():
-    if not os.path.exists(MENU_PATH):
-        st.error("❌ menu.json not found at path: " + MENU_PATH)
+    if not os.path.exists(MENU_FILE):
+        st.error("❌ menu.json not found at path: " + MENU_FILE)
         return []
     try:
-        with open(MENU_PATH, "r") as f:
+        with open(MENU_FILE, "r") as f:
             return json.load(f)
     except Exception as e:
         st.error(f"Failed to load menu.json: {e}")
@@ -47,32 +47,40 @@ if "cart" not in st.session_state:
 if "order_id" not in st.session_state:
     st.session_state.order_id = None
 
+if "category_filter" not in st.session_state:
+    st.session_state.category_filter = "All"
+
 # ---------- Menu Display ----------
 def render_menu():
     st.title("📋 Smart Restaurant Menu")
-    st.subheader("Select items to add to your cart")
     menu = load_menu()
 
     if not menu:
-        st.warning("⚠️ No menu items available.")
+        st.warning("No menu items available.")
         return
 
-    categories = sorted(set(item["category"] for item in menu))
-    for cat in categories:
-        st.markdown(f"### 🍴 {cat}")
-        col1, col2 = st.columns(2)
-        with col1:
-            for item in [m for m in menu if m["category"] == cat][:len(menu)//2]:
-                st.markdown(f"**{item['name']}** - ${item['price']:.2f}")
-                if st.button(f"Add {item['name']}", key=f"add_{item['id']}"):
+    # --- Category Filter ---
+    categories = sorted(set(item.get("category", "Uncategorized") for item in menu))
+    st.subheader("🍴 Select Category")
+    selected_category = st.selectbox("Filter by Category", ["All"] + categories, index=0)
+    st.session_state.category_filter = selected_category
+
+    # --- Menu Items ---
+    st.subheader("🧾 Menu Items")
+    filtered_menu = [item for item in menu if selected_category == "All" or item.get("category") == selected_category]
+
+    for item in filtered_menu:
+        with st.container():
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**{item.get('name', 'Unnamed')}**")
+                st.caption(f"Category: {item.get('category', 'Uncategorized')}")
+                st.markdown(f"💵 ${item.get('price', 0.0):.2f}")
+            with col2:
+                if st.button(f"Add", key=f"add_{item.get('id')}"):
                     st.session_state.cart.append(item)
-                    st.toast(f"🛒 {item['name']} added to cart", icon="✅")
-        with col2:
-            for item in [m for m in menu if m["category"] == cat][len(menu)//2:]:
-                st.markdown(f"**{item['name']}** - ${item['price']:.2f}")
-                if st.button(f"Add {item['name']}", key=f"add_{item['id']}"):
-                    st.session_state.cart.append(item)
-                    st.toast(f"🛒 {item['name']} added to cart", icon="✅")
+                    st.toast(f"✅ {item.get('name')} added to cart")
+            st.markdown("---")
 
 # ---------- Cart Display ----------
 def render_cart():
@@ -82,9 +90,9 @@ def render_cart():
         st.sidebar.info("Your cart is empty.")
         return
 
-    total = sum(item["price"] for item in cart)
+    total = sum(item.get("price", 0.0) for item in cart)
     for item in cart:
-        st.sidebar.markdown(f"- {item['name']} (${item['price']:.2f})")
+        st.sidebar.markdown(f"- {item.get('name')} (${item.get('price', 0.0):.2f})")
 
     st.sidebar.markdown(f"**Total: ${total:.2f}**")
     table_number = st.sidebar.number_input("Enter Table Number", min_value=1, step=1)
@@ -97,9 +105,9 @@ def render_cart():
             "status": "Pending",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-        orders = load_json(ORDERS_PATH)
+        orders = load_json(ORDERS_FILE)
         orders.append(order)
-        save_json(ORDERS_PATH, orders)
+        save_json(ORDERS_FILE, orders)
 
         st.toast("🎉 Order placed successfully", icon="✅")
         st.session_state.order_id = order["order_id"]
@@ -112,16 +120,16 @@ def render_tracking():
         return
 
     st.divider()
-    st.subheader("📡 Order Tracking")
-    orders = load_json(ORDERS_PATH)
-    current = next((o for o in orders if o["order_id"] == st.session_state.order_id), None)
+    st.subheader("📱 Order Tracking")
+    orders = load_json(ORDERS_FILE)
+    current = next((o for o in orders if o.get("order_id") == st.session_state.order_id), None)
 
     if not current:
         st.warning("Your order could not be found.")
         return
 
-    status = current["status"]
-    st.info(f"Order ID: {current['order_id']} | Table: {current['table']}")
+    status = current.get("status", "Pending")
+    st.info(f"Order ID: {current.get('order_id')} | Table: {current.get('table')}")
 
     progress_map = {
         "Pending": 0.25,
@@ -131,23 +139,22 @@ def render_tracking():
     }
 
     st.progress(progress_map.get(status, 0.0), text=f"Status: {status}")
-    
+
     if status == "Served":
         st.success("✅ Your food has been served! Enjoy your meal 🍽️")
 
-        # Optional feedback form
         with st.expander("💬 Leave Feedback"):
             rating = st.slider("Rate your experience (1-5)", 1, 5, 5)
             comment = st.text_area("Comments")
             if st.button("Submit Feedback"):
-                feedback = load_json(FEEDBACK_PATH)
+                feedback = load_json(FEEDBACK_FILE)
                 feedback.append({
-                    "order_id": current["order_id"],
-                    "table": current["table"],
+                    "order_id": current.get("order_id"),
+                    "table": current.get("table"),
                     "rating": rating,
                     "comment": comment
                 })
-                save_json(FEEDBACK_PATH, feedback)
+                save_json(FEEDBACK_FILE, feedback)
                 st.toast("✅ Feedback submitted", icon="💬")
 
 # ---------- Main App ----------
@@ -155,8 +162,6 @@ def main():
     render_menu()
     render_cart()
     render_tracking()
-
-    # Auto-refresh every 10 seconds
     st_autorefresh(interval=10 * 1000, key="track_refresh")
 
 if __name__ == "__main__":
