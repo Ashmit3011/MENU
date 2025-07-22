@@ -98,31 +98,45 @@ if "cart" not in st.session_state:
     st.session_state.cart = {}
 
 # -------------- Display Menu --------------
-st.subheader("📋 Browse Menu")
+st.markdown("## 🍽️ Browse Menu")
 
-menu_container = st.container()
-with menu_container:
-    for category, items in menu.items():
-        st.markdown(f"### 🍽️ {category}")
-        for item in items:
-            with st.container():
-                col1, col2, col3 = st.columns([6, 2, 1])
-                with col1:
-                    st.markdown(f"""
-                        <div style='padding: 0.5rem 0.75rem; background-color: #f1faee; border-radius: 10px;'>
-                            <strong style='font-size: 1rem; color: #1d3557;'>{item['name']}</strong><br>
-                            <span style='color: #6c757d; font-size: 0.85rem;'>{item.get('description', '')}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
-                with col2:
-                    st.markdown(f"<div style='margin-top: 0.75rem;'><strong>₹{item['price']}</strong></div>", unsafe_allow_html=True)
-                with col3:
-                    if st.button("➕", key=f"{category}-{item['name']}"):
-                        name, price = item["name"], item["price"]
-                        st.session_state.cart[name] = st.session_state.cart.get(name, {"price": price, "quantity": 0})
-                        st.session_state.cart[name]["quantity"] += 1
-                        st.rerun()
-            st.markdown("---")
+# Load the menu
+menu_data = load_json(MENU_FILE, {})
+
+# Show category selector first
+categories = list(menu_data.keys())
+selected_category = st.selectbox("🔍 Select a category", categories)
+
+# Show items in the selected category
+if selected_category:
+    st.markdown(f"### 📋 {selected_category} Menu")
+
+    col1, col2 = st.columns(2)
+    for idx, item in enumerate(menu_data[selected_category]):
+        with (col1 if idx % 2 == 0 else col2):
+            st.markdown(
+                f"""
+                <div style='background-color:#f3f4f6; padding:15px; border-radius:10px; margin-bottom:15px;'>
+                    <h5 style='margin:0;'>{item["name"]} - ₹{item["price"]}</h5>
+                    <p style='margin:5px 0; font-size: 0.9rem;'>{item.get("description", "")}</p>
+                    <form action='' method='post'>
+                        <button type="submit" name="add_{item['name']}" style='background-color:#10b981; color:white; padding:5px 10px; border:none; border-radius:5px;'>Add to Cart</button>
+                    </form>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # Add to cart when user clicks
+            if st.button(f"Add {item['name']}", key=item['name']):
+                if item["name"] in st.session_state.cart:
+                    st.session_state.cart[item["name"]]["qty"] += 1
+                else:
+                    st.session_state.cart[item["name"]] = {
+                        "price": item["price"],
+                        "qty": 1
+                    }
+                st.success(f"✅ {item['name']} added to cart.")
 
 # -------------- Display Cart --------------
 st.subheader("🛒 Cart")
