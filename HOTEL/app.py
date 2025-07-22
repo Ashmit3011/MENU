@@ -37,31 +37,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 QR_IMAGE = os.path.join(BASE_DIR, "qr.png")
-INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
+FONT_PATH = os.path.join(BASE_DIR, "DejaVuSans.ttf")
 
 # -------------- Helper: Generate Invoice --------------
-
 def generate_invoice(order):
     pdf = FPDF()
     pdf.add_page()
-
-    # Optional: Use Unicode font for ₹ and emoji
-    font_path = os.path.join(BASE_DIR, "DejaVuSans.ttf")
-    if os.path.exists(font_path):
-        pdf.add_font("DejaVu", "", font_path, uni=True)
-        pdf.set_font("DejaVu", "", 12)
-    else:
-        pdf.set_font("Helvetica", size=12)
-
-    pdf.set_font_size(16)
+    pdf.add_font("DejaVu", "", FONT_PATH, uni=True)
+    pdf.set_font("DejaVu", "", 16)
     pdf.cell(0, 10, "Smart Café Invoice", ln=True, align="C")
 
-    pdf.set_font_size(12)
+    pdf.set_font("DejaVu", "", 12)
     pdf.cell(0, 10, f"Table: {order['table']}", ln=True)
     pdf.cell(0, 10, f"Date: {order['timestamp']}", ln=True)
     pdf.ln(10)
 
-    pdf.set_font(style="B")
+    pdf.set_font("DejaVu", "", 12)
     pdf.cell(80, 10, "Item", 1)
     pdf.cell(30, 10, "Qty", 1)
     pdf.cell(30, 10, "Price", 1)
@@ -69,7 +60,6 @@ def generate_invoice(order):
     pdf.ln()
 
     total = 0
-    pdf.set_font(style="")
     for name, item in order["items"].items():
         qty = item["quantity"]
         price = item["price"]
@@ -82,18 +72,18 @@ def generate_invoice(order):
         pdf.cell(40, 10, f"₹{subtotal}", 1)
         pdf.ln()
 
-    pdf.set_font(style="B")
+    pdf.set_font("DejaVu", "", 12)
     pdf.cell(140, 10, "Total", 1)
     pdf.cell(40, 10, f"₹{total}", 1)
     pdf.ln(20)
 
-    # Add QR code image
     if os.path.exists(QR_IMAGE):
-        pdf.image(QR_IMAGE, x=10, y=pdf.get_y(), w=40)
+        pdf.image(QR_IMAGE, x=pdf.get_x(), y=pdf.get_y(), w=40)
 
     invoice_path = os.path.join(BASE_DIR, f"invoice_table_{order['table']}.pdf")
     pdf.output(invoice_path)
     return invoice_path
+
 # -------------- Load Data --------------
 menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else {}
 orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
@@ -152,7 +142,6 @@ if st.session_state.cart:
     st.markdown(f"### 🧾 Total: ₹{total}")
 
     if st.button("✅ Place Order"):
-        # Remove previous orders from same table
         orders = [o for o in orders if o["table"] != st.session_state.table_number]
         new_order = {
             "table": st.session_state.table_number,
