@@ -81,7 +81,9 @@ if st.session_state.cart:
         subtotal = item["price"] * item["quantity"]
         total += subtotal
 
-        item_col, btn1_col, btn2_col = st.columns([8, 1, 1])
+        # Changed from [8,1,1] to [6,1,1] for better spacing and put text in same row as buttons
+        item_col, btn1_col, btn2_col = st.columns([6, 1, 1])
+        
         with item_col:
             st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
 
@@ -106,7 +108,7 @@ if st.session_state.cart:
         order = {
             "table": st.session_state.table_number,
             "items": st.session_state.cart,
-            "status": "Pending",
+            "status": "pending",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         orders.append(order)
