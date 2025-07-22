@@ -1,86 +1,150 @@
 import streamlit as st
 import json
 import os
-import time
-from datetime import datetime
+from collections import Counter
 
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
-FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
+# ---------------- AUTH SETUP ----------------
+USERNAME = "admin"
+PASSWORD = "1234"
 
-st.set_page_config(page_title="🛎️ Admin Panel", layout="centered")
+if 'admin_logged_in' not in st.session_state:
+    st.session_state.admin_logged_in = False
 
-# === File Setup ===
-for file in [ORDERS_FILE, FEEDBACK_FILE]:
+def login():
+    st.title("🔐 Admin Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        if username == USERNAME and password == PASSWORD:
+            st.session_state.admin_logged_in = True
+            st.success("✅ Login successful")
+            st.experimental_rerun()
+        else:
+            st.error("❌ Incorrect credentials")
+
+# ---------------- LOAD/SAVE DATA ----------------
+def load_json(file, default=[]):
     if not os.path.exists(file):
-        with open(file, "w") as f:
-            json.dump([], f)
+        with open(file, 'w') as f:
+            json.dump(default, f)
+    with open(file, 'r') as f:
+        return json.load(f)
 
-if "last_order_count" not in st.session_state:
-    st.session_state.last_order_count = 0
+def save_json(file, data):
+    with open(file, 'w') as f:
+        json.dump(data, f, indent=2)
 
-st.title("🛎️ Live Order Dashboard")
+# ---------------- ORDER MANAGEMENT ----------------
+def manage_orders():
+    st.subheader("📦 Order Management")
+    orders = load_json('orders.json')
+    status_options = ["Pending", "Preparing", "Ready", "Served"]
 
-# === Load Orders ===
-with open(ORDERS_FILE, "r") as f:
-    orders = json.load(f)
-
-orders.sort(key=lambda x: x["time"], reverse=True)
-
-# === New Order Notification ===
-if len(orders) > st.session_state.last_order_count:
-    st.toast("🔔 New Order Received", icon="🧾")
-    st.audio("https://www.soundjay.com/buttons/beep-07.wav", autoplay=True)
-    st.session_state.last_order_count = len(orders)
-
-# === Show Orders ===
-if not orders:
-    st.info("No orders yet.")
-else:
     for order in orders:
-        st.markdown(f"""
-        ### 🧾 Order #{order['id']}
-        **🪑 Table:** {order['table']}  
-        **⏱️ Time:** {order['time']}  
-        **📦 Status:** `{order['status']}`  
-        """)
-        for item in order["items"]:
-            st.markdown(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
+        with st.expander(f"🧾 Order {order['order_id']} - Table {order['table']} - Status: {order['status']}"):
+            st.write("**Items:**")
+            for item in order["items"]:
+                st.markdown(f"- **{item['name']}** (${item['price']:.2f})")
 
-        st.markdown(f"**💵 Total:** ₹{order['total']}")
+            new_status = st.selectbox("Update status", status_options,
+                                      index=status_options.index(order["status"]),
+                                      key=order["order_id"])
+            if st.button("Update", key=f"update_{order['order_id']}"):
+                order["status"] = new_status
+                save_json('orders.json', orders)
+                st.toast("✅ Order status updated", icon="📦")
+                st.experimental_rerun()
 
-        col1, col2 = st.columns(2)
-        statuses = ["Pending", "Preparing", "Ready", "Served"]
-        current = statuses.index(order["status"])
+# ---------------- MENU MANAGEMENT ----------------
+def manage_menu():
+    st.subheader("🍽️ Menu Management")
+    menu = load_json('menu.json')
 
-        with col1:
-            if current < len(statuses) - 1:
-                if st.button(f"➡️ {statuses[current + 1]}", key=f"next_{order['id']}"):
-                    order["status"] = statuses[current + 1]
-                    with open(ORDERS_FILE, "w") as f:
-                        json.dump(orders, f, indent=2)
-                    st.rerun()
+    st.write("### Current Menu")
+    for item in menu:
+        st.markdown(f"- **{item['name']}** (${item['price']:.2f}) — *{item['category']}*")
+        if st.button("🗑️ Delete", key=f"delete_{item['id']}"):
+            menu.remove(item)
+            save_json('menu.json', menu)
+            st.toast("🗑️ Item deleted", icon="⚠️")
+            st.experimental_rerun()
 
-        with col2:
-            if st.button("❌ Remove Order", key=f"remove_{order['id']}"):
-                orders.remove(order)
-                with open(ORDERS_FILE, "w") as f:
-                    json.dump(orders, f, indent=2)
-                st.rerun()
+    st.divider()
+    st.write("### ➕ Add New Menu Item")
+    name = st.text_input("Item Name")
+    category = st.text_input("Category")
+    price = st.number_input("Price", min_value=0.0, step=0.1)
 
-        st.markdown("---")
+    if st.button("Add Item"):
+        if name and category and price > 0:
+            new_item = {
+                "id": max([item["id"] for item in menu], default=0) + 1,
+                "name": name,
+                "category": category,
+                "price": price
+            }
+            menu.append(new_item)
+            save_json('menu.json', menu)
+            st.toast("✅ Item added to menu", icon="🍽️")
+            st.experimental_rerun()
+        else:
+            st.warning("Please fill all fields.")
 
-# === Feedback Section ===
-st.markdown("### 💬 Recent Feedback")
-with open(FEEDBACK_FILE, "r") as f:
-    feedbacks = json.load(f)
+# ---------------- FEEDBACK ----------------
+def view_feedback():
+    st.subheader("💬 Customer Feedback")
+    feedback = load_json('feedback.json')
+    if not feedback:
+        st.info("No feedback received yet.")
+        return
+    for entry in feedback:
+        with st.expander(f"🧾 Order {entry['order_id']} - Table {entry['table']}"):
+            st.write(f"**Rating:** ⭐ {entry['rating']} / 5")
+            st.write(f"**Comment:** {entry['comment']}")
 
-if feedbacks:
-    for fb in feedbacks[-5:]:
-        st.success(f"🪑 Table {fb['table']} at {fb['time']}: {fb['feedback']}")
+# ---------------- REPORTS ----------------
+def sales_reports():
+    st.subheader("📊 Sales & Analytics")
+    orders = load_json('orders.json')
+    total_revenue = sum(sum(item['price'] for item in order['items']) for order in orders)
+    st.metric("💰 Total Revenue", f"${total_revenue:.2f}")
+
+    status_counts = Counter(order['status'] for order in orders)
+    st.write("### 📦 Order Status Breakdown")
+    for status, count in status_counts.items():
+        st.write(f"- **{status}**: {count} orders")
+
+    item_counter = Counter()
+    for order in orders:
+        for item in order['items']:
+            item_counter[item['name']] += 1
+    top_items = item_counter.most_common(5)
+    st.write("### 🥇 Most Popular Items")
+    for item, count in top_items:
+        st.write(f"- **{item}**: {count} ordered")
+
+# ---------------- MAIN ----------------
+if not st.session_state.admin_logged_in:
+    login()
 else:
-    st.write("No feedback yet.")
+    st.title("👨‍💼 Admin Dashboard")
+    page = st.sidebar.radio("Navigate", [
+        "📦 Orders", "🍽️ Menu", "💬 Feedback", "📊 Reports", "🚪 Logout"
+    ])
 
-# === Auto-refresh ===
-time.sleep(5)
-st.rerun()
+    if page == "📦 Orders":
+        manage_orders()
+
+    elif page == "🍽️ Menu":
+        manage_menu()
+
+    elif page == "💬 Feedback":
+        view_feedback()
+
+    elif page == "📊 Reports":
+        sales_reports()
+
+    elif page == "🚪 Logout":
+        st.session_state.admin_logged_in = False
+        st.success("Logged out")
+        st.experimental_rerun()
