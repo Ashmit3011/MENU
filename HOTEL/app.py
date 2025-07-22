@@ -1,178 +1,108 @@
 import streamlit as st
 import json
-import uuid
+import os
 import time
 from datetime import datetime
-import os
+import uuid
 
-# ---------- CONFIG ----------
-st.set_page_config(page_title="Smart Table Ordering", layout="wide")
+# File paths
+BASE_DIR = os.path.dirname(__file__)
+MENU_FILE = os.path.join(BASE_DIR, 'menu.json')
+ORDERS_FILE = os.path.join(BASE_DIR, '..', 'orders.json')  # Save orders in parent dir
 
-# ---------- FILE PATHS ----------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+# Page setup
+st.set_page_config(page_title="Smart Table Menu", layout="wide")
+st.title("🍽️ Smart Table Ordering")
 
-# ---------- DATA FUNCTIONS ----------
+# Load menu
 def load_menu():
-    try:
-        with open(MENU_FILE, "r") as f:
-            menu = json.load(f)
-            assert isinstance(menu, list)
-            return menu
-    except:
+    if os.path.exists(MENU_FILE):
+        with open(MENU_FILE, 'r') as f:
+            try:
+                return json.load(f)
+            except:
+                st.error("⚠️ Menu file is corrupted.")
+                return []
+    else:
+        st.warning("⚠️ Menu not found.")
         return []
 
-def load_orders():
-    try:
-        with open(ORDERS_FILE, "r") as f:
-            return json.load(f)
-    except:
-        return []
-
-def save_orders(orders):
-    with open(ORDERS_FILE, "w") as f:
-        json.dump(orders, f, indent=2)
-
-def save_order(order):
-    orders = load_orders()
-    orders.append(order)
-    save_orders(orders)
-
-def delete_served_orders():
-    orders = load_orders()
-    remaining = [o for o in orders if o.get("status") != "Served"]
-    save_orders(remaining)
-
-# ---------- TOAST CSS ----------
-st.markdown("""
-    <style>
-        .toast {
-            position: fixed;
-            bottom: 70px;
-            right: 20px;
-            background-color: #333;
-            color: white;
-            padding: 16px;
-            border-radius: 10px;
-            z-index: 10000;
-            animation: slideIn 0.5s ease-out;
-        }
-        @keyframes slideIn {
-            0% {opacity: 0; transform: translateY(20px);}
-            100% {opacity: 1; transform: translateY(0);}
-        }
-
-        /* Hide sidebar */
-        [data-testid="stSidebar"] {
-            display: none;
-        }
-
-        /* Hide hamburger menu */
-        [data-testid="stToolbar"] {
-            display: none;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-def toast(msg):
-    st.markdown(f'<div class="toast">{msg}</div>', unsafe_allow_html=True)
-
-# ---------- SESSION STATE ----------
-st.session_state.setdefault("cart", {})
-st.session_state.setdefault("table_number", "")
-
-# ---------- LOAD MENU ----------
 menu = load_menu()
-st.title("🍽️ Smart Table Ordering System")
 
 if not menu:
-    st.error("❌ Menu is empty or not loaded properly.")
     st.stop()
 
-# ---------- UI TABS ----------
-tab_menu, tab_cart, tab_track, tab_admin = st.tabs(["📋 Menu", "🛒 Cart", "📦 Track Order", "🧑‍🍳 Admin"])
+# Group by category
+grouped_menu = {}
+for item in menu:
+    cat = item.get("category", "Others")
+    grouped_menu.setdefault(cat, []).append(item)
 
-# ---------- MENU TAB ----------
-with tab_menu:
-    selected_category = st.selectbox("Select a category", sorted(set(i["category"] for i in menu)))
-    filtered_menu = [item for item in menu if item["category"] == selected_category]
+# Select table number
+table = st.selectbox("🪑 Select Your Table Number", [f"Table {i}" for i in range(1, 11)])
 
-    for item in filtered_menu:
-        col1, col2 = st.columns([4, 1])
-        with col1:
-            st.markdown(f"**{item['name']}**")
-            st.caption(f"₹{item['price']} | {'🌶️' if item['spicy'] else ''} {'🟢' if item['veg'] else '🔴'}")
-        with col2:
-            qty = st.number_input(f"Qty - {item['id']}", min_value=0, step=1, key=f"qty_{item['id']}")
-            if qty > 0:
-                st.session_state.cart[item['id']] = {"name": item['name'], "qty": qty, "price": item['price']}
-            elif item['id'] in st.session_state.cart:
-                del st.session_state.cart[item['id']]
+# Add to cart state
+if "cart" not in st.session_state:
+    st.session_state.cart = {}
 
-# ---------- CART TAB ----------
-with tab_cart:
-    st.subheader("🛒 Your Cart")
-    if not st.session_state.cart:
-        st.info("Your cart is empty.")
-    else:
-        total = 0
-        for item in st.session_state.cart.values():
-            st.write(f"{item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-            total += item['qty'] * item['price']
-        st.success(f"Total: ₹{total}")
+# Show menu
+st.markdown("### 🧾 Menu")
+for category, items in grouped_menu.items():
+    with st.expander(f"🍱 {category}"):
+        for item in items:
+            item_key = item["id"]
+            col1, col2, col3 = st.columns([4, 2, 2])
+            with col1:
+                st.write(f"**{item['name']}**")
+                st.caption(f"₹{item['price']} | {'🌶️ Spicy' if item['spicy'] else '🟢 Mild'} | {'Veg' if item['veg'] else 'Non-Veg'}")
+            with col2:
+                qty = st.number_input(f"Qty", min_value=0, max_value=20, value=0, key=f"{item_key}_qty")
+            with col3:
+                if st.button("➕ Add", key=f"{item_key}_btn"):
+                    if qty > 0:
+                        st.session_state.cart[item_key] = {
+                            "id": item_key,
+                            "name": item["name"],
+                            "price": item["price"],
+                            "qty": qty
+                        }
+                        st.success(f"{item['name']} added to cart!")
 
-        st.text_input("Enter your table number", key="table_number")
-        if st.button("✅ Place Order"):
-            if not st.session_state.table_number:
-                st.warning("Please enter a table number.")
-            else:
-                order = {
-                    "id": str(uuid.uuid4())[:8],
-                    "table": st.session_state.table_number,
-                    "items": st.session_state.cart,
-                    "total": total,
-                    "status": "Pending",
-                    "timestamp": time.time()
-                }
-                save_order(order)
-                st.session_state.cart = {}
-                toast("✅ Order placed successfully!")
+# Cart display
+st.markdown("### 🛒 Your Cart")
+if not st.session_state.cart:
+    st.info("Cart is empty.")
+else:
+    total = 0
+    for item in st.session_state.cart.values():
+        subtotal = item['qty'] * item['price']
+        total += subtotal
+        st.write(f"- **{item['name']}** x {item['qty']} = ₹{subtotal}")
+    st.write(f"### 💵 Total: ₹{total}")
 
-# ---------- ORDER TRACKING TAB ----------
-with tab_track:
-    st.subheader("📦 Track Your Order")
+    if st.button("✅ Place Order"):
+        order = {
+            "id": str(uuid.uuid4())[:8],
+            "table": table,
+            "timestamp": time.time(),
+            "status": "Preparing",
+            "items": st.session_state.cart
+        }
 
-    if not st.session_state.table_number:
-        st.info("Enter your table number in the cart to track your order.")
-    else:
-        user_orders = [o for o in load_orders() if o['table'] == st.session_state.table_number]
-        user_orders = sorted(user_orders, key=lambda x: x['timestamp'], reverse=True)
+        # Save order to orders.json
+        orders = []
+        if os.path.exists(ORDERS_FILE):
+            with open(ORDERS_FILE, 'r') as f:
+                try:
+                    orders = json.load(f)
+                except:
+                    orders = []
 
-        if not user_orders:
-            st.info("No orders found for your table.")
-        else:
-            latest = user_orders[0]
-            status = latest['status']
-            status_steps = ["Pending", "Preparing", "Ready", "Served"]
-            status_index = status_steps.index(status)
+        orders.append(order)
+        with open(ORDERS_FILE, 'w') as f:
+            json.dump(orders, f, indent=2)
 
-            st.write(f"🧾 **Order ID**: `{latest['id']}`")
-            st.write(f"🪑 **Table**: `{latest['table']}`")
-            st.caption(f"⏰ Placed at: {datetime.fromtimestamp(latest['timestamp']).strftime('%I:%M %p')}")
-
-            with st.expander("📋 View Ordered Items"):
-                for item in latest["items"].values():
-                    st.write(f"- {item['name']} x {item['qty']} = ₹{item['qty'] * item['price']}")
-                st.success(f"Total: ₹{latest['total']}")
-
-            st.progress(status_index / 3)
-
-            st.markdown("### 🚦 Order Status")
-            for i, step in enumerate(status_steps):
-                if i < status_index:
-                    st.markdown(f"✅ **{step}**")
-                elif i == status_index:
-                    st.markdown(f"🟡 **{step} (Current)**")
-                else:
-                    st.markdown(f"⏳ {step}")
+        st.success("🛎️ Order placed successfully!")
+        st.balloons()
+        st.session_state.cart = {}  # Clear cart
+        st.rerun()
