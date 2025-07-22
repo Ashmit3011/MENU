@@ -67,26 +67,30 @@ for idx, order in reversed(list(enumerate(orders))):
             f"""
             <div style="border: 1px solid #444; border-radius: 10px; padding: 10px; margin: 10px 0; background-color: #222;">
                 <div style="display: flex; justify-content: space-between;">
-                    <strong>🪑 Table {order['table']}</strong>
-                    <span style="background-color: #444; color: white; padding: 2px 8px; border-radius: 12px;">{order['status'].capitalize()}</span>
+                    <strong>🍽️ Table {order.get('table', '?')}</strong>
+                    <span style="background-color: #555; color: white; padding: 2px 8px; border-radius: 12px;">{order.get('status', 'Unknown').capitalize()}</span>
                 </div>
-                <div style="font-size: 12px; color: #ccc;">⏰ {order['timestamp']}</div>
+                <div style="font-size: 12px; color: #ccc;">⏰ {order.get('timestamp', '')}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        # ✅ Display items in order
-        for item in order["items"]:
-            try:
-                price = int(item["price"])
-                qty = int(item["quantity"])
-                total = price * qty
-                st.markdown(f"🍴 <b>{item['name']}</b> x {qty} = ₹{total}", unsafe_allow_html=True)
-            except (ValueError, KeyError, TypeError):
-                st.warning("⚠️ Invalid item data.")
+        # ✅ Display items
+        for item in order.get("items", []):
+            name = item.get("name", "Unnamed")
+            price = item.get("price")
+            quantity = item.get("quantity")
 
-        # ✅ Status control buttons
+            try:
+                price = float(price)
+                quantity = int(quantity)
+                total = price * quantity
+                st.markdown(f"🍴 <b>{name}</b> x {quantity} = ₹{total:.2f}", unsafe_allow_html=True)
+            except Exception:
+                st.warning(f"⚠️ Invalid item data: {item}")
+
+        # ✅ Button logic
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
@@ -96,7 +100,7 @@ for idx, order in reversed(list(enumerate(orders))):
                 custom_toast(f"🍳 Order for Table {order['table']} is now Preparing")
 
         with col2:
-            if order["status"] == "Preparing" and st.button("✅ Complete", key=f"complete-{idx}"):
+            if order["status"] == "Preparing" and st.button("✅ Complete", key=f"comp-{idx}"):
                 orders[idx]["status"] = "Completed"
                 changed = True
                 custom_toast(f"✅ Order for Table {order['table']} marked as Completed")
@@ -108,11 +112,11 @@ for idx, order in reversed(list(enumerate(orders))):
                 custom_toast(f"❌ Order for Table {order['table']} Cancelled")
 
         with col4:
-            if order["status"] == "Completed" and st.button("🗑️ Delete", key=f"delete-{idx}"):
+            if order["status"] in ["Completed", "Cancelled"] and st.button("🗑️ Delete", key=f"del-{idx}"):
+                table = order["table"]
                 del orders[idx]
-                with open(ORDERS_FILE, "w") as f:
-                    json.dump(orders, f, indent=2)
-                custom_toast(f"🗑️ Deleted order for Table {order['table']}")
+                changed = True
+                custom_toast(f"🗑️ Deleted order for Table {table}")
                 st.rerun()
 
         st.markdown("---")
@@ -121,4 +125,4 @@ for idx, order in reversed(list(enumerate(orders))):
 if changed:
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
-    st.success("✅ Order status updated.")
+    st.success("✅ Order updated.")
