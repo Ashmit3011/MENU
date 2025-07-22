@@ -91,7 +91,7 @@ if st.session_state.cart:
             }
             save_order(order)
             st.session_state.cart = {}
-            st.experimental_rerun()
+            st.rerun()
 else:
     st.info("Your cart is empty.")
 
