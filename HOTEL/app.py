@@ -8,22 +8,33 @@ from fpdf import FPDF
 # --- Page config ---
 st.set_page_config(page_title="Smart Table Order", layout="centered")
 
-# --- Styling ---
+# --- Calm UI Styling ---
 st.markdown("""
     <style>
+    body {
+        background-color: #F6F6F6;
+        color: #2E3B4E;
+    }
     [data-testid="stSidebar"] { display: none; }
     #MainMenu, footer {visibility: hidden;}
     .stButton > button {
-        padding: 0.4rem 1rem !important;
+        padding: 0.5rem 1.2rem !important;
         font-size: 1rem !important;
         border-radius: 10px !important;
-        background-color: #4CAF50 !important;
-        color: white;
+        background-color: #A7D7C5 !important;
+        color: #1C2B2D;
+        border: none;
+    }
+    .stButton > button:hover {
+        background-color: #92C9B1 !important;
     }
     .invoice {
-        background: #f1f3f4;
+        background: #e0f2f1;
         padding: 1rem;
         border-radius: 10px;
+    }
+    .block-container {
+        background-color: #F6F6F6;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -120,7 +131,6 @@ for order in reversed(orders):
         status = order["status"]
         st.markdown(f"🕒 *{order['timestamp']}* — **Status:** `{status}`")
 
-        # Show items
         for name, item in order["items"].items():
             line = f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}"
             if status == "Cancelled":
@@ -128,7 +138,6 @@ for order in reversed(orders):
             else:
                 st.markdown(line)
 
-        # ✅ Invoice on completion
         if status == "Completed":
             with st.expander("🧾 Download Invoice"):
                 pdf = FPDF()
