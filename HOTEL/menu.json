@@ -1,47 +1,17 @@
 [
-  {
-    "id": "item001",
-    "name": "Margherita Pizza",
-    "category": "Main Course",
-    "price": 250,
-    "veg": true,
-    "spicy": false,
-    "popular": true
-  },
-  {
-    "id": "item002",
-    "name": "Paneer Tikka",
-    "category": "Appetizers",
-    "price": 180,
-    "veg": true,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item003",
-    "name": "Butter Chicken",
-    "category": "Main Course",
-    "price": 320,
-    "veg": false,
-    "spicy": true,
-    "popular": true
-  },
-  {
-    "id": "item004",
-    "name": "Chocolate Brownie",
-    "category": "Desserts",
-    "price": 150,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  },
-  {
-    "id": "item005",
-    "name": "Masala Lemonade",
-    "category": "Drinks",
-    "price": 90,
-    "veg": true,
-    "spicy": false,
-    "popular": false
-  }
+    {
+        "id": "burger",
+        "name": "Cheese Burger",
+        "price": 120
+    },
+    {
+        "id": "pizza",
+        "name": "Veg Pizza",
+        "price": 200
+    },
+    {
+        "id": "coffee",
+        "name": "Cold Coffee",
+        "price": 90
+    }
 ]
