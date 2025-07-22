@@ -71,26 +71,27 @@ for idx, order in reversed(list(enumerate(orders))):
     with col1:
         if order["status"] == "Pending" and st.button("👨‍🍳 Mark Preparing", key=f"prep-{idx}"):
             orders[idx]["status"] = "Preparing"
-            custom_toast(f"🍳 Order for Table {order['table']} is now Preparing")
             changed = True
+            custom_toast(f"🍳 Order for Table {order['table']} is now Preparing")
 
     with col2:
         if order["status"] == "Preparing" and st.button("✅ Complete", key=f"comp-{idx}"):
             orders[idx]["status"] = "Completed"
-            custom_toast(f"✅ Order for Table {order['table']} marked as Completed")
             changed = True
+            custom_toast(f"✅ Order for Table {order['table']} marked as Completed")
 
     with col3:
         if order["status"] not in ["Completed", "Cancelled"] and st.button("❌ Cancel", key=f"cancel-{idx}"):
             orders[idx]["status"] = "Cancelled"
-            custom_toast(f"❌ Order for Table {order['table']} Cancelled")
             changed = True
+            custom_toast(f"❌ Order for Table {order['table']} Cancelled")
 
     with col4:
         if order["status"] == "Completed" and st.button("🗑️ Delete", key=f"delete-{idx}"):
             del orders[idx]
+            with open(ORDERS_FILE, "w") as f:
+                json.dump(orders, f, indent=2)
             custom_toast(f"🗑️ Deleted completed order for Table {order['table']}")
-            changed = True
             st.rerun()
 
     st.markdown("---")
