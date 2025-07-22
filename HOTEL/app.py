@@ -73,10 +73,22 @@ for category, items in menu.items():
 st.subheader("🛒 Cart")
 if st.session_state.cart:
     total = 0
-    for name, item in st.session_state.cart.items():
+    for name, item in list(st.session_state.cart.items()):
         subtotal = item["price"] * item["quantity"]
         total += subtotal
-        st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
+        col1, col2, col3 = st.columns([6, 1, 1])
+        with col1:
+            st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
+        with col2:
+            if st.button("➖", key=f"decrease-{name}"):
+                st.session_state.cart[name]["quantity"] -= 1
+                if st.session_state.cart[name]["quantity"] <= 0:
+                    del st.session_state.cart[name]
+                st.rerun()
+        with col3:
+            if st.button("❌", key=f"remove-{name}"):
+                del st.session_state.cart[name]
+                st.rerun()
     st.markdown(f"### 🧾 Total: ₹{total}")
 
     if st.button("✅ Place Order"):
