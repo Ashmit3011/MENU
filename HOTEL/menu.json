@@ -1,37 +1,18 @@
-[
-  {
-    "id": "item_1",
-    "name": "Margherita Pizza",
-    "price": 180
-  },
-  {
-    "id": "item_2",
-    "name": "Veg Burger",
-    "price": 100
-  },
-  {
-    "id": "item_3",
-    "name": "French Fries",
-    "price": 90
-  },
-  {
-    "id": "item_4",
-    "name": "Pasta Alfredo",
-    "price": 160
-  },
-  {
-    "id": "item_5",
-    "name": "Cold Coffee",
-    "price": 80
-  },
-  {
-    "id": "item_6",
-    "name": "Masala Dosa",
-    "price": 70
-  },
-  {
-    "id": "item_7",
-    "name": "Paneer Tikka",
-    "price": 150
-  }
-]
+
+    "Starters": {
+        "French Fries": 120,
+        "Spring Rolls": 150
+    },
+    "Main Course": {
+        "Paneer Butter Masala": 250,
+        "Chicken Biryani": 300
+    },
+    "Desserts": {
+        "Gulab Jamun": 80,
+        "Ice Cream": 90
+    },
+    "Drinks": {
+        "Coke": 40,
+        "Lassi": 60
+    }
+}
