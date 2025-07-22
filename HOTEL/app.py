@@ -1,72 +1,90 @@
 import streamlit as st
 import json
-import os
+import uuid
+from pathlib import Path
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
-ORDER_FILE = "orders.json"
-MENU_FILE = "menu.json"
-
+# ---------- Setup ----------
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
+BASE_DIR = Path(__file__).resolve().parent
+ORDERS_FILE = BASE_DIR / "orders.json"
+MENU_FILE = BASE_DIR / "menu.json"
 
-# Auto-refresh every 5 seconds
-st_autorefresh(interval=5000, key="apprefresh")
+# ---------- Load Menu ----------
+def load_menu():
+    if MENU_FILE.exists():
+        try:
+            with open(MENU_FILE, "r") as f:
+                return json.load(f)
+        except:
+            st.error("❌ menu.json is invalid.")
+            return {}
+    else:
+        st.warning("⚠️ menu.json not found.")
+        return {}
 
-# Load menu
-if os.path.exists(MENU_FILE):
-    with open(MENU_FILE, "r") as f:
-        menu = json.load(f)
-else:
-    st.error("Menu not found!")
-    st.stop()
+menu = load_menu()
 
-# Initialize order list
-if os.path.exists(ORDER_FILE):
-    with open(ORDER_FILE, "r") as f:
-        orders = json.load(f)
-else:
-    orders = []
+# ---------- Save Order ----------
+def save_order(order):
+    try:
+        with open(ORDERS_FILE, "r") as f:
+            orders = json.load(f)
+    except:
+        orders = []
+    orders.append(order)
+    with open(ORDERS_FILE, "w") as f:
+        json.dump(orders, f, indent=2)
 
-st.title("🍽️ Smart Table Ordering System")
-table = st.selectbox("Select Table Number", [f"Table {i}" for i in range(1, 11)])
+# ---------- UI ----------
+st.title("🍽 Smart Table Ordering System")
 
-with st.form("place_order"):
-    st.subheader("📋 Menu")
-    selected_items = {}
-    for item in menu:
-        qty = st.number_input(f"{item['name']} (₹{item['price']})", 0, 20, step=1)
-        if qty > 0:
-            selected_items[item['name']] = qty
+table_num = st.text_input("Enter your Table Number", key="table_input")
 
-    submitted = st.form_submit_button("✅ Place Order")
-    if submitted and selected_items:
-        new_order = {
-            "table": table,
-            "items": selected_items,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "status": "Placed"
-        }
-        orders.append(new_order)
-        with open(ORDER_FILE, "w") as f:
-            json.dump(orders, f, indent=2)
-        st.success("✅ Order placed successfully!")
+if table_num:
+    order = {}
+    total = 0
 
-# Show current orders
-st.subheader("📦 Your Orders")
-has_orders = False
-for idx, order in enumerate(orders):
-    if order["table"] == table:
-        has_orders = True
-        with st.expander(f"🕒 {order['timestamp']} - Status: {order['status']}"):
-            for item, qty in order["items"].items():
-                st.write(f"{item} x {qty}")
-            if order["status"] in ["Placed", "Preparing"]:
-                if st.button("❌ Cancel Order", key=f"cancel_{idx}"):
-                    orders[idx]["status"] = "Cancelled"
-                    with open(ORDER_FILE, "w") as f:
-                        json.dump(orders, f, indent=2)
-                    st.warning("Order cancelled.")
-                    st.rerun()
+    st.markdown("### 🧾 Select Your Items")
 
-if not has_orders:
-    st.info("You have no active orders.")
+    # ---------- Menu Display by Categories ----------
+    for category, items in menu.items():
+        with st.expander(f"📂 {category}"):
+            for item_id, item in items.items():
+                qty = st.number_input(
+                    f"{item['name']} - ₹{item['price']}",
+                    min_value=0,
+                    step=1,
+                    key=item_id
+                )
+                if qty > 0:
+                    order[item_id] = {
+                        "name": item["name"],
+                        "qty": qty,
+                        "price": item["price"]
+                    }
+                    total += qty * item["price"]
+
+    # ---------- Feedback ----------
+    feedback = st.text_area("💬 Any feedback or special instructions?", placeholder="E.g. Less spicy, no onions, etc.")
+
+    # ---------- Place Order ----------
+    if st.button("✅ Place Order"):
+        if order:
+            new_order = {
+                "id": str(uuid.uuid4()),
+                "table": table_num,
+                "items": order,
+                "total": total,
+                "status": "Pending",
+                "feedback": feedback.strip(),
+                "timestamp": datetime.now().timestamp()
+            }
+            save_order(new_order)
+            st.success("🟢 Order Placed Successfully!")
+        else:
+            st.warning("⚠️ Please select at least one item.")
+
+# ---------- Auto Refresh ----------
+st_autorefresh(interval=5000, key="app_refresh")
