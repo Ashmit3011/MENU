@@ -3,41 +3,41 @@ import json
 import os
 from datetime import datetime
 
-# Set page
+# Set page configuration
 st.set_page_config(page_title="Smart Table Order", layout="wide")
 st.title("🍽️ Smart Table Ordering System")
 
-# Get absolute path of current file
+# === Get absolute paths ===
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
-# Load menu
+# === Load menu ===
 if os.path.exists(MENU_FILE):
     with open(MENU_FILE, "r") as f:
         menu = json.load(f)
 else:
-    st.error(f"❌ Menu file not found at {MENU_FILE}")
+    st.error(f"❌ Menu file not found at: {MENU_FILE}")
     st.stop()
 
-# Load orders
+# === Load orders ===
 if os.path.exists(ORDERS_FILE):
     with open(ORDERS_FILE, "r") as f:
         orders = json.load(f)
 else:
     orders = []
 
-# Ask for table number
+# === Table number input ===
 if "table_number" not in st.session_state:
     table_number = st.text_input("Enter your Table Number")
     if table_number:
         st.session_state.table_number = table_number
-        st.session_state.cart = {}  # Initialize cart immediately
+        st.session_state.cart = {}
         st.rerun()
 else:
     st.sidebar.success(f"🪑 Table: {st.session_state.table_number}")
-    
-    # ✅ Ensure cart always exists before any buttons are used
+
+    # ✅ Ensure cart is initialized
     if "cart" not in st.session_state:
         st.session_state.cart = {}
 
@@ -47,9 +47,8 @@ else:
             del st.session_state.cart
         st.rerun()
 
-# Show menu
+# === Show Menu with Categories ===
 st.subheader("📋 Menu")
-
 for category, items in menu.items():
     with st.expander(category):
         for item in items:
@@ -66,9 +65,8 @@ for category, items in menu.items():
                         st.session_state.cart[name]["quantity"] += 1
                     st.rerun()
 
-# Show cart
+# === Cart Section ===
 st.subheader("🛒 Cart")
-
 if st.session_state.get("cart"):
     total = 0
     for name, item in st.session_state.cart.items():
@@ -93,9 +91,8 @@ if st.session_state.get("cart"):
 else:
     st.info("🛍️ Your cart is empty.")
 
-# Show order history
+# === Order History & Status Tracking ===
 st.subheader("📦 Your Orders")
-
 if "table_number" in st.session_state:
     found = False
     for order in reversed(orders):
