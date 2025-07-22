@@ -3,7 +3,6 @@ import json
 import os
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
-import streamlit.components.v1 as components
 
 # 🔄 Auto-refresh every 5 seconds
 count = st_autorefresh(interval=5000, key="admin_autorefresh")
@@ -30,9 +29,9 @@ st.markdown("""
 
 st.title("🛠️ Admin Panel - Order Management")
 
-# Toast function (working version)
+# Toast function
 def toast(message: str, duration=3000):
-    components.html(f"""
+    st.markdown(f"""
         <script>
         const toast = document.createElement("div");
         toast.textContent = "{message}";
@@ -51,7 +50,7 @@ def toast(message: str, duration=3000):
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), {duration});
         </script>
-    """, height=0)
+    """, unsafe_allow_html=True)
 
 # Load helpers
 def load_json(path, default):
@@ -92,18 +91,16 @@ for idx, order in reversed(list(enumerate(orders))):
         st.markdown(f"### 🪑 Table {order.get('table', '?')} - <span style='color: green'>{order.get('status', 'Unknown')}</span>", unsafe_allow_html=True)
         st.caption(f"🕒 {order.get('timestamp', 'Unknown')}")
 
-        if "items" in order:
-            st.markdown("#### 🧾 Ordered Items")
-            total = 0
-            for item in order["items"]:
-                if isinstance(item, dict):
-                    name = item.get("name", "Unnamed")
-                    qty = item.get("quantity", 0)
-                    price = item.get("price", 0)
-                    subtotal = price * qty
-                    total += subtotal
-                    st.markdown(f"- **{name}** × {qty} = ₹{subtotal}")
-            st.markdown(f"**💵 Total: ₹{total}**")
+        st.markdown("#### 🧾 Ordered Items")
+        total = 0
+        items = order.get("items", {})
+        for name, item in items.items():
+            qty = item.get("quantity", 0)
+            price = item.get("price", 0)
+            total += qty * price
+            st.markdown(f"🍽️ **{name}** x {qty} = ₹{price * qty}")
+
+        st.markdown(f"💰 **Total: ₹{total}**")
 
         st.markdown("---")
 
