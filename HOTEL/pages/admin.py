@@ -5,7 +5,7 @@ from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
 # Auto-refresh every 5 seconds
-st_autorefresh(interval=5000, key="admin_autorefresh", max_runs=-1)
+st_autorefresh(interval=5000, key="admin_autorefresh")
 
 # File paths
 ORDERS_FILE = os.path.join(os.path.dirname(__file__), "..", "orders.json")
