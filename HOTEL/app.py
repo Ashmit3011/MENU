@@ -12,9 +12,9 @@ st.markdown("""
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
-            padding: 0.3rem 0.8rem !important;
-            font-size: 0.8rem !important;
-            border-radius: 6px !important;
+            padding: 0.2rem 0.4rem !important;
+            font-size: 0.7rem !important;
+            border-radius: 4px !important;
         }
     </style>
 """, unsafe_allow_html=True)
