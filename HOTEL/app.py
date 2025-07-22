@@ -84,3 +84,40 @@ if st.button("✅ Place Order"):
 
         st.success(f"🧾 Order `{order_id}` placed successfully!")
         st.balloons()
+        st.rerun()
+
+# --- Live Order Tracker ---
+st.subheader("📦 Live Order Status Tracker")
+
+orders = load_orders()
+table_orders = [order for order in orders if order["table"] == table_number]
+latest_order = sorted(table_orders, key=lambda x: x["timestamp"], reverse=True)[0] if table_orders else None
+
+if latest_order:
+    st.markdown(f"**Order ID:** `{latest_order['id']}`")
+    st.markdown(f"**Placed at:** {datetime.fromtimestamp(latest_order['timestamp']).strftime('%H:%M:%S')}")
+    st.markdown(f"**Status:** `{latest_order['status']}`")
+
+    # Status progress bar
+    status_stages = ["Pending", "Preparing", "Ready", "Completed"]
+    current_stage_index = status_stages.index(latest_order["status"]) if latest_order["status"] in status_stages else 0
+
+    progress = st.progress(0)
+    for i in range(current_stage_index + 1):
+        progress.progress((i + 1) / len(status_stages))
+
+    # Cancel button (only if status is Pending)
+    if latest_order["status"] == "Pending":
+        if st.button("❌ Cancel Order"):
+            updated_orders = [order for order in orders if order["id"] != latest_order["id"]]
+            save_orders(updated_orders)
+            st.success("🛑 Order canceled successfully.")
+            st.rerun()
+    else:
+        st.info("ℹ️ Order can no longer be canceled.")
+
+    # Auto-refresh every 5 seconds
+    time.sleep(5)
+    st.rerun()
+else:
+    st.info("🕐 No order placed for this table yet.")
