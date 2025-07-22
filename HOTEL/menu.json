@@ -1,62 +1,50 @@
 [
   {
-    "id": "M001",
+    "id": 1,
     "name": "Margherita Pizza",
-    "category": "Main Course",
-    "price": 220
+    "category": "Food",
+    "price": 8.99
   },
   {
-    "id": "M002",
-    "name": "Paneer Butter Masala",
-    "category": "Main Course",
-    "price": 250
+    "id": 2,
+    "name": "Veggie Burger",
+    "category": "Food",
+    "price": 7.49
   },
   {
-    "id": "M003",
-    "name": "Veg Biryani",
-    "category": "Main Course",
-    "price": 180
-  },
-  {
-    "id": "A001",
+    "id": 3,
     "name": "French Fries",
-    "category": "Appetizers",
-    "price": 120
+    "category": "Food",
+    "price": 3.99
   },
   {
-    "id": "A002",
-    "name": "Spring Rolls",
-    "category": "Appetizers",
-    "price": 150
+    "id": 4,
+    "name": "Coca Cola",
+    "category": "Drinks",
+    "price": 1.99
   },
   {
-    "id": "D001",
-    "name": "Chocolate Brownie",
+    "id": 5,
+    "name": "Orange Juice",
+    "category": "Drinks",
+    "price": 2.49
+  },
+  {
+    "id": 6,
+    "name": "Chocolate Shake",
+    "category": "Drinks",
+    "price": 3.49
+  },
+  {
+    "id": 7,
+    "name": "Brownie Sundae",
     "category": "Desserts",
-    "price": 90
+    "price": 4.99
   },
   {
-    "id": "D002",
-    "name": "Gulab Jamun",
+    "id": 8,
+    "name": "Cheesecake",
     "category": "Desserts",
-    "price": 60
-  },
-  {
-    "id": "B001",
-    "name": "Masala Chai",
-    "category": "Drinks",
-    "price": 30
-  },
-  {
-    "id": "B002",
-    "name": "Cold Coffee",
-    "category": "Drinks",
-    "price": 90
-  },
-  {
-    "id": "B003",
-    "name": "Fresh Lime Soda",
-    "category": "Drinks",
-    "price": 60
+    "price": 5.49
   }
 ]
