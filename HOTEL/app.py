@@ -83,7 +83,7 @@ if st.session_state.cart:
 
         # Horizontal layout for cart item & buttons (Mobile Optimized)
         with st.container():
-            cart_cols = st.columns([6, 2, 2])
+            cart_cols = st.columns([4, 1, 1])
             with cart_cols[0]:
                 st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
             with cart_cols[1]:
