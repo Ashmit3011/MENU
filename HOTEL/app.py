@@ -125,4 +125,4 @@ else:
         st.rerun()
 
 # ----- Auto Refresh -----
-st.experimental_set_query_params(t=int(time.time()))
+st.query_params(t=int(time.time()))
