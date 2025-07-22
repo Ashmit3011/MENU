@@ -4,124 +4,99 @@ import os
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
-# --- Custom Toast ---
-def custom_toast(message, toast_type="info"):
-    color_map = {
-        "info": "#2b78e4",
-        "success": "#3cba54",
-        "warning": "#f4c20d",
-        "error": "#db3236"
-    }
-    color = color_map.get(toast_type, "#2b78e4")
+# 🚀 Custom toast using HTML
+def custom_toast(message: str, duration: int = 3000):
+    st.markdown(
+        f"""
+        <script>
+        const toast = document.createElement("div");
+        toast.textContent = "{message}";
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #323232;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-size: 14px;
+            z-index: 9999;
+            animation: fadein 0.5s, fadeout 0.5s {duration / 1000 - 0.5}s;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), {duration});
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
 
-    toast_html = f"""
-    <div id="custom-toast" style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: {color};
-        color: white;
-        padding: 14px 22px;
-        border-radius: 8px;
-        font-weight: bold;
-        z-index: 9999;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        animation: fadein 0.5s, fadeout 0.5s 2.5s;
-    ">
-        {message}
-    </div>
-    <script>
-        setTimeout(function() {{
-            var toast = document.getElementById("custom-toast");
-            if (toast) {{
-                toast.style.display = "none";
-            }}
-        }}, 3000);
-    </script>
-    <style>
-        @keyframes fadein {{
-            from {{bottom: 0; opacity: 0;}}
-            to {{bottom: 20px; opacity: 1;}}
-        }}
-        @keyframes fadeout {{
-            from {{bottom: 20px; opacity: 1;}}
-            to {{bottom: 0; opacity: 0;}}
-        }}
-    </style>
-    """
-    st.markdown(toast_html, unsafe_allow_html=True)
-
-# --- File Paths ---
+# Paths
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MENU_FILE = os.path.join(ROOT_DIR, "menu.json")
 ORDERS_FILE = os.path.join(ROOT_DIR, "orders.json")
 
-# --- Load Orders ---
+# Load menu
+if os.path.exists(MENU_FILE):
+    with open(MENU_FILE, "r") as f:
+        menu = json.load(f)
+else:
+    st.error(f"❌ Menu file not found at {MENU_FILE}")
+    st.stop()
+
+# Load orders
 if os.path.exists(ORDERS_FILE):
     with open(ORDERS_FILE, "r") as f:
         orders = json.load(f)
 else:
     orders = []
 
-# --- Auto-Refresh ---
+# Refresh every 5 seconds
 st_autorefresh(interval=5000, key="admin_autorefresh")
 
-# --- Header ---
-st.title("🛠️ Admin Panel - Order Management")
-st.subheader("📦 Active Orders")
-
-# --- Filter Dropdown ---
-status_filter = st.selectbox("🔍 Filter by status", ["All", "Pending", "Preparing", "Completed", "Cancelled"])
-
-def status_badge(status):
-    colors = {
-        "Pending": "#f39c12",
-        "Preparing": "#2980b9",
-        "Completed": "#27ae60",
-        "Cancelled": "#c0392b"
-    }
-    color = colors.get(status, "#7f8c8d")
-    return f'<span style="background-color:{color}; color:white; padding:4px 10px; border-radius:6px;">{status}</span>'
+st.markdown("### 🛠️ Admin Panel - Order Management")
+st.subheader("📦 All Orders")
 
 changed = False
 
-# --- Orders Loop ---
 for idx, order in reversed(list(enumerate(orders))):
-    if status_filter != "All" and order["status"] != status_filter:
-        continue
-
-    st.markdown(f"""
-    <div style="padding: 12px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 10px;">
-        <h4>🍽️ Table <strong>{order['table']}</strong> — 🕒 {order['timestamp']} &nbsp;&nbsp; {status_badge(order['status'])}</h4>
-    """, unsafe_allow_html=True)
-
+    st.markdown(
+        f"### Table {order['table']} — {order['status']} — ⏰ {order['timestamp']}"
+    )
     for name, item in order["items"].items():
-        st.markdown(f"<li>{name} × {item['quantity']} = ₹{item['price'] * item['quantity']}</li>", unsafe_allow_html=True)
+        st.markdown(f"- {name} x {item['quantity']} = ₹{item['price'] * item['quantity']}")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         if order["status"] == "Pending" and st.button("👨‍🍳 Mark Preparing", key=f"prep-{idx}"):
             orders[idx]["status"] = "Preparing"
-            custom_toast(f"🍳 Table {order['table']} order marked Preparing", "info")
+            custom_toast(f"🍳 Order for Table {order['table']} is now Preparing")
             changed = True
 
     with col2:
         if order["status"] == "Preparing" and st.button("✅ Complete", key=f"comp-{idx}"):
             orders[idx]["status"] = "Completed"
-            custom_toast(f"✅ Table {order['table']} order Completed", "success")
+            custom_toast(f"✅ Order for Table {order['table']} marked as Completed")
             changed = True
 
     with col3:
         if order["status"] not in ["Completed", "Cancelled"] and st.button("❌ Cancel", key=f"cancel-{idx}"):
             orders[idx]["status"] = "Cancelled"
-            custom_toast(f"❌ Table {order['table']} order Cancelled", "error")
+            custom_toast(f"❌ Order for Table {order['table']} Cancelled")
             changed = True
 
-    st.markdown("</div><br>", unsafe_allow_html=True)
+    with col4:
+        if order["status"] == "Completed" and st.button("🗑️ Delete", key=f"delete-{idx}"):
+            del orders[idx]
+            custom_toast(f"🗑️ Deleted completed order for Table {order['table']}")
+            changed = True
+            st.rerun()
 
-# --- Save Changes ---
+    st.markdown("---")
+
+# Save updates
 if changed:
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
-    st.rerun()
+    st.success("✅ Order status updated.")
