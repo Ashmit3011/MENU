@@ -9,7 +9,7 @@ st.set_page_config(page_title="Smart Table Order", layout="wide")
 
 # Paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MENU_FILE = os.path.join(BASE_DIR, "menu.json")
+MENU_FILE = os.path.join(BASE_DIR, "pages", "menu.json")  # 🔄 Updated path
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
 # Load menu
