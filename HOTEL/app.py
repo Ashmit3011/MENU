@@ -37,7 +37,7 @@ if "table_number" not in st.session_state:
 else:
     st.sidebar.success(f"🪑 Table: {st.session_state.table_number}")
     
-    # ✅ Ensure cart exists during every rerun with table_number
+    # ✅ Ensure cart always exists before any buttons are used
     if "cart" not in st.session_state:
         st.session_state.cart = {}
 
