@@ -12,11 +12,9 @@ st.markdown("""
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
-            padding: 0.25rem 0.4rem !important;
-            font-size: 0.65rem !important;
+            padding: 0.2rem 0.4rem !important;
+            font-size: 0.7rem !important;
             border-radius: 8px !important;
-            margin: 0 2px !important;
-            min-width: 2rem;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -83,36 +81,21 @@ if st.session_state.cart:
         subtotal = item["price"] * item["quantity"]
         total += subtotal
 
-        # Inline layout (compact for mobile)
-        with st.container():
-            item_col, btn1_col, btn2_col = st.columns([8, 1, 1])  # Tighter layout
-            with item_col:
-                st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
-            with btn1_col:
-                st.markdown(
-                    f"""<button style='font-size:0.6rem;padding:2px 6px;border-radius:8px;background-color:#262730;color:#a5a5ff;border:1px solid #444;'>➖</button>""",
-                    unsafe_allow_html=True
-                )
-                if st.button(" ", key=f"decrease-{name}"):
-                    st.session_state.cart[name]["quantity"] -= 1
-                    if st.session_state.cart[name]["quantity"] <= 0:
-                        del st.session_state.cart[name]
-                    st.rerun()
-            with btn2_col:
-                st.markdown(
-                    f"""<button style='font-size:0.6rem;padding:2px 6px;border-radius:8px;background-color:#262730;color:#ff6b81;border:1px solid #444;'>❌</button>""",
-                    unsafe_allow_html=True
-                )
-                if st.button("  ", key=f"remove-{name}"):
-                    del st.session_state.cart[name]
-                    st.rerun()
+        item_col, btn1_col, btn2_col = st.columns([8, 1, 1])
+        with item_col:
+            st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
 
-            with cart_cols[2]:
-                st.markdown("<div style='padding-top: 0.2rem;'>", unsafe_allow_html=True)
-                if st.button("❌", key=f"remove-{name}"):
+        with btn1_col:
+            if st.button("➖", key=f"decrease-{name}"):
+                st.session_state.cart[name]["quantity"] -= 1
+                if st.session_state.cart[name]["quantity"] <= 0:
                     del st.session_state.cart[name]
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
+                st.rerun()
+
+        with btn2_col:
+            if st.button("❌", key=f"remove-{name}"):
+                del st.session_state.cart[name]
+                st.rerun()
 
     st.markdown(f"### 🧾 Total: ₹{total}")
 
