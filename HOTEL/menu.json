@@ -1,74 +1,32 @@
 [
   {
-    "id": 1,
-    "name": "Margherita Pizza",
-    "category": "Food",
-    "price": 8.99
+    "id": "1",
+    "name": "Paneer Tikka",
+    "price": 10.00,
+    "category": "Main course"
   },
   {
-    "id": 2,
-    "name": "Veggie Burger",
-    "category": "Food",
-    "price": 7.49
+    "id": "2",
+    "name": "Veg Biryani",
+    "price": 12.50,
+    "category": "Main course"
   },
   {
-    "id": 3,
-    "name": "French Fries",
-    "category": "Food",
-    "price": 3.99
+    "id": "3",
+    "name": "Spring Rolls",
+    "price": 6.00,
+    "category": "Starters"
   },
   {
-    "id": 4,
-    "name": "Spaghetti Aglio e Olio",
-    "category": "Food",
-    "price": 6.99
-  },
-  {
-    "id": 5,
-    "name": "Grilled Sandwich",
-    "category": "Food",
-    "price": 5.49
-  },
-  {
-    "id": 6,
-    "name": "Coca Cola",
-    "category": "Drinks",
-    "price": 1.99
-  },
-  {
-    "id": 7,
-    "name": "Fresh Lime Soda",
-    "category": "Drinks",
-    "price": 2.49
-  },
-  {
-    "id": 8,
-    "name": "Cold Coffee",
-    "category": "Drinks",
-    "price": 3.49
-  },
-  {
-    "id": 9,
-    "name": "Chocolate Shake",
-    "category": "Drinks",
-    "price": 3.99
-  },
-  {
-    "id": 10,
-    "name": "Brownie Sundae",
-    "category": "Desserts",
-    "price": 4.99
-  },
-  {
-    "id": 11,
-    "name": "Cheesecake Slice",
-    "category": "Desserts",
-    "price": 5.49
-  },
-  {
-    "id": 12,
+    "id": "4",
     "name": "Gulab Jamun",
-    "category": "Desserts",
-    "price": 2.99
+    "price": 4.00,
+    "category": "Desserts"
+  },
+  {
+    "id": "5",
+    "name": "Masala Chai",
+    "price": 3.00,
+    "category": "Beverages"
   }
 ]
