@@ -83,7 +83,7 @@ if st.session_state.cart:
 
         # Horizontal layout for cart item & buttons
         with st.container():
-    cart_cols = st.columns([6, 1, 1], gap="small")  # Force compact layout
+    cart_cols = st.columns([6, 1, 1], gap="small")  # Horizontal layout
     with cart_cols[0]:
         st.markdown(
             f"<div style='white-space: nowrap; font-size: 0.85rem;'><b>{name}</b> x {item['quantity']} = ₹{subtotal}</div>",
