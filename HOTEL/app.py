@@ -1,134 +1,132 @@
 import streamlit as st
 import json
 import os
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 
-# Paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-menu_file = os.path.join(BASE_DIR, "menu.json")
-orders_file = os.path.join(BASE_DIR, "orders.json")
-
-# Page config
-st.set_page_config(page_title="Smart Table Ordering", layout="wide")
-
-# Hide sidebar and Streamlit elements
-hide_sidebar = """
+# Hide sidebar and Streamlit default styling
+st.set_page_config(page_title="Smart Table Order", layout="wide")
+hide_sidebar_style = """
     <style>
-    [data-testid="stSidebar"] { display: none; }
-    [data-testid="stSidebarNav"] ul li a[href*="pages/_admin"] { display: none; }
+        [data-testid="stSidebar"] { display: none; }
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
     </style>
 """
-st.markdown(hide_sidebar, unsafe_allow_html=True)
+st.markdown(hide_sidebar_style, unsafe_allow_html=True)
 
-# Title
-st.markdown("<h1 style='text-align: center;'>🍽️ Smart Table Ordering System</h1>", unsafe_allow_html=True)
-
-# ⌨️ Input table number at the top of the page
-table_number = st.text_input("Enter your Table Number:", max_chars=10)
-
-if not table_number:
-    st.warning("Please enter your Table Number to continue.")
-    st.stop()
+# Get absolute path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MENU_FILE = os.path.join(BASE_DIR, "menu.json")
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 
 # Load menu
-if os.path.exists(menu_file):
-    with open(menu_file, "r") as f:
+if os.path.exists(MENU_FILE):
+    with open(MENU_FILE, "r") as f:
         menu = json.load(f)
 else:
-    st.error("Menu file not found.")
+    st.error(f"❌ Menu file not found at {MENU_FILE}")
     st.stop()
 
 # Load orders
-if os.path.exists(orders_file):
-    with open(orders_file, "r") as f:
+if os.path.exists(ORDERS_FILE):
+    with open(ORDERS_FILE, "r") as f:
         orders = json.load(f)
 else:
     orders = []
 
-# Auto-clean old completed/cancelled orders (> 5 mins)
-now = datetime.now()
-filtered_orders = []
-for order in orders:
-    order_time = datetime.strptime(order["timestamp"], "%Y-%m-%d %H:%M:%S")
-    if order["status"] in ["Completed", "Cancelled"]:
-        if now - order_time < timedelta(minutes=5):
-            filtered_orders.append(order)
-    else:
-        filtered_orders.append(order)
-
-# Save cleaned orders
-with open(orders_file, "w") as f:
-    json.dump(filtered_orders, f, indent=4)
-
-# Select items
-st.markdown("## 🧾 Menu")
-selected_items = {}
-for category, items in menu.items():
-    st.subheader(category)
-    for item in items:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.write(f"**{item['name']}** - ₹{item['price']}")
-        with col2:
-            qty = st.number_input(f"{item['name']}", key=item['name'], min_value=0, step=1)
-            if qty > 0:
-                selected_items[item['name']] = {"price": item['price'], "quantity": qty}
-
-# Place order
-if st.button("🛎️ Place Order"):
-    if selected_items:
-        new_order = {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "table": table_number,
-            "items": selected_items,
-            "status": "Pending"
-        }
-        filtered_orders.append(new_order)
-        with open(orders_file, "w") as f:
-            json.dump(filtered_orders, f, indent=4)
-        st.success("✅ Your order has been placed!")
+# Ask for table number (shown on main page)
+if "table_number" not in st.session_state:
+    st.title("🍽️ Smart Table Ordering System")
+    table_number = st.text_input("🔢 Enter your Table Number")
+    if table_number:
+        st.session_state.table_number = table_number
+        st.session_state.cart = {}
         st.rerun()
-    else:
-        st.warning("Please select at least one item.")
+else:
+    st.title(f"🍽️ Smart Table Ordering — Table {st.session_state.table_number}")
 
-# Show current table's orders
-st.markdown("## 📦 Your Orders")
+# Initialize cart
+if "cart" not in st.session_state:
+    st.session_state.cart = {}
 
-has_orders = False
-for order in reversed(filtered_orders):
-    if order.get("table") != table_number:
-        continue
+# Show menu
+st.subheader("📋 Menu")
+for category, items in menu.items():
+    with st.expander(category):
+        for item in items:
+            col1, col2 = st.columns([6, 1])
+            with col1:
+                st.markdown(f"**{item['name']}** — ₹{item['price']}")
+            with col2:
+                if st.button("➕", key=f"{category}-{item['name']}"):
+                    name = item["name"]
+                    price = item["price"]
+                    if name not in st.session_state.cart:
+                        st.session_state.cart[name] = {"price": price, "quantity": 1}
+                    else:
+                        st.session_state.cart[name]["quantity"] += 1
+                    st.rerun()
 
-    has_orders = True
-    timestamp = order["timestamp"]
-    status = order["status"]
-    items = order["items"]
+# Show cart
+st.subheader("🛒 Cart")
+if st.session_state.cart:
+    total = 0
+    for name, item in st.session_state.cart.items():
+        subtotal = item["price"] * item["quantity"]
+        total += subtotal
+        st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
+    st.markdown(f"### 🧾 Total: ₹{total}")
 
-    status_color = {
-        "Pending": "orange",
-        "Preparing": "blue",
-        "Completed": "green",
-        "Cancelled": "red"
-    }.get(status, "gray")
+    if st.button("✅ Place Order"):
+        # Remove old orders for this table
+        orders = [o for o in orders if o["table"] != st.session_state.table_number]
 
-    st.markdown(f"""
-    <div style="border:1px solid #444;padding:10px;border-radius:10px;margin:10px 0;">
-        <p>🕒 <span style="color:lightgreen;">{timestamp}</span> — 
-        <b>Status:</b> <span style="color:{status_color};">{status}</span></p>
-    """, unsafe_allow_html=True)
+        # Add new order
+        order = {
+            "table": st.session_state.table_number,
+            "items": st.session_state.cart,
+            "status": "Pending",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        orders.append(order)
+        with open(ORDERS_FILE, "w") as f:
+            json.dump(orders, f, indent=2)
 
-    for name, detail in items.items():
-        text = f"{name} x {detail['quantity']} = ₹{detail['price'] * detail['quantity']}"
-        if status == "Cancelled":
-            st.markdown(f"<p style='text-decoration: line-through; color: gray;'>{text}</p>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"- {text}")
+        st.success("✅ Order Placed!")
+        del st.session_state.cart
+        st.rerun()
+else:
+    st.info("🛍️ Your cart is empty.")
 
-    st.markdown("</div>", unsafe_allow_html=True)
+# Show order history
+st.subheader("📦 Your Orders")
+found = False
+for order in reversed(orders):
+    if order["table"] == st.session_state.table_number:
+        found = True
+        status = order["status"]
+        st.markdown(f"🕒 *{order['timestamp']}* — **Status:** `{status}`")
+        for name, item in order["items"].items():
+            line = f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}"
+            if status == "Cancelled":
+                st.markdown(f"<s>{line}</s>", unsafe_allow_html=True)
+            else:
+                st.markdown(line)
 
-if not has_orders:
-    st.info("You have not placed any orders yet.")
+        if status not in ["Completed", "Cancelled"]:
+            if st.button(f"❌ Cancel Order ({order['timestamp']})", key=order["timestamp"]):
+                order["status"] = "Cancelled"
+                with open(ORDERS_FILE, "w") as f:
+                    json.dump(orders, f, indent=2)
+                st.warning("Order cancelled.")
+                st.rerun()
+        st.markdown("---")
 
-# Refresh to update live
-# Refresh to update live
-st.query_params.update(t=str(datetime.now().timestamp()))
+if not found:
+    st.info("📭 No orders found.")
+
+# Auto-refresh every 10 seconds
+with st.empty():
+    time.sleep(10)
+    st.rerun()
