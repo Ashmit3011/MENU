@@ -8,9 +8,17 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(page_title="Smart Table Order", layout="wide")
 
 # Paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+CURRENT_FILE = os.path.abspath(__file__)
+PAGES_DIR = os.path.dirname(CURRENT_FILE)
+ROOT_DIR = os.path.dirname(PAGES_DIR)
+MENU_FILE = os.path.join(ROOT_DIR, "menu.json")
+ORDERS_FILE = os.path.join(ROOT_DIR, "orders.json")
+
+# Debug file paths
+st.markdown(f"**📄 Current File:** `{CURRENT_FILE}`")
+st.markdown(f"**📁 Root Dir:** `{ROOT_DIR}`")
+st.markdown(f"**📋 Menu Path:** `{MENU_FILE}`")
+st.markdown(f"**📦 Orders Path:** `{ORDERS_FILE}`")
 
 # Load menu
 if os.path.exists(MENU_FILE):
