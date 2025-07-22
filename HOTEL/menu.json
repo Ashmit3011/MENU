@@ -1,79 +1,22 @@
 {
-  "Starters": [
-    {
-      "name": "Paneer Tikka",
-      "price": 180,
-      "description": "Marinated paneer grilled to perfection."
-    },
-    {
-      "name": "Chicken Lollipop",
-      "price": 220,
-      "description": "Crispy and spicy chicken wings."
-    }
-  ],
-  "Main Course": [
-    {
-      "name": "Butter Chicken",
-      "price": 250,
-      "description": "Creamy tomato-based chicken curry."
-    },
-    {
-      "name": "Paneer Butter Masala",
-      "price": 200,
-      "description": "Soft paneer cubes in rich butter gravy."
-    },
-    {
-      "name": "Dal Tadka",
-      "price": 140,
-      "description": "Yellow lentils cooked with ghee and spices."
-    }
-  ],
-  "Biryani": [
-    {
-      "name": "Veg Biryani",
-      "price": 160,
-      "description": "Fragrant rice with mixed vegetables and spices."
-    },
-    {
-      "name": "Chicken Biryani",
-      "price": 220,
-      "description": "Basmati rice cooked with spiced chicken and herbs."
-    }
-  ],
-  "Breads": [
-    {
-      "name": "Butter Naan",
-      "price": 30,
-      "description": "Soft leavened Indian bread with butter."
-    },
-    {
-      "name": "Tandoori Roti",
-      "price": 20,
-      "description": "Whole wheat bread cooked in clay oven."
-    }
-  ],
-  "Desserts": [
-    {
-      "name": "Gulab Jamun",
-      "price": 80,
-      "description": "Soft deep-fried dumplings soaked in sugar syrup."
-    },
-    {
-      "name": "Ice Cream",
-      "price": 100,
-      "description": "Assorted seasonal flavors."
-    }
-  ],
-  "Beverages": [
-    {
-      "name": "Masala Chai",
-      "price": 20,
-      "description": "Spiced Indian tea with milk."
-    },
-    {
-      "name": "Cold Coffee",
-      "price": 70,
-      "description": "Chilled coffee with cream."
-    }
-  ]
+  "Margherita Pizza": {
+    "price": 199,
+    "category": "Pizza"
+  },
+  "Paneer Tikka": {
+    "price": 249,
+    "category": "Starter"
+  },
+  "Veg Biryani": {
+    "price": 179,
+    "category": "Main Course"
+  },
+  "Gulab Jamun": {
+    "price": 99,
+    "category": "Dessert"
+  },
+  "Cold Coffee": {
+    "price": 79,
+    "category": "Beverage"
+  }
 }
