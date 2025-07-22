@@ -1,123 +1,86 @@
 import streamlit as st
 import json
 import os
-import time
+from streamlit_autorefresh import st_autorefresh
 from datetime import datetime
 
-# Page setup
-st.set_page_config(page_title="Smart Table Ordering", layout="centered")
-st.title("📲 Smart Table Ordering System")
+# File paths
+MENU_FILE = "menu.json"
+ORDERS_FILE = "orders.json"
 
-# --- File paths ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, 'menu_files')
-MENU_FILE = os.path.join(DATA_DIR, 'menu.json')
-ORDERS_FILE = os.path.join(DATA_DIR, 'orders.json')
+# Refresh every 5 seconds
+st_autorefresh(interval=5000, key="app_autorefresh")
 
-# --- Load menu ---
+# Load menu items
 def load_menu():
-    if os.path.exists(MENU_FILE):
-        with open(MENU_FILE, 'r') as f:
-            return json.load(f)
-    return []
+    if not os.path.exists(MENU_FILE):
+        return []
+    with open(MENU_FILE, "r") as f:
+        return json.load(f)
 
-# --- Load orders ---
+# Load orders
 def load_orders():
-    if os.path.exists(ORDERS_FILE):
-        with open(ORDERS_FILE, 'r') as f:
-            try:
-                return json.load(f)
-            except:
-                return []
-    return []
+    if not os.path.exists(ORDERS_FILE):
+        return []
+    with open(ORDERS_FILE, "r") as f:
+        return json.load(f)
 
-# --- Save orders ---
+# Save orders
 def save_orders(orders):
-    with open(ORDERS_FILE, 'w') as f:
-        json.dump(orders, f, indent=2)
+    with open(ORDERS_FILE, "w") as f:
+        json.dump(orders, f, indent=4)
 
-# Load menu
+# UI
+st.title("🍔 Smart Table Order")
+
+# Table Number Input
+table_number = st.number_input("Enter Table Number:", min_value=1, step=1)
+
 menu = load_menu()
-if not menu:
-    st.error("⚠️ Menu not found or is empty!")
-    st.stop()
+orders = load_orders()
 
-# --- Select Table ---
-table_number = st.selectbox("🪑 Select Your Table", [f"Table {i}" for i in range(1, 11)])
-
-# --- Item selection ---
-st.subheader("📝 Select Items")
-cart = {}
-
+# Show menu and take order
+st.subheader("📋 Menu")
+order_items = {}
 for item in menu:
-    col1, col2 = st.columns([6, 1])
-    with col1:
-        st.markdown(f"**{item['name']}** - ₹{item['price']}")
-    with col2:
-        qty = st.number_input("Qty", min_value=0, max_value=10, step=1, key=f"qty_{item['id']}")
-        if qty > 0:
-            cart[item['id']] = {
-                "name": item["name"],
-                "price": item["price"],
-                "qty": qty
-            }
+    qty = st.number_input(f"{item['name']} - ₹{item['price']}", min_value=0, step=1, key=item["id"])
+    if qty > 0:
+        order_items[item["id"]] = qty
 
-# --- Place Order ---
+# Submit order
 if st.button("✅ Place Order"):
-    if not cart:
-        st.warning("🛒 Your cart is empty!")
-    else:
-        orders = load_orders()
-        timestamp = time.time()
-        order_id = f"ORD{int(timestamp)}"
-
+    if order_items:
         new_order = {
-            "id": order_id,
             "table": table_number,
-            "timestamp": timestamp,
-            "status": "Pending",
-            "items": cart
+            "items": order_items,
+            "status": "Placed",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-
         orders.append(new_order)
         save_orders(orders)
-
-        st.success(f"🧾 Order `{order_id}` placed successfully!")
-        st.balloons()
-        st.rerun()
-
-# --- Live Order Tracker ---
-st.subheader("📦 Live Order Status Tracker")
-
-orders = load_orders()
-table_orders = [order for order in orders if order["table"] == table_number]
-latest_order = sorted(table_orders, key=lambda x: x["timestamp"], reverse=True)[0] if table_orders else None
-
-if latest_order:
-    st.markdown(f"**Order ID:** `{latest_order['id']}`")
-    st.markdown(f"**Placed at:** {datetime.fromtimestamp(latest_order['timestamp']).strftime('%H:%M:%S')}")
-    st.markdown(f"**Status:** `{latest_order['status']}`")
-
-    # Status progress bar
-    status_stages = ["Pending", "Preparing", "Ready", "Completed"]
-    current_stage_index = status_stages.index(latest_order["status"]) if latest_order["status"] in status_stages else 0
-
-    progress = st.progress(0)
-    for i in range(current_stage_index + 1):
-        progress.progress((i + 1) / len(status_stages))
-
-    # Cancel button (only if status is Pending)
-    if latest_order["status"] == "Pending":
-        if st.button("❌ Cancel Order"):
-            updated_orders = [order for order in orders if order["id"] != latest_order["id"]]
-            save_orders(updated_orders)
-            st.success("🛑 Order canceled successfully.")
-            st.rerun()
+        st.success("Order placed successfully!")
     else:
-        st.info("ℹ️ Order can no longer be canceled.")
+        st.warning("Please select at least one item.")
 
-    # Auto-refresh every 5 seconds
-    time.sleep(5)
-    st.rerun()
+# Show live status for this table
+st.subheader("📡 Live Order Tracker")
+
+table_orders = [order for order in orders if order["table"] == table_number]
+
+if not table_orders:
+    st.info("No orders yet for this table.")
 else:
-    st.info("🕐 No order placed for this table yet.")
+    for i, order in enumerate(table_orders):
+        st.markdown(f"### 🧾 Order #{i+1} - Status: `{order['status']}`")
+        for item_id, qty in order["items"].items():
+            item_name = next((m['name'] for m in menu if m["id"] == item_id), "Unknown")
+            st.markdown(f"- **{item_name}** x {qty}")
+
+        # Cancel button for each active order
+        if order["status"] not in ["Completed", "Cancelled"]:
+            if st.button(f"❌ Cancel Order #{i+1}", key=f"cancel_{i}"):
+                order["status"] = "Cancelled"
+                order["cancelled_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                save_orders(orders)
+                st.warning("Order cancelled.")
+                st.rerun()
