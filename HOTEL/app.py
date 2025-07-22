@@ -130,4 +130,5 @@ if not has_orders:
     st.info("You have not placed any orders yet.")
 
 # Refresh to update live
-st.experimental_set_query_params(t=str(datetime.now().timestamp()))
+# Refresh to update live
+st.query_params.update(t=str(datetime.now().timestamp()))
