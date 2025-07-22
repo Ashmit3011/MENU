@@ -63,7 +63,7 @@ for idx, order in reversed(list(enumerate(orders))):
                     orders[idx]["status"] = new_status
                     save_json(ORDERS_FILE, orders)
                     st.success(f"✅ Status updated to {new_status}")
-                    st.experimental_rerun()
+                    st.rerun()
 
             # Cancel/delete
             col1, col2 = st.columns(2)
@@ -72,10 +72,10 @@ for idx, order in reversed(list(enumerate(orders))):
                     orders[idx]["status"] = "Cancelled"
                     save_json(ORDERS_FILE, orders)
                     st.warning("Order cancelled.")
-                    st.experimental_rerun()
+                    st.rerun()
             with col2:
                 if order.get("status") == "Completed" and st.button("🗑️ Delete", key=f"delete_{idx}"):
                     orders.pop(idx)
                     save_json(ORDERS_FILE, orders)
                     st.success("🗑️ Order deleted.")
-                    st.experimental_rerun()
+                    st.rerun()
