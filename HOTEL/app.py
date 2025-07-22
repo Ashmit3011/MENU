@@ -40,9 +40,6 @@ QR_IMAGE = os.path.join(BASE_DIR, "qr.png")
 INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
 
 # -------------- Helper: Generate Invoice --------------
-ChatGPT said:
-Perfect — since your QR code is saved as qr code.jpg, here's how to integrate it into the invoice generation in your app.py using fpdf:
-
 ✅ Step-by-Step Update
 1. Rename the file for simplicity
 Avoid spaces in filenames for stability across systems. Rename:
