@@ -1,7 +1,7 @@
 [theme]
-base = "light"
-primaryColor = "#4F6D7A"            # Calm blue
-backgroundColor = "#F5F7FA"         # Light gray
-secondaryBackgroundColor = "#E3E9ED"
-textColor = "#2C3E50"               # Dark slate for visibility
-font = "sans serif"
+base="dark"
+primaryColor="#80cbc4"              # soft teal
+backgroundColor="#121212"           # deep dark gray
+secondaryBackgroundColor="#1e1e1e"  # slightly lighter for cards
+textColor="#e0e0e0"                 # soft white
+font="sans serif"
