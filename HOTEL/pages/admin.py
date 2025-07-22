@@ -54,32 +54,42 @@ else:
 # 🔁 Auto-refresh
 st_autorefresh(interval=5000, key="admin_autorefresh")
 
-# 🧠 CSS styles for dark theme
+# 🧠 CSS styles (Glassmorphic UI + Modern Buttons + Status Badges)
 st.markdown("""
     <style>
     .order-card {
-        border: 1px solid #444;
         padding: 16px;
-        border-radius: 12px;
-        background-color: #1e1e1e;
+        border-radius: 14px;
         margin-bottom: 20px;
+        backdrop-filter: blur(6px);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         box-shadow: 0 0 8px rgba(255, 255, 255, 0.05);
-        animation: fadeIn 0.5s ease-in-out;
+        animation: fadeIn 0.4s ease-in-out;
     }
     .status-badge {
+        background-color: rgba(255,255,255,0.1);
         padding: 4px 12px;
         border-radius: 999px;
-        font-weight: bold;
+        font-weight: 600;
         font-size: 12px;
         color: white;
-        text-transform: capitalize;
+        box-shadow: 0 0 6px rgba(255,255,255,0.15);
     }
     .stButton button {
-        padding: 0.4rem 1.2rem;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 14px;
-        margin: 6px 0;
+        border-radius: 10px;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 8px 16px;
+        font-weight: bold;
+        color: white;
+        transition: all 0.2s ease;
+        margin: 4px 0;
+    }
+    .stButton button:hover {
+        background-color: #ef4444;
+        color: white;
+        border: 1px solid #ef4444;
     }
     @keyframes fadeIn {
         from {opacity: 0; transform: translateY(10px);}
@@ -104,16 +114,16 @@ def time_ago(timestamp_str):
     except:
         return timestamp_str
 
-# 🎨 Status color mapping
+# 🎨 Status color (optional – currently using same badge style)
 def get_status_color(status):
     return {
-        "Pending": "#f59e0b",      # amber
-        "Preparing": "#3b82f6",    # blue
-        "Completed": "#22c55e",    # green
-        "Cancelled": "#ef4444",    # red
+        "Pending": "#f59e0b",
+        "Preparing": "#3b82f6",
+        "Completed": "#22c55e",
+        "Cancelled": "#ef4444",
     }.get(status, "#888")
 
-# 🔃 Sort orders: Pending > Preparing > Others
+# 🔃 Sort orders
 status_priority = {"Pending": 0, "Preparing": 1, "Completed": 2, "Cancelled": 3}
 orders = sorted(orders, key=lambda x: (status_priority.get(x["status"], 99), x["timestamp"]), reverse=True)
 
@@ -128,13 +138,13 @@ if not orders:
 else:
     for idx, order in enumerate(orders):
         status = order["status"]
-        color = get_status_color(status)
+        badge = f'<span class="status-badge">{status}</span>'
 
         st.markdown(f"""
         <div class="order-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div><strong>🍽️ Table {order['table']}</strong></div>
-                <div class="status-badge" style="background-color:{color};">{status}</div>
+                <div>{badge}</div>
             </div>
             <div style="font-size: 13px; color: #aaa;">⏱️ {time_ago(order['timestamp'])}</div>
             <hr style="border: none; border-top: 1px solid #333; margin: 10px 0;">
@@ -175,9 +185,9 @@ else:
                 custom_toast(f"🗑️ Deleted completed order for Table {order['table']}")
                 st.rerun()
 
-        st.markdown("</div>", unsafe_allow_html=True)  # close order-card div
+        st.markdown("</div>", unsafe_allow_html=True)  # close .order-card div
 
-# 💾 Save updates
+# 💾 Save changes
 if changed:
     with open(ORDERS_FILE, "w") as f:
         json.dump(orders, f, indent=2)
