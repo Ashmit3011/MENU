@@ -11,6 +11,11 @@ st.markdown("""
         [data-testid="stSidebar"] { display: none; }
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
+        .stButton > button {
+            padding: 0.3rem 0.8rem !important;
+            font-size: 0.8rem !important;
+            border-radius: 6px !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -76,7 +81,7 @@ if st.session_state.cart:
         subtotal = item["price"] * item["quantity"]
         total += subtotal
 
-        # 💡 Horizontal layout for cart item & buttons (Mobile Optimized)
+        # Horizontal layout for cart item & buttons (Mobile Optimized)
         with st.container():
             cart_cols = st.columns([6, 2, 2])
             with cart_cols[0]:
