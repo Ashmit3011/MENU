@@ -32,6 +32,7 @@ if "table_number" not in st.session_state:
     table_number = st.text_input("Enter your Table Number")
     if table_number:
         st.session_state.table_number = table_number
+        st.session_state.cart = {}  # ✅ Initialize cart right away
         st.rerun()
 else:
     st.sidebar.success(f"🪑 Table: {st.session_state.table_number}")
@@ -40,10 +41,6 @@ else:
         if "cart" in st.session_state:
             del st.session_state.cart
         st.rerun()
-
-# Init cart
-if "cart" not in st.session_state:
-    st.session_state.cart = {}
 
 # Show menu
 st.subheader("📋 Menu")
@@ -67,7 +64,7 @@ for category, items in menu.items():
 # Show cart
 st.subheader("🛒 Cart")
 
-if st.session_state.cart:
+if st.session_state.get("cart"):
     total = 0
     for name, item in st.session_state.cart.items():
         subtotal = item["price"] * item["quantity"]
