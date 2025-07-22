@@ -13,8 +13,8 @@ st.markdown("""
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
             padding: 0.2rem 0.4rem !important;
-            font-size: 0.4rem !important;
-            border-radius: 10px !important;
+            font-size: 0.6rem !important;
+            border-radius: 8px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -81,21 +81,20 @@ if st.session_state.cart:
         subtotal = item["price"] * item["quantity"]
         total += subtotal
 
-        # Horizontal layout for cart item & buttons (Mobile Optimized)
-        with st.container():
-            cart_cols = st.columns([10, 1, 1])
-            with cart_cols[0]:
-                st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
-            with cart_cols[1]:
-                if st.button("➖", key=f"decrease-{name}"):
-                    st.session_state.cart[name]["quantity"] -= 1
-                    if st.session_state.cart[name]["quantity"] <= 0:
-                        del st.session_state.cart[name]
-                    st.rerun()
-            with cart_cols[2]:
-                if st.button("❌", key=f"remove-{name}"):
+        # Horizontal layout for cart item & buttons
+        cart_cols = st.columns([6, 1, 1])
+        with cart_cols[0]:
+            st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
+        with cart_cols[1]:
+            if st.button("➖", key=f"decrease-{name}", help="Decrease", use_container_width=True):
+                st.session_state.cart[name]["quantity"] -= 1
+                if st.session_state.cart[name]["quantity"] <= 0:
                     del st.session_state.cart[name]
-                    st.rerun()
+                st.rerun()
+        with cart_cols[2]:
+            if st.button("❌", key=f"remove-{name}", help="Remove", use_container_width=True):
+                del st.session_state.cart[name]
+                st.rerun()
 
     st.markdown(f"### 🧾 Total: ₹{total}")
 
