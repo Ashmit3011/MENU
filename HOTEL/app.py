@@ -56,18 +56,22 @@ st.subheader("📋 Menu")
 for category, items in menu.items():
     with st.expander(category):
         for item in items:
-            col1, col2 = st.columns([6, 1])
-            with col1:
-                st.markdown(f"**{item['name']}** — ₹{item['price']}")
-            with col2:
-                if st.button("➕", key=f"{category}-{item['name']}"):
-                    name = item["name"]
-                    price = item["price"]
-                    if name not in st.session_state.cart:
-                        st.session_state.cart[name] = {"price": price, "quantity": 1}
-                    else:
-                        st.session_state.cart[name]["quantity"] += 1
-                    st.rerun()
+            col1, col2, col3 = st.columns([6, 1, 1])
+            item_col, button_col = st.columns([8, 4])
+with item_col:
+    st.markdown(f"{name} x {item['quantity']} = ₹{subtotal}")
+with button_col:
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button("➖", key=f"decrease-{name}"):
+            st.session_state.cart[name]["quantity"] -= 1
+            if st.session_state.cart[name]["quantity"] <= 0:
+                del st.session_state.cart[name]
+            st.rerun()
+    with b2:
+        if st.button("❌", key=f"remove-{name}"):
+            del st.session_state.cart[name]
+            st.rerun()
 
 # Show cart
 st.subheader("🛒 Cart")
