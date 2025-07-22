@@ -44,23 +44,32 @@ INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
 def generate_invoice(order):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
+
+    # Optional: Use Unicode font for ₹ and emoji
+    font_path = os.path.join(BASE_DIR, "DejaVuSans.ttf")
+    if os.path.exists(font_path):
+        pdf.add_font("DejaVu", "", font_path, uni=True)
+        pdf.set_font("DejaVu", "", 12)
+    else:
+        pdf.set_font("Helvetica", size=12)
+
+    pdf.set_font_size(16)
     pdf.cell(0, 10, "Smart Café Invoice", ln=True, align="C")
-    
-    pdf.set_font("Arial", "", 12)
+
+    pdf.set_font_size(12)
     pdf.cell(0, 10, f"Table: {order['table']}", ln=True)
     pdf.cell(0, 10, f"Date: {order['timestamp']}", ln=True)
     pdf.ln(10)
 
-    pdf.set_font("Arial", "B", 12)
+    pdf.set_font(style="B")
     pdf.cell(80, 10, "Item", 1)
     pdf.cell(30, 10, "Qty", 1)
     pdf.cell(30, 10, "Price", 1)
     pdf.cell(40, 10, "Subtotal", 1)
     pdf.ln()
 
-    pdf.set_font("Arial", "", 12)
     total = 0
+    pdf.set_font(style="")
     for name, item in order["items"].items():
         qty = item["quantity"]
         price = item["price"]
@@ -73,14 +82,14 @@ def generate_invoice(order):
         pdf.cell(40, 10, f"₹{subtotal}", 1)
         pdf.ln()
 
-    pdf.set_font("Arial", "B", 12)
+    pdf.set_font(style="B")
     pdf.cell(140, 10, "Total", 1)
     pdf.cell(40, 10, f"₹{total}", 1)
     pdf.ln(20)
 
-    # Add QR code image (make sure qr.jpg exists)
+    # Add QR code image
     if os.path.exists(QR_IMAGE):
-        pdf.image(QR_IMAGE, x=pdf.get_x(), y=pdf.get_y(), w=40)
+        pdf.image(QR_IMAGE, x=10, y=pdf.get_y(), w=40)
 
     invoice_path = os.path.join(BASE_DIR, f"invoice_table_{order['table']}.pdf")
     pdf.output(invoice_path)
