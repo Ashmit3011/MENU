@@ -12,7 +12,7 @@ ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 # ---------- Auto Refresh ----------
 if 'last_refresh' not in st.session_state or time.time() - st.session_state.last_refresh > 5:
     st.session_state.last_refresh = time.time()
-    st.experimental_rerun()
+    st.rerun()
 
 # ---------- Load Functions ----------
 def load_menu():
