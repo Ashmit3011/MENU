@@ -4,9 +4,6 @@ import os
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 
-# Debug: show file paths
-st.markdown(f"**Current file:** `{__file__}`")
-st.markdown(f"**Absolute path:** `{os.path.abspath(__file__)}`")
 
 # Resolve project root (e.g. if this file is in /pages)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
