@@ -32,10 +32,15 @@ if "table_number" not in st.session_state:
     table_number = st.text_input("Enter your Table Number")
     if table_number:
         st.session_state.table_number = table_number
-        st.session_state.cart = {}  # ✅ Initialize cart right away
+        st.session_state.cart = {}  # Initialize cart immediately
         st.rerun()
 else:
     st.sidebar.success(f"🪑 Table: {st.session_state.table_number}")
+    
+    # ✅ Ensure cart exists during every rerun with table_number
+    if "cart" not in st.session_state:
+        st.session_state.cart = {}
+
     if st.sidebar.button("🔄 Change Table"):
         del st.session_state.table_number
         if "cart" in st.session_state:
