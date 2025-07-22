@@ -108,7 +108,7 @@ for idx, order in enumerate(orders):
                 if st.confirm(f"Delete Order {order_id}?"):
                     orders.pop(idx)
                     updated = True
-                    st.experimental_rerun()
+                    st.rerun()
 
 # Save updated orders
 if updated:
