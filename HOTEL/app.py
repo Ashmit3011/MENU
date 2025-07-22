@@ -117,7 +117,7 @@ else:
         col3.markdown(f"₹{subtotal}")
         if col4.button("🗑️", key=f"remove_{name}"):
             del st.session_state.cart[name]
-            st.experimental_rerun()
+            st.rerun()
 
     st.markdown(f"### 💰 Total: ₹{total}")
     if st.button("✅ Place Order"):
