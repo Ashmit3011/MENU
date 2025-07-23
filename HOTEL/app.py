@@ -130,50 +130,50 @@ if st.session_state.cart:
         subtotal = price * qty
         total += subtotal
 
-        # Nice styled card layout
-        st.markdown(f"""
-            <div style="
-                background-color: #f8f9fa;
-                padding: 0.8rem;
-                margin-bottom: 0.5rem;
-                border-radius: 10px;
-                border: 1px solid #dee2e6;
-                box-shadow: 2px 2px 4px rgba(0,0,0,0.05);
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="flex: 2;">
-                        <b>🍽️ {name}</b><br>
-                        <span style="font-size: 0.85rem; color: #555;">Price: ₹{price} × {qty}</span>
-                    </div>
-                    <div style="flex: 1; text-align: center;">
-                        <b>₹{subtotal}</b>
-                    </div>
-                    <div style="flex: 1; text-align: right;">
-                        <form action="#" method="post">
-                            <button name="dec_{name}" style="
-                                background-color:#a8dadc;
-                                color: white;
-                                border: none;
-                                padding: 0.2rem 0.5rem;
-                                font-size: 0.8rem;
-                                border-radius: 6px;
-                                cursor: pointer;
-                            ">➖</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+        col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
+        with col1:
+            st.markdown(f"**🍽️ {name}**  \n₹{price} × {qty} = ₹{subtotal}")
+        with col2:
+            if st.button("➖", key=f"dec_{name}"):
+                st.session_state.cart[name]["quantity"] -= 1
+                if st.session_state.cart[name]["quantity"] <= 0:
+                    del st.session_state.cart[name]
+                st.rerun()
+        with col3:
+            if st.button("➕", key=f"inc_{name}"):
+                st.session_state.cart[name]["quantity"] += 1
+                st.rerun()
 
-        # Decrease button logic
-        if st.session_state.get(f"dec_{name}"):
-            st.session_state.cart[name]["quantity"] -= 1
-            if st.session_state.cart[name]["quantity"] <= 0:
-                del st.session_state.cart[name]
+    st.markdown(f"""
+        <div style='
+            margin-top: 1rem;
+            background-color: #2c2c2c;
+            padding: 0.6rem;
+            border-radius: 8px;
+            color: #f1f1f1;
+        '>
+            <b>🧾 Total: ₹{total}</b>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col = st.columns([2, 1, 2])[1]
+    with col:
+        if st.button("✅ Place Order"):
+            orders = [o for o in orders if o["table"] != st.session_state.table_number]
+            new_order = {
+                "table": st.session_state.table_number,
+                "items": st.session_state.cart,
+                "status": "pending",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            orders.append(new_order)
+            with open(ORDERS_FILE, "w", encoding="utf-8") as f:
+                json.dump(orders, f, indent=2)
+            st.success("✅ Order Placed!")
+            del st.session_state.cart
             st.rerun()
-
-    st.markdown(f"""<h4 style='margin-top:1rem;'>🧾 Total: ₹{total}</h4>""", unsafe_allow_html=True)
-
+else:
+    st.info("🛍️ Your cart is empty.")
     # Place Order button
     col = st.columns([2, 1, 2])[1]
     with col:
