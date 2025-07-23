@@ -14,9 +14,9 @@ st.markdown("""
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
-            padding: 0.2rem 0.5rem;
+            padding: 0.1rem 0.3rem;
             font-size: 0.75rem;
-            height: 2rem;
+            height: 1rem;
             border-radius: 6px;
             background-color: #a8dadc !important;
             color: #1d3557 !important;
