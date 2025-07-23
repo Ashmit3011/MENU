@@ -122,7 +122,7 @@ if st.session_state.cart:
         subtotal = item["price"] * item["quantity"]
         total += subtotal
 
-        col1, col2, col3 = st.columns([6, 1, 1])
+        col1, col2 = st.columns([6, 1])
         with col1:
             st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
         with col2:
@@ -130,10 +130,6 @@ if st.session_state.cart:
                 st.session_state.cart[name]["quantity"] -= 1
                 if st.session_state.cart[name]["quantity"] <= 0:
                     del st.session_state.cart[name]
-                st.rerun()
-        with col3:
-            if st.button("❌", key=f"rem-{name}"):
-                del st.session_state.cart[name]
                 st.rerun()
 
     st.markdown(f"### 🧾 Total: ₹{total}")
