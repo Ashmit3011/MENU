@@ -151,7 +151,7 @@ if st.session_state.cart:
                     <div style="flex: 1; text-align: right;">
                         <form action="#" method="post">
                             <button name="dec_{name}" style="
-                                background-color: #f28482;
+                                background-color:#a8dadc;
                                 color: white;
                                 border: none;
                                 padding: 0.2rem 0.5rem;
