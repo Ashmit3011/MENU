@@ -6,12 +6,13 @@ from datetime import datetime
 from fpdf import FPDF
 from PIL import Image
 
-#st.markdown("""
+# -------------- Streamlit Config & Styling --------------
+st.set_page_config(page_title="Smart Table Order", layout="wide")
+st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none; }
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
-
         .stButton > button {
             padding: 0.2rem 0.5rem;
             font-size: 0.75rem;
@@ -20,7 +21,6 @@ from PIL import Image
             background-color: #a8dadc !important;
             color: #1d3557 !important;
         }
-
         .stDownloadButton > button {
             background-color: #457b9d !important;
             color: white !important;
