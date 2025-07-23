@@ -121,39 +121,50 @@ for category, items in menu.items():
                     st.rerun()
 
 # -------------- Display Cart --------------
-st.subheader("🛒 Cart")
+st.subheader("🛒 Your Cart")
+
 if st.session_state.cart:
     total = 0
     for name, item in list(st.session_state.cart.items()):
-        subtotal = item["price"] * item["quantity"]
+        price = item["price"]
+        qty = item["quantity"]
+        subtotal = price * qty
         total += subtotal
 
-        col1, col2 = st.columns([6, 1])
+        col1, col2, col3, col4 = st.columns([4, 2, 2, 1])
         with col1:
-            st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
+            st.markdown(f"**{name}**")
         with col2:
+            st.markdown(f"Qty: `{qty}`")
+        with col3:
+            st.markdown(f"Subtotal: `₹{subtotal}`")
+        with col4:
             if st.button("➖", key=f"dec-{name}"):
                 st.session_state.cart[name]["quantity"] -= 1
                 if st.session_state.cart[name]["quantity"] <= 0:
                     del st.session_state.cart[name]
                 st.rerun()
 
-    st.markdown(f"### 🧾 Total: ₹{total}")
+        st.divider()
 
-    if st.button("✅ Place Order"):
-        orders = [o for o in orders if o["table"] != st.session_state.table_number]
-        new_order = {
-            "table": st.session_state.table_number,
-            "items": st.session_state.cart,
-            "status": "pending",
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        orders.append(new_order)
-        with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-            json.dump(orders, f, indent=2)
-        st.success("✅ Order Placed!")
-        del st.session_state.cart
-        st.rerun()
+    st.markdown(f"### 🧾 Total Amount: ₹{total}")
+
+    col_confirm = st.columns([1, 6, 1])[1]
+    with col_confirm:
+        if st.button("✅ Place Order"):
+            orders = [o for o in orders if o["table"] != st.session_state.table_number]
+            new_order = {
+                "table": st.session_state.table_number,
+                "items": st.session_state.cart,
+                "status": "pending",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            orders.append(new_order)
+            with open(ORDERS_FILE, "w", encoding="utf-8") as f:
+                json.dump(orders, f, indent=2)
+            st.success("✅ Order Placed!")
+            del st.session_state.cart
+            st.rerun()
 else:
     st.info("🛍️ Your cart is empty.")
 
