@@ -74,7 +74,7 @@ def generate_invoice(order):
     pdf.ln(20)
 
     if os.path.exists(QR_IMAGE):
-        pdf.image(QR_IMAGE, x=pdf.get_x(), y=pdf.get_y(), w=40)
+        pdf.image(QR_IMAGE, x=10, y=pdf.get_y(), w=40)
 
     invoice_path = os.path.join(BASE_DIR, f"invoice_table_{order['table']}.pdf")
     pdf.output(invoice_path)
@@ -147,7 +147,8 @@ if st.session_state.cart:
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         orders.append(new_order)
-        json.dump(orders, open(ORDERS_FILE, "w"), indent=2)
+        with open(ORDERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(orders, f, indent=2)
         st.success("✅ Order Placed!")
         del st.session_state.cart
         st.rerun()
@@ -166,13 +167,13 @@ for order in reversed(orders):
         for name, item in order["items"].items():
             st.markdown(f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}")
 
-    elif status == "Completed":
+        if status == "Completed":
             invoice_path = generate_invoice(order)
             st.success("✅ Order Completed! Download your invoice below:")
             with open(invoice_path, "rb") as f:
-                st.download_button("📄 Download Invoice", data=f, file_name=os.path.basename(invoice_path))
+                st.download_button("📄 Download Invoice", data=f.read(), file_name=os.path.basename(invoice_path))
 
-    if status == "Preparing" and "alerted" not in st.session_state:
+        if status == "Preparing" and "alerted" not in st.session_state:
             st.session_state.alerted = True
             st.audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg")
 
@@ -195,7 +196,8 @@ if st.button("📩 Submit Feedback"):
             "message": message,
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
-        json.dump(feedback, open(FEEDBACK_FILE, "w"), indent=2)
+        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+            json.dump(feedback, f, indent=2)
         st.success("🎉 Thank you for your feedback!")
     else:
         st.warning("Please enter both name and feedback.")
