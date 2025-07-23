@@ -14,22 +14,21 @@ st.markdown("""
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
-            padding: 0.1rem 0.35rem !important;
-            font-size: 0.65rem !important;
-            height: 1.5rem !important;
-            line-height: 1rem !important;
-            border-radius: 4px !important;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+            height: 2rem;
+            border-radius: 6px;
             background-color: #a8dadc !important;
             color: #1d3557 !important;
         }
         .stDownloadButton > button {
-            padding: 0.2rem 0.5rem !important;
-            font-size: 0.7rem !important;
-            height: 1.8rem !important;
-            border-radius: 4px !important;
             background-color: #457b9d !important;
             color: white !important;
             font-weight: bold;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            height: 2.2rem;
+            border-radius: 6px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -120,77 +119,40 @@ for category, items in menu.items():
                     st.session_state.cart[name]["quantity"] += 1
                     st.rerun()
 
-st.subheader("🛒 Your Cart")
-
+# -------------- Display Cart --------------
+st.subheader("🛒 Cart")
 if st.session_state.cart:
     total = 0
     for name, item in list(st.session_state.cart.items()):
-        price = item["price"]
-        qty = item["quantity"]
-        subtotal = price * qty
+        subtotal = item["price"] * item["quantity"]
         total += subtotal
 
-        col1, col2, col3, col4 = st.columns([4, 1, 1, 1])
+        col1, col2 = st.columns([6, 1])
         with col1:
-            st.markdown(f"**🍽️ {name}**  \n₹{price} × {qty} = ₹{subtotal}")
+            st.markdown(f"**{name}** x {item['quantity']} = ₹{subtotal}")
         with col2:
-            if st.button("➖", key=f"dec_{name}"):
+            if st.button("➖", key=f"dec-{name}"):
                 st.session_state.cart[name]["quantity"] -= 1
                 if st.session_state.cart[name]["quantity"] <= 0:
                     del st.session_state.cart[name]
                 st.rerun()
-        with col3:
-            if st.button("➕", key=f"inc_{name}"):
-                st.session_state.cart[name]["quantity"] += 1
-                st.rerun()
 
-    st.markdown(f"""
-        <div style='
-            margin-top: 1rem;
-            background-color: #2c2c2c;
-            padding: 0.6rem;
-            border-radius: 8px;
-            color: #f1f1f1;
-        '>
-            <b>🧾 Total: ₹{total}</b>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"### 🧾 Total: ₹{total}")
 
-    col = st.columns([2, 1, 2])[1]
-    with col:
-        if st.button("✅ Place Order"):
-            orders = [o for o in orders if o["table"] != st.session_state.table_number]
-            new_order = {
-                "table": st.session_state.table_number,
-                "items": st.session_state.cart,
-                "status": "pending",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            orders.append(new_order)
-            with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-                json.dump(orders, f, indent=2)
-            st.success("✅ Order Placed!")
-            del st.session_state.cart
-            st.rerun()
-else:
-    st.info("🛍️ Your cart is empty.")
-    # Place Order button
-    col = st.columns([2, 1, 2])[1]
-    with col:
-        if st.button("✅ Place Order"):
-            orders = [o for o in orders if o["table"] != st.session_state.table_number]
-            new_order = {
-                "table": st.session_state.table_number,
-                "items": st.session_state.cart,
-                "status": "pending",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            orders.append(new_order)
-            with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-                json.dump(orders, f, indent=2)
-            st.success("✅ Order Placed!")
-            del st.session_state.cart
-            st.rerun()
+    if st.button("✅ Place Order"):
+        orders = [o for o in orders if o["table"] != st.session_state.table_number]
+        new_order = {
+            "table": st.session_state.table_number,
+            "items": st.session_state.cart,
+            "status": "pending",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        orders.append(new_order)
+        with open(ORDERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(orders, f, indent=2)
+        st.success("✅ Order Placed!")
+        del st.session_state.cart
+        st.rerun()
 else:
     st.info("🛍️ Your cart is empty.")
 
