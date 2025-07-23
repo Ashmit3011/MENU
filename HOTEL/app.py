@@ -166,12 +166,6 @@ for order in reversed(orders):
         for name, item in order["items"].items():
             st.markdown(f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}")
 
-        if status not in ["Completed", "Cancelled"]:
-            if st.button(f"❌ Cancel Order ({order['timestamp']})", key=order["timestamp"]):
-                order["status"] = "Cancelled"
-                json.dump(orders, open(ORDERS_FILE, "w"), indent=2)
-                st.warning("Order cancelled.")
-                st.rerun()
         elif status == "Completed":
             invoice_path = generate_invoice(order)
             st.success("✅ Order Completed! Download your invoice below:")
