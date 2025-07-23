@@ -6,24 +6,29 @@ from datetime import datetime
 from fpdf import FPDF
 from PIL import Image
 
-# -------------- Streamlit Config & Styling --------------
-st.set_page_config(page_title="Smart Table Order", layout="wide")
-st.markdown("""
+#st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none; }
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
+
         .stButton > button {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.85rem;
-            border-radius: 8px;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
+            height: 2rem;
+            border-radius: 6px;
             background-color: #a8dadc !important;
             color: #1d3557 !important;
         }
-        .stDownloadButton>button {
+
+        .stDownloadButton > button {
             background-color: #457b9d !important;
             color: white !important;
             font-weight: bold;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            height: 2.2rem;
+            border-radius: 6px;
         }
     </style>
 """, unsafe_allow_html=True)
