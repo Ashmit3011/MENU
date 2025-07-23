@@ -14,22 +14,22 @@ st.markdown("""
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
-            padding: 0.1rem 0.3rem;
-            font-size: 0.50rem;
-            height: 0.5rem;
-            width: 2rem;
-            border-radius: 8px;
+            padding: 0.1rem 0.35rem !important;
+            font-size: 0.65rem !important;
+            height: 1.5rem !important;
+            line-height: 1rem !important;
+            border-radius: 4px !important;
             background-color: #a8dadc !important;
             color: #1d3557 !important;
         }
         .stDownloadButton > button {
+            padding: 0.2rem 0.5rem !important;
+            font-size: 0.7rem !important;
+            height: 1.8rem !important;
+            border-radius: 4px !important;
             background-color: #457b9d !important;
             color: white !important;
             font-weight: bold;
-            padding: 0.3rem 0.6rem;
-            font-size: 0.8rem;
-            height: 2.2rem;
-            border-radius: 6px;
         }
     </style>
 """, unsafe_allow_html=True)
