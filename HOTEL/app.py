@@ -15,9 +15,9 @@ st.markdown("""
         .css-1aumxhk {padding-top: 1rem;}
         .stButton > button {
             padding: 0.1rem 0.3rem;
-            font-size: 0.75rem;
-            height: 1rem;
-            border-radius: 6px;
+            font-size: 0.50rem;
+            height: 0.5rem;
+            border-radius: 8px;
             background-color: #a8dadc !important;
             color: #1d3557 !important;
         }
