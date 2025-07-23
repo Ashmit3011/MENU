@@ -166,13 +166,13 @@ for order in reversed(orders):
         for name, item in order["items"].items():
             st.markdown(f"{name} x {item['quantity']} = ₹{item['price'] * item['quantity']}")
 
-        elif status == "Completed":
+    elif status == "Completed":
             invoice_path = generate_invoice(order)
             st.success("✅ Order Completed! Download your invoice below:")
             with open(invoice_path, "rb") as f:
                 st.download_button("📄 Download Invoice", data=f, file_name=os.path.basename(invoice_path))
 
-        if status == "Preparing" and "alerted" not in st.session_state:
+    if status == "Preparing" and "alerted" not in st.session_state:
             st.session_state.alerted = True
             st.audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg")
 
