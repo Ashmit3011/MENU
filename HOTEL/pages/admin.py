@@ -17,7 +17,6 @@ FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 # Page settings
 st.set_page_config(page_title="Admin Panel", layout="wide")
 st.markdown("""
-    st.markdown("""
     <style>
         [data-testid="stSidebar"] { display: none; }
         #MainMenu, footer {visibility: hidden;}
