@@ -156,9 +156,11 @@ if st.session_state.cart:
 else:
     st.info("🛍️ Your cart is empty.")
 
-# -------------- Order History --------------
+# -------------- Order History & Conditional Feedback --------------
 st.subheader("📦 Your Orders")
+feedback_given = False
 found = False
+
 for order in reversed(orders):
     if order["table"] == st.session_state.table_number:
         found = True
@@ -174,7 +176,29 @@ for order in reversed(orders):
             with open(invoice_path, "rb") as f:
                 st.download_button("📄 Download Invoice", data=f.read(), file_name=os.path.basename(invoice_path))
 
-        if status == "Preparing" and "alerted" not in st.session_state:
+            # 💬 Feedback Section shown only after order completion
+            st.markdown("---")
+            st.subheader("💬 Feedback")
+            name = st.text_input("Your Name", key="fb_name")
+            rating = st.slider("How was your experience?", 1, 5, 3, key="fb_rating")
+            message = st.text_area("Any comments or suggestions?", key="fb_message")
+            if st.button("📩 Submit Feedback", key="fb_submit"):
+                if name and message:
+                    feedback.append({
+                        "table": st.session_state.table_number,
+                        "name": name,
+                        "rating": rating,
+                        "message": message,
+                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+                        json.dump(feedback, f, indent=2)
+                    st.success("🎉 Thank you for your feedback!")
+                else:
+                    st.warning("Please enter both name and feedback.")
+            feedback_given = True
+
+        elif status == "Preparing" and "alerted" not in st.session_state:
             st.session_state.alerted = True
             st.audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg")
 
@@ -182,26 +206,6 @@ for order in reversed(orders):
 
 if not found:
     st.info("📭 No orders found.")
-
-# -------------- Feedback Form --------------
-st.subheader("💬 Feedback")
-name = st.text_input("Your Name")
-rating = st.slider("How was your experience?", 1, 5, 3)
-message = st.text_area("Any comments or suggestions?")
-if st.button("📩 Submit Feedback"):
-    if name and message:
-        feedback.append({
-            "table": st.session_state.table_number,
-            "name": name,
-            "rating": rating,
-            "message": message,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        })
-        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
-            json.dump(feedback, f, indent=2)
-        st.success("🎉 Thank you for your feedback!")
-    else:
-        st.warning("Please enter both name and feedback.")
 
 # -------------- Auto-refresh every 10 seconds --------------
 with st.empty():
