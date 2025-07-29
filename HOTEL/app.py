@@ -176,27 +176,38 @@ for order in reversed(orders):
             with open(invoice_path, "rb") as f:
                 st.download_button("📄 Download Invoice", data=f.read(), file_name=os.path.basename(invoice_path))
 
-            # 💬 Feedback Section shown only after order completion
+            # 💬 Stylish Feedback Section
             st.markdown("---")
-            st.subheader("💬 Feedback")
-            name = st.text_input("Your Name", key="fb_name")
-            rating = st.slider("How was your experience?", 1, 5, 3, key="fb_rating")
-            message = st.text_area("Any comments or suggestions?", key="fb_message")
-            if st.button("📩 Submit Feedback", key="fb_submit"):
-                if name and message:
-                    feedback.append({
-                        "table": st.session_state.table_number,
-                        "name": name,
-                        "rating": rating,
-                        "message": message,
-                        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    })
-                    with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
-                        json.dump(feedback, f, indent=2)
-                    st.success("🎉 Thank you for your feedback!")
-                else:
-                    st.warning("Please enter both name and feedback.")
-            feedback_given = True
+            st.markdown("""
+                <div style="background-color:#f1faee; padding:20px; border-radius:10px; border:1px solid #a8dadc; box-shadow:2px 2px 8px rgba(0,0,0,0.1);">
+                    <h4 style="color:#1d3557;">💬 We'd love your feedback!</h4>
+                </div>
+            """, unsafe_allow_html=True)
+
+            with st.form("feedback_form"):
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    name = st.text_input("👤 Your Name", key="fb_name")
+                    message = st.text_area("✏️ Comments or Suggestions", key="fb_message", height=100)
+                with col2:
+                    rating = st.slider("⭐ Rating", 1, 5, 3, key="fb_rating")
+                    st.markdown(f"<p style='margin-top: 20px;'>Rate from 1 (Poor) to 5 (Excellent)</p>", unsafe_allow_html=True)
+
+                submitted = st.form_submit_button("📩 Submit Feedback")
+                if submitted:
+                    if name and message:
+                        feedback.append({
+                            "table": st.session_state.table_number,
+                            "name": name,
+                            "rating": rating,
+                            "message": message,
+                            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        })
+                        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+                            json.dump(feedback, f, indent=2)
+                        st.success("🎉 Thank you for your feedback!")
+                    else:
+                        st.warning("Please enter both your name and a comment.")
 
         elif status == "Preparing" and "alerted" not in st.session_state:
             st.session_state.alerted = True
@@ -206,7 +217,6 @@ for order in reversed(orders):
 
 if not found:
     st.info("📭 No orders found.")
-
 # -------------- Auto-refresh every 10 seconds --------------
 with st.empty():
     time.sleep(10)
