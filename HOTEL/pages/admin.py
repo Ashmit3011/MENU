@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import json
 import os
 import pandas as pd
@@ -18,61 +18,43 @@ FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 st.set_page_config(page_title="Admin Panel", layout="wide")
 st.markdown("""
     <style>
-        [data-testid="stSidebar"] { display: none; }
-        #MainMenu, footer {visibility: hidden;}
         body {
-            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            background: linear-gradient(to right, #1e3c72, #2a5298);
             font-family: 'Segoe UI', sans-serif;
-            color: white;
         }
         .order-card {
-            background: rgba(255, 255, 255, 0.07);
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 1.5rem;
-            border-radius: 18px;
-            box-shadow: 0 10px 24px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1.2rem;
+            border-radius: 15px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
             margin-bottom: 2rem;
-            color: #f1f5f9;
+            color: #fff;
         }
         .order-header {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
         }
         .status {
             font-weight: bold;
             padding: 4px 12px;
             border-radius: 8px;
-            margin-left: 10px;
         }
         .Pending { background: #facc15; color: #000; }
         .Preparing { background: #3b82f6; }
         .Ready { background: #10b981; }
-        .Completed { background: #9ca3af; }
+        .Completed { background: #a3a3a3; }
         .Cancelled { background: #ef4444; }
         .item-line {
             margin-left: 10px;
         }
-        .stButton > button, .stDownloadButton > button {
-            background-color: #1d4ed8;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 18px;
-            font-weight: bold;
-            transition: all 0.2s ease-in-out;
+        button:hover {
+            transform: scale(1.03);
+            transition: 0.2s ease-in-out;
         }
-        .stButton > button:hover, .stDownloadButton > button:hover {
-            background-color: #2563eb;
-            transform: scale(1.05);
-        }
-        .stButton > button:active {
-            transform: scale(0.95);
-        }
-        .stSelectbox, .stTextInput {
-            background-color: #f1f5f9;
-            color: #111827;
+        button:active {
+            transform: scale(0.98);
         }
     </style>
 """, unsafe_allow_html=True)
@@ -85,7 +67,7 @@ def toast(message: str, duration=3000):
         <script>
         const toast = document.createElement("div");
         toast.textContent = "{message}";
-        toast.style.cssText = `
+        toast.style.cssText = 
             position: fixed;
             bottom: 20px;
             right: 20px;
@@ -96,7 +78,7 @@ def toast(message: str, duration=3000):
             font-size: 15px;
             z-index: 9999;
             animation: fadein 0.3s, fadeout 0.3s ease {duration / 1000 - 0.3}s;
-        `;
+        ;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), {duration});
         </script>
@@ -247,3 +229,5 @@ else:
             save_json(FEEDBACK_FILE, feedbacks)
             toast("🗑️ Feedback deleted")
             st.rerun()
+
+
