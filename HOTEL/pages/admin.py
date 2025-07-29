@@ -17,44 +17,63 @@ FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 # Page settings
 st.set_page_config(page_title="Admin Panel", layout="wide")
 st.markdown("""
+    st.markdown("""
     <style>
+        [data-testid="stSidebar"] { display: none; }
+        #MainMenu, footer {visibility: hidden;}
         body {
-            background: linear-gradient(to right, #1e3c72, #2a5298);
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
             font-family: 'Segoe UI', sans-serif;
+            color: white;
         }
         .order-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.07);
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 1.2rem;
-            border-radius: 15px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 1.5rem;
+            border-radius: 18px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.4);
             margin-bottom: 2rem;
-            color: #fff;
+            color: #f1f5f9;
         }
         .order-header {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: bold;
+            margin-bottom: 0.5rem;
         }
         .status {
             font-weight: bold;
             padding: 4px 12px;
             border-radius: 8px;
+            margin-left: 10px;
         }
         .Pending { background: #facc15; color: #000; }
         .Preparing { background: #3b82f6; }
         .Ready { background: #10b981; }
-        .Completed { background: #a3a3a3; }
+        .Completed { background: #9ca3af; }
         .Cancelled { background: #ef4444; }
         .item-line {
             margin-left: 10px;
         }
-        button:hover {
-            transform: scale(1.03);
-            transition: 0.2s ease-in-out;
+        .stButton > button, .stDownloadButton > button {
+            background-color: #1d4ed8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 18px;
+            font-weight: bold;
+            transition: all 0.2s ease-in-out;
         }
-        button:active {
-            transform: scale(0.98);
+        .stButton > button:hover, .stDownloadButton > button:hover {
+            background-color: #2563eb;
+            transform: scale(1.05);
+        }
+        .stButton > button:active {
+            transform: scale(0.95);
+        }
+        .stSelectbox, .stTextInput {
+            background-color: #f1f5f9;
+            color: #111827;
         }
     </style>
 """, unsafe_allow_html=True)
