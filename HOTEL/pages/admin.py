@@ -169,13 +169,15 @@ else:
 
         st.markdown(f"**💰 Total: ₹{total}**")
 
+        # Status change buttons
         st.markdown("---")
-        new_status = st.selectbox("Change Status", [status] + [s for s in ["Pending", "Preparing", "Ready", "Completed"] if s != status], key=f"status_{idx}")
-        if new_status != status and st.button("✅ Update", key=f"update_{idx}"):
-            with st.spinner("🔄 Updating..."):
-                orders[idx]["status"] = new_status
+        col_buttons = st.columns(4)
+        statuses = ["Pending", "Preparing", "Ready", "Completed"]
+        for i, s in enumerate(statuses):
+            if col_buttons[i].button(s, key=f"{idx}_{s}"):
+                orders[idx]["status"] = s
                 save_json(ORDERS_FILE, orders)
-                toast(f"✅ Status changed to {new_status}")
+                toast(f"✅ Status changed to {s}")
                 st.rerun()
 
         col1, col2 = st.columns(2)
