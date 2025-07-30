@@ -1,141 +1,149 @@
 import streamlit as st
 import json
 import os
-import pandas as pd
 from datetime import datetime
+import pandas as pd
 from fpdf import FPDF
+from streamlit_autorefresh import st_autorefresh
+
+# Auto-refresh every 10 seconds
+st_autorefresh(interval=10000, key="customer_refresh")
 
 # File paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-QR_IMAGE = os.path.join(BASE_DIR, "qr.png")  # Optional QR code image
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
+INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
+
+# Create invoice directory if not exists
+os.makedirs(INVOICE_DIR, exist_ok=True)
 
 # Load menu
-with open(MENU_FILE, "r", encoding="utf-8") as f:
-    menu = json.load(f)
+menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else []
 
-# Load existing orders
-if os.path.exists(ORDERS_FILE):
-    with open(ORDERS_FILE, "r", encoding="utf-8") as f:
-        orders = json.load(f)
-else:
-    orders = []
+# Load orders
+orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
 
+# Load feedbacks
+feedbacks = json.load(open(FEEDBACK_FILE)) if os.path.exists(FEEDBACK_FILE) else []
+
+# App title
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
-st.markdown("<h1 style='text-align: center;'>🍽️ Smart Table Ordering</h1>", unsafe_allow_html=True)
+st.title("🍽️ Smart Table Ordering")
 
-# Select table
-table_number = st.selectbox("Select your Table Number", [1, 2, 3, 4, 5], index=0)
+# Select Table Number
+table_number = st.selectbox("Select your Table Number:", ["1", "2", "3", "4", "5"], index=0)
 
-# Create categories
-categories = sorted(set(item["category"] for item in menu))
-selected_category = st.selectbox("Choose a Category", categories)
+# --- Menu Display ---
+st.header("📋 Menu")
+categories = sorted(set(item['category'] for item in menu))
+selected_category = st.selectbox("Select Category", categories)
 
-# Show menu items for selected category
-st.subheader(f"Menu - {selected_category}")
 cart = {}
 
 for item in menu:
     if item["category"] == selected_category:
-        col1, col2 = st.columns([3, 1])
+        col1, col2 = st.columns([4, 1])
         with col1:
-            st.markdown(f"**{item['name']}**  \nRs. {item['price']}")
+            st.markdown(f"**{item['name']}**  \n💵 Rs. {item['price']}")
         with col2:
-            qty = st.number_input(f"{item['name']}", min_value=0, max_value=10, step=1, key=item["name"])
+            qty = st.number_input(f"Qty - {item['name']}", min_value=0, step=1, key=item['name'])
             if qty > 0:
-                cart[item["name"]] = {"price": item["price"], "quantity": qty}
+                cart[item['id']] = qty
 
-# Place order
+# --- Place Order ---
 if st.button("🛒 Place Order"):
     if not cart:
-        st.warning("Please add at least one item to cart.")
+        st.warning("Please select at least one item.")
     else:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         new_order = {
             "table": table_number,
             "items": cart,
-            "status": "Pending",
-            "timestamp": timestamp
+            "status": "Preparing",
+            "timestamp": timestamp,
         }
 
+        # Save order
         orders.append(new_order)
-
         with open(ORDERS_FILE, "w", encoding="utf-8") as f:
             json.dump(orders, f, indent=2)
 
         st.success("✅ Order placed successfully!")
+        st.rerun()
 
-# View order history for current table
-st.markdown("## 📦 Your Orders")
-for idx, order in enumerate(orders):
-    if order["table"] == table_number:
-        status = order["status"]
-        st.markdown(f"**Order #{idx+1}** - `{status}` - `{order['timestamp']}`")
-        df = pd.DataFrame([
-            {
-                "Item": name,
-                "Quantity": item["quantity"],
+# --- Your Orders ---
+st.header("📦 Your Orders")
+user_orders = [o for o in orders if o["table"] == table_number]
+
+if not user_orders:
+    st.info("You haven't placed any orders yet.")
+else:
+    for idx, order in enumerate(reversed(user_orders)):
+        st.markdown("---")
+        st.markdown(f"### 🪑 Table: {order['table']} | ⏰ {order['timestamp']}")
+        st.markdown(f"**Status:** `{order['status']}`")
+
+        item_data = []
+        for item_id, qty in order["items"].items():
+            item = next((i for i in menu if i["id"] == item_id), {"name": "Unknown", "price": 0})
+            item_data.append({
+                "Item": item["name"],
+                "Quantity": qty,
                 "Price": item["price"],
-                "Subtotal": item["price"] * item["quantity"]
-            }
-            for name, item in order["items"].items()
-        ])
+                "Total": qty * item["price"]
+            })
+
+        df = pd.DataFrame(item_data)
         st.dataframe(df, use_container_width=True)
 
-        if status == "Completed":
-            if "invoice_path" not in order or not os.path.exists(order["invoice_path"]):
-                invoice_path = os.path.join(BASE_DIR, f"invoice_table_{order['table']}_{order['timestamp'].replace(':','-').replace(' ', '_')}.pdf")
-                order["invoice_path"] = generate_invoice(order, invoice_path)
-                with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-                    json.dump(orders, f, indent=2)
-            else:
-                invoice_path = order["invoice_path"]
+        # Invoice download if Completed
+        if order["status"] == "Completed":
+            invoice_name = f"invoice_table{order['table']}_{idx}.pdf"
+            invoice_path = os.path.join(INVOICE_DIR, invoice_name)
 
-            st.success("✅ Order Completed! Download your invoice below:")
+            if not os.path.exists(invoice_path):
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_font("Arial", size=12)
+                pdf.cell(200, 10, txt="Smart Table Invoice", ln=True, align="C")
+                pdf.cell(200, 10, txt=f"Table: {order['table']} | Time: {order['timestamp']}", ln=True)
+
+                pdf.ln(10)
+                total = 0
+                for row in item_data:
+                    line = f"{row['Item']} x {row['Quantity']} - Rs. {row['Total']}"
+                    pdf.cell(200, 10, txt=line, ln=True)
+                    total += row['Total']
+                pdf.ln(5)
+                pdf.cell(200, 10, txt=f"Total Amount: Rs. {total}", ln=True)
+
+                pdf.output(invoice_path)
+
             with open(invoice_path, "rb") as f:
-                st.download_button("📄 Download Invoice", data=f.read(), file_name=os.path.basename(invoice_path), mime="application/pdf")
+                st.download_button(
+                    label="📄 Download Invoice",
+                    data=f.read(),
+                    file_name=invoice_name,
+                    mime="application/pdf"
+                )
 
-# --- Invoice PDF Generation ---
-def generate_invoice(order, save_path):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, "Smart Café Invoice", ln=True, align="C")
+# --- Feedback Section ---
+st.markdown("---")
+st.header("💬 Submit Feedback")
 
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(0, 10, f"Table: {order['table']}", ln=True)
-    pdf.cell(0, 10, f"Date: {order['timestamp']}", ln=True)
-    pdf.ln(10)
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(80, 10, "Item", 1)
-    pdf.cell(30, 10, "Qty", 1)
-    pdf.cell(30, 10, "Price", 1)
-    pdf.cell(40, 10, "Subtotal", 1)
-    pdf.ln()
-
-    pdf.set_font("Arial", "", 12)
-    total = 0
-    for name, item in order["items"].items():
-        qty = item["quantity"]
-        price = item["price"]
-        subtotal = qty * price
-        total += subtotal
-
-        pdf.cell(80, 10, name, 1)
-        pdf.cell(30, 10, str(qty), 1)
-        pdf.cell(30, 10, f"Rs. {price}", 1)
-        pdf.cell(40, 10, f"Rs. {subtotal}", 1)
-        pdf.ln()
-
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(140, 10, "Total", 1)
-    pdf.cell(40, 10, f"Rs. {total}", 1)
-    pdf.ln(20)
-
-    if os.path.exists(QR_IMAGE):
-        pdf.image(QR_IMAGE, x=10, y=pdf.get_y(), w=40)
-
-    pdf.output(save_path)
-    return save_path
+feedback_text = st.text_area("Your feedback:")
+if st.button("✅ Submit Feedback"):
+    if not feedback_text.strip():
+        st.warning("Feedback cannot be empty.")
+    else:
+        feedbacks.append({
+            "table": table_number,
+            "feedback": feedback_text.strip(),
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
+            json.dump(feedbacks, f, indent=2)
+        st.success("🙏 Thanks for your feedback!")
+        st.rerun()
