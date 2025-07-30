@@ -1,27 +1,50 @@
-{
-  "Starters": [
-    {"name": "Paneer Tikka", "price": 180},
-    {"name": "Veg Spring Roll", "price": 150},
-    {"name": "Chicken Lollipop", "price": 200}
-  ],
-  "Main Course": [
-    {"name": "Butter Chicken", "price": 280},
-    {"name": "Paneer Butter Masala", "price": 250},
-    {"name": "Dal Tadka", "price": 160}
-  ],
-  "Breads": [
-    {"name": "Naan", "price": 30},
-    {"name": "Butter Roti", "price": 20},
-    {"name": "Garlic Naan", "price": 40}
-  ],
-  "Beverages": [
-    {"name": "Masala Chai", "price": 20},
-    {"name": "Cold Coffee", "price": 60},
-    {"name": "Sweet Lassi", "price": 50}
-  ],
-  "Desserts": [
-    {"name": "Gulab Jamun", "price": 50},
-    {"name": "Ice Cream", "price": 80},
-    {"name": "Rasgulla", "price": 60}
-  ]
-}
+[
+  {
+    "id": "1",
+    "name": "Margherita Pizza",
+    "price": 250,
+    "category": "Pizza"
+  },
+  {
+    "id": "2",
+    "name": "Farmhouse Pizza",
+    "price": 320,
+    "category": "Pizza"
+  },
+  {
+    "id": "3",
+    "name": "Paneer Tikka",
+    "price": 180,
+    "category": "Starter"
+  },
+  {
+    "id": "4",
+    "name": "Veg Manchurian",
+    "price": 150,
+    "category": "Starter"
+  },
+  {
+    "id": "5",
+    "name": "Masala Dosa",
+    "price": 100,
+    "category": "South Indian"
+  },
+  {
+    "id": "6",
+    "name": "Idli Sambhar",
+    "price": 80,
+    "category": "South Indian"
+  },
+  {
+    "id": "7",
+    "name": "Coke",
+    "price": 50,
+    "category": "Beverages"
+  },
+  {
+    "id": "8",
+    "name": "Lassi",
+    "price": 60,
+    "category": "Beverages"
+  }
+]
