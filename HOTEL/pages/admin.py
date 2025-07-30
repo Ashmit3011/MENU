@@ -170,7 +170,7 @@ else:
 
         st.markdown(f"**💰 Total: ₹{total}**")
 
-        # Status change buttons
+        # Status change buttons (removed duplicate row)
         st.markdown("---")
         col_buttons = st.columns(4)
         statuses = ["Pending", "Preparing", "Ready", "Completed"]
