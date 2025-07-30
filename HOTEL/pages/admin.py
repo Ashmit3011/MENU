@@ -102,3 +102,22 @@ else:
                         json.dump(orders, f, indent=2)
                     st.success(f"🗑️ Order for Table {table} deleted.")
                     st.rerun()
+# Feedback Viewer
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
+st.markdown("---")
+st.subheader("💬 Customer Feedback")
+
+if os.path.exists(FEEDBACK_FILE):
+    with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
+        feedback_data = json.load(f)
+
+    if feedback_data:
+        for entry in reversed(feedback_data):  # Show latest feedback first
+            table = entry.get("table", "Unknown")
+            message = entry.get("message", "")
+            timestamp = entry.get("timestamp", "Unknown")
+            st.info(f"🪑 Table {table} | 🕒 {timestamp}\n\n📩 {message}")
+    else:
+        st.write("No feedback submitted yet.")
+else:
+    st.write("Feedback file not found.")
