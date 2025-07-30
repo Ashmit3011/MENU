@@ -28,32 +28,43 @@ orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
 # Load feedbacks
 feedbacks = json.load(open(FEEDBACK_FILE)) if os.path.exists(FEEDBACK_FILE) else []
 
-# App title
+# App config
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
-st.title("🍽️ Smart Table Ordering")
+st.title("🍽️ Smart Table Ordering System")
 
 # Select Table Number
 table_number = st.selectbox("Select your Table Number:", ["1", "2", "3", "4", "5"], index=0)
 
-# --- Menu Display ---
-st.header("📋 Menu")
-categories = sorted(set(item['category'] for item in menu))
-selected_category = st.selectbox("Select Category", categories)
-
+# Sidebar Cart
+st.sidebar.title("🛒 Cart Summary")
 cart = {}
 
+# --- Menu Display ---
+st.header("📋 Menu")
+categories = sorted(set(item['category'] for item in menu if 'category' in item))
+selected_category = st.selectbox("Select Category", categories)
+
 for item in menu:
-    if item["category"] == selected_category:
+    if item.get("category") == selected_category:
         col1, col2 = st.columns([4, 1])
         with col1:
             st.markdown(f"**{item['name']}**  \n💵 Rs. {item['price']}")
         with col2:
-            qty = st.number_input(f"Qty - {item['name']}", min_value=0, step=1, key=item['name'])
+            qty = st.number_input(f"Qty - {item['name']}", min_value=0, step=1, key=f"qty_{item['id']}")
             if qty > 0:
                 cart[item['id']] = qty
+                st.sidebar.write(f"{item['name']} x {qty} = Rs. {item['price'] * qty}")
+
+# Show total in cart sidebar
+if cart:
+    total_amt = sum(next((i['price'] for i in menu if i['id'] == id_), 0) * q for id_, q in cart.items())
+    st.sidebar.markdown(f"### Total: Rs. {total_amt}")
+
+# Payment method
+payment_method = st.selectbox("💳 Choose Payment Method", ["Cash", "Card", "Online"])
 
 # --- Place Order ---
-if st.button("🛒 Place Order"):
+if st.button("✅ Place Order"):
     if not cart:
         st.warning("Please select at least one item.")
     else:
@@ -63,9 +74,9 @@ if st.button("🛒 Place Order"):
             "items": cart,
             "status": "Preparing",
             "timestamp": timestamp,
+            "payment_method": payment_method
         }
 
-        # Save order
         orders.append(new_order)
         with open(ORDERS_FILE, "w", encoding="utf-8") as f:
             json.dump(orders, f, indent=2)
@@ -84,6 +95,7 @@ else:
         st.markdown("---")
         st.markdown(f"### 🪑 Table: {order['table']} | ⏰ {order['timestamp']}")
         st.markdown(f"**Status:** `{order['status']}`")
+        st.markdown(f"**Payment Method:** `{order.get('payment_method', 'N/A')}`")
 
         item_data = []
         for item_id, qty in order["items"].items():
@@ -109,6 +121,7 @@ else:
                 pdf.set_font("Arial", size=12)
                 pdf.cell(200, 10, txt="Smart Table Invoice", ln=True, align="C")
                 pdf.cell(200, 10, txt=f"Table: {order['table']} | Time: {order['timestamp']}", ln=True)
+                pdf.cell(200, 10, txt=f"Payment Method: {order.get('payment_method', 'N/A')}", ln=True)
 
                 pdf.ln(10)
                 total = 0
@@ -134,7 +147,7 @@ st.markdown("---")
 st.header("💬 Submit Feedback")
 
 feedback_text = st.text_area("Your feedback:")
-if st.button("✅ Submit Feedback"):
+if st.button("📝 Submit Feedback"):
     if not feedback_text.strip():
         st.warning("Feedback cannot be empty.")
     else:
