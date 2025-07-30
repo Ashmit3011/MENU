@@ -60,6 +60,7 @@ def generate_invoice(order, item_data, invoice_file):
     pdf.ln(5)
     pdf.cell(200, 10, txt=f"Total Amount: Rs. {total}", ln=True)
 
+    # Payment Method
     if "payment" in order:
         pdf.cell(200, 10, txt=f"Payment Method: {order['payment']}", ln=True)
 
@@ -86,6 +87,12 @@ else:
                 f"<span style='color:{status_colors.get(status, 'black')}; font-weight:bold;'>Status: {status}</span>",
                 unsafe_allow_html=True
             )
+
+            # Show payment method if available
+            if "payment" in order:
+                st.markdown(
+                    f"💳 **Payment Method:** `{order['payment']}`"
+                )
 
             # Item breakdown
             item_data = []
