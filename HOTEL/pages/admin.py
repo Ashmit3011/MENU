@@ -132,7 +132,7 @@ sort_option = st.selectbox("📊 Sort orders by:", ["Newest", "Oldest", "Pending
 table_filter = st.text_input("🔍 Filter by Table Number")
 
 if table_filter:
-    orders = [o for o in orders if o.get("table") == table_filter]
+    orders = [o for o in orders if str(o.get("table")) == str(table_filter)]
 
 if sort_option == "Pending First":
     orders.sort(key=lambda x: x["status"] != "Pending")
