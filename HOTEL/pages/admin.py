@@ -13,12 +13,12 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
+INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
+os.makedirs(INVOICE_DIR, exist_ok=True)
 
 # Load data
 orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
-
-menu_data = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else []
-menu = {item["id"]: item for item in menu_data}  # ✅ fixed here
+menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else {}
 
 st.title("🛠️ Admin Panel")
 st.caption("Real-time order tracking and management")
@@ -43,6 +43,7 @@ else:
             table = order["table"]
             items = order["items"]
             timestamp = order["timestamp"]
+            payment_method = order.get("payment_method", "Not selected")
 
             st.markdown(
                 f"<h4>🪑 Table: {table} | 🕒 {timestamp}</h4>",
@@ -54,6 +55,9 @@ else:
                 f"<span style='color:{status_colors.get(status, 'black')}; font-weight:bold;'>Status: {status}</span>",
                 unsafe_allow_html=True
             )
+
+            # Payment method display
+            st.markdown(f"💳 **Payment Method:** {payment_method}")
 
             # Display items in a table
             item_data = []
@@ -82,10 +86,57 @@ else:
                     st.success(f"✅ Status updated to '{new_status}'")
                     st.rerun()
 
-            # Invoice download section
+            # Invoice generation and download
             if status == "Completed":
                 invoice_path = order.get("invoice_path")
-                if invoice_path and os.path.exists(invoice_path):
+
+                if not invoice_path or not os.path.exists(invoice_path):
+                    # Generate invoice
+                    from reportlab.lib.pagesizes import letter
+                    from reportlab.pdfgen import canvas
+
+                    invoice_filename = f"invoice_table_{table}_{timestamp.replace(':', '-')}.pdf"
+                    invoice_path = os.path.join(INVOICE_DIR, invoice_filename)
+
+                    c = canvas.Canvas(invoice_path, pagesize=letter)
+                    c.setFont("Helvetica", 14)
+                    c.drawString(50, 750, f"Smart Restaurant Invoice")
+                    c.setFont("Helvetica", 12)
+                    c.drawString(50, 730, f"Table: {table}")
+                    c.drawString(250, 730, f"Time: {timestamp}")
+                    c.drawString(50, 710, f"Payment Method: {payment_method}")
+                    c.drawString(50, 690, "-" * 70)
+
+                    y = 670
+                    total_amount = 0
+                    c.setFont("Helvetica", 11)
+                    c.drawString(50, y, "Item")
+                    c.drawString(250, y, "Qty")
+                    c.drawString(300, y, "Price")
+                    c.drawString(400, y, "Total")
+                    y -= 20
+
+                    for item_id, qty in items.items():
+                        item = menu.get(item_id, {"name": "Unknown", "price": 0})
+                        price = item["price"]
+                        line_total = price * qty
+                        total_amount += line_total
+                        c.drawString(50, y, item["name"])
+                        c.drawString(250, y, str(qty))
+                        c.drawString(300, y, f"{price:.2f}")
+                        c.drawString(400, y, f"{line_total:.2f}")
+                        y -= 20
+
+                    c.drawString(50, y - 10, "-" * 70)
+                    c.setFont("Helvetica-Bold", 12)
+                    c.drawString(50, y - 30, f"Total Amount: ₹ {total_amount:.2f}")
+                    c.save()
+
+                    order["invoice_path"] = invoice_path
+                    with open(ORDERS_FILE, "w", encoding="utf-8") as f:
+                        json.dump(orders, f, indent=2)
+
+                if os.path.exists(invoice_path):
                     with open(invoice_path, "rb") as f:
                         st.download_button(
                             label="📄 Download Invoice",
@@ -95,10 +146,9 @@ else:
                             key=f"download_{idx}"
                         )
                 else:
-                    st.info("📄 Invoice not found or not generated yet.")
+                    st.warning("⚠️ Invoice not found or failed to generate.")
 
-            # Delete completed order
-            if status == "Completed":
+                # Delete completed order
                 if st.button(f"🗑️ Delete Order (Table {table})", key=f"delete_{idx}"):
                     orders.pop(idx)
                     with open(ORDERS_FILE, "w", encoding="utf-8") as f:
