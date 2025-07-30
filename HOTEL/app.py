@@ -38,7 +38,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
-PAYMENT_FILE = os.path.join(BASE_DIR, "payments.json")
 QR_IMAGE = os.path.join(BASE_DIR, "qr.jpg")
 
 # -------------- Helper: Generate Invoice --------------
@@ -90,7 +89,6 @@ def generate_invoice(order):
 menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else {}
 orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
 feedback = json.load(open(FEEDBACK_FILE)) if os.path.exists(FEEDBACK_FILE) else []
-payments = json.load(open(PAYMENT_FILE)) if os.path.exists(PAYMENT_FILE) else []
 
 # -------------- Table Number Session --------------
 if "table_number" not in st.session_state:
@@ -158,7 +156,7 @@ if st.session_state.cart:
 else:
     st.info("🛍️ Your cart is empty.")
 
-# -------------- Order History, Invoice, Payment, Feedback --------------
+# -------------- Order History, Invoice, Feedback --------------
 st.subheader("📦 Your Orders")
 feedback_given = False
 found = False
@@ -177,26 +175,6 @@ for order in reversed(orders):
             st.success("✅ Order Completed! Download your invoice below:")
             with open(invoice_path, "rb") as f:
                 st.download_button("📄 Download Invoice", data=f.read(), file_name=os.path.basename(invoice_path))
-
-            # 🔻 Payment Method Selection
-            table_payment = next((p for p in payments if p["table"] == order["table"] and p["timestamp"] == order["timestamp"]), None)
-
-            if not table_payment:
-                st.subheader("💳 Select Payment Method")
-                payment_option = st.radio("Choose a payment method:", ["Cash", "Card", "Online"])
-                if st.button("💰 Confirm Payment"):
-                    payments.append({
-                        "table": order["table"],
-                        "method": payment_option,
-                        "timestamp": order["timestamp"]
-                    })
-                    with open(PAYMENT_FILE, "w", encoding="utf-8") as f:
-                        json.dump(payments, f, indent=2)
-                    st.success(f"✅ Payment method '{payment_option}' selected for Table {order['table']}")
-                    st.balloons()
-                    st.rerun()
-            else:
-                st.info(f"✅ Payment method **{table_payment['method']}** already submitted for Table {order['table']}")
 
             # 💬 Feedback Section
             st.markdown("---")
