@@ -77,15 +77,15 @@ else:
                     with open(ORDERS_FILE, "w", encoding="utf-8") as f:
                         json.dump(orders, f, indent=2)
                     st.success(f"✅ Status updated to '{new_status}'")
-                    st.experimental_rerun()
+                    st.rerun()
 
-            # Download Invoice if available
+            # Invoice download section
             if status == "Completed":
                 invoice_path = order.get("invoice_path")
                 if invoice_path and os.path.exists(invoice_path):
                     with open(invoice_path, "rb") as f:
                         st.download_button(
-                            "📄 Download Invoice",
+                            label="📄 Download Invoice",
                             data=f.read(),
                             file_name=os.path.basename(invoice_path),
                             mime="application/pdf",
@@ -94,11 +94,11 @@ else:
                 else:
                     st.info("📄 Invoice not found or not generated yet.")
 
-            # Delete option for Completed orders
+            # Delete completed order
             if status == "Completed":
                 if st.button(f"🗑️ Delete Order (Table {table})", key=f"delete_{idx}"):
                     orders.pop(idx)
                     with open(ORDERS_FILE, "w", encoding="utf-8") as f:
                         json.dump(orders, f, indent=2)
                     st.success(f"🗑️ Order for Table {table} deleted.")
-                    st.experimental_rerun()
+                    st.rerun()
