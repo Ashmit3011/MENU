@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
+from fpdf import FPDF
 
 # Auto-refresh every 5 seconds
 st_autorefresh(interval=5000, key="admin_autorefresh")
@@ -14,25 +15,67 @@ ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
+
+# Ensure invoice directory exists
 os.makedirs(INVOICE_DIR, exist_ok=True)
 
-# Load data
+# Load orders
 orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
-menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else {}
+
+# Load menu and convert to dict
+if os.path.exists(MENU_FILE):
+    raw_menu = json.load(open(MENU_FILE))
+    menu = {item["id"]: item for item in raw_menu}
+else:
+    menu = {}
+
+# Sort orders by timestamp
+orders = sorted(orders, key=lambda x: x["timestamp"], reverse=True)
 
 st.title("🛠️ Admin Panel")
 st.caption("Real-time order tracking and management")
 
-# Color status map
 status_colors = {
     "Preparing": "orange",
     "Ready": "green",
     "Completed": "gray"
 }
 
-# Sort orders by timestamp (latest first)
-orders = sorted(orders, key=lambda x: x["timestamp"], reverse=True)
+# Function to generate invoice PDF
+def generate_invoice(order, items_data, file_path):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(200, 10, f"🧾 Invoice - Table {order['table']}", ln=True, align="C")
+    pdf.set_font("Arial", "", 12)
+    pdf.cell(200, 10, f"Timestamp: {order['timestamp']}", ln=True, align="C")
+    pdf.ln(10)
+    
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(60, 10, "Item", 1)
+    pdf.cell(30, 10, "Qty", 1)
+    pdf.cell(40, 10, "Price", 1)
+    pdf.cell(60, 10, "Total", 1)
+    pdf.ln()
 
+    total_amount = 0
+    for row in items_data:
+        pdf.set_font("Arial", "", 12)
+        pdf.cell(60, 10, row["Item"], 1)
+        pdf.cell(30, 10, str(row["Quantity"]), 1)
+        pdf.cell(40, 10, f"{row['Price']:.2f}", 1)
+        total = row["Quantity"] * row["Price"]
+        total_amount += total
+        pdf.cell(60, 10, f"{total:.2f}", 1)
+        pdf.ln()
+    
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(130, 10, "Grand Total", 1)
+    pdf.cell(60, 10, f"{total_amount:.2f}", 1)
+    
+    pdf.output(file_path)
+
+# Admin order management
 if not orders:
     st.info("No orders found.")
 else:
@@ -43,23 +86,18 @@ else:
             table = order["table"]
             items = order["items"]
             timestamp = order["timestamp"]
-            payment_method = order.get("payment_method", "Not selected")
 
             st.markdown(
                 f"<h4>🪑 Table: {table} | 🕒 {timestamp}</h4>",
                 unsafe_allow_html=True
             )
 
-            # Status label
             st.markdown(
                 f"<span style='color:{status_colors.get(status, 'black')}; font-weight:bold;'>Status: {status}</span>",
                 unsafe_allow_html=True
             )
 
-            # Payment method display
-            st.markdown(f"💳 **Payment Method:** {payment_method}")
-
-            # Display items in a table
+            # Item breakdown
             item_data = []
             for item_id, quantity in items.items():
                 item = menu.get(item_id, {"name": "Unknown", "price": 0})
@@ -69,9 +107,10 @@ else:
                     "Price": item["price"],
                     "Total": quantity * item["price"]
                 })
+
             st.dataframe(pd.DataFrame(item_data), use_container_width=True)
 
-            # Change status options
+            # Status change
             if status != "Completed":
                 new_status = st.selectbox(
                     f"Change status for Table {table}",
@@ -81,74 +120,35 @@ else:
                 )
                 if new_status != status:
                     order["status"] = new_status
+
+                    # Generate invoice if moved to Completed
+                    if new_status == "Completed":
+                        invoice_file = os.path.join(
+                            INVOICE_DIR, f"invoice_table{table}_{timestamp.replace(':', '-')}.pdf"
+                        )
+                        generate_invoice(order, item_data, invoice_file)
+                        order["invoice_path"] = invoice_file
+
                     with open(ORDERS_FILE, "w", encoding="utf-8") as f:
                         json.dump(orders, f, indent=2)
                     st.success(f"✅ Status updated to '{new_status}'")
                     st.rerun()
 
-            # Invoice generation and download
+            # Invoice download for completed orders
             if status == "Completed":
                 invoice_path = order.get("invoice_path")
-
-                if not invoice_path or not os.path.exists(invoice_path):
-                    # Generate invoice
-                    from reportlab.lib.pagesizes import letter
-                    from reportlab.pdfgen import canvas
-
-                    invoice_filename = f"invoice_table_{table}_{timestamp.replace(':', '-')}.pdf"
-                    invoice_path = os.path.join(INVOICE_DIR, invoice_filename)
-
-                    c = canvas.Canvas(invoice_path, pagesize=letter)
-                    c.setFont("Helvetica", 14)
-                    c.drawString(50, 750, f"Smart Restaurant Invoice")
-                    c.setFont("Helvetica", 12)
-                    c.drawString(50, 730, f"Table: {table}")
-                    c.drawString(250, 730, f"Time: {timestamp}")
-                    c.drawString(50, 710, f"Payment Method: {payment_method}")
-                    c.drawString(50, 690, "-" * 70)
-
-                    y = 670
-                    total_amount = 0
-                    c.setFont("Helvetica", 11)
-                    c.drawString(50, y, "Item")
-                    c.drawString(250, y, "Qty")
-                    c.drawString(300, y, "Price")
-                    c.drawString(400, y, "Total")
-                    y -= 20
-
-                    for item_id, qty in items.items():
-                        item = menu.get(item_id, {"name": "Unknown", "price": 0})
-                        price = item["price"]
-                        line_total = price * qty
-                        total_amount += line_total
-                        c.drawString(50, y, item["name"])
-                        c.drawString(250, y, str(qty))
-                        c.drawString(300, y, f"{price:.2f}")
-                        c.drawString(400, y, f"{line_total:.2f}")
-                        y -= 20
-
-                    c.drawString(50, y - 10, "-" * 70)
-                    c.setFont("Helvetica-Bold", 12)
-                    c.drawString(50, y - 30, f"Total Amount: ₹ {total_amount:.2f}")
-                    c.save()
-
-                    order["invoice_path"] = invoice_path
-                    with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-                        json.dump(orders, f, indent=2)
-
-                if os.path.exists(invoice_path):
+                if invoice_path and os.path.exists(invoice_path):
                     with open(invoice_path, "rb") as f:
                         st.download_button(
                             label="📄 Download Invoice",
                             data=f.read(),
                             file_name=os.path.basename(invoice_path),
                             mime="application/pdf",
-                            key=f"download_{idx}"
+                            key=f"invoice_{idx}"
                         )
                 else:
-                    st.warning("⚠️ Invoice not found or failed to generate.")
+                    st.info("📄 Invoice not found or not generated yet.")
 
-                # Delete completed order
                 if st.button(f"🗑️ Delete Order (Table {table})", key=f"delete_{idx}"):
                     orders.pop(idx)
                     with open(ORDERS_FILE, "w", encoding="utf-8") as f:
@@ -156,7 +156,7 @@ else:
                     st.success(f"🗑️ Order for Table {table} deleted.")
                     st.rerun()
 
-# Feedback Viewer
+# Feedback section
 st.markdown("---")
 st.subheader("💬 Customer Feedback")
 
@@ -165,7 +165,7 @@ if os.path.exists(FEEDBACK_FILE):
         feedback_data = json.load(f)
 
     if feedback_data:
-        for entry in reversed(feedback_data):  # Show latest feedback first
+        for entry in reversed(feedback_data):
             table = entry.get("table", "Unknown")
             message = entry.get("message", "")
             timestamp = entry.get("timestamp", "Unknown")
