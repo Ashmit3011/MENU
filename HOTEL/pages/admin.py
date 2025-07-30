@@ -12,10 +12,13 @@ st_autorefresh(interval=5000, key="admin_autorefresh")
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 
 # Load data
 orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
-menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else {}
+
+menu_data = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else []
+menu = {item["id"]: item for item in menu_data}  # ✅ fixed here
 
 st.title("🛠️ Admin Panel")
 st.caption("Real-time order tracking and management")
@@ -102,8 +105,8 @@ else:
                         json.dump(orders, f, indent=2)
                     st.success(f"🗑️ Order for Table {table} deleted.")
                     st.rerun()
+
 # Feedback Viewer
-FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 st.markdown("---")
 st.subheader("💬 Customer Feedback")
 
