@@ -24,20 +24,34 @@ menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else []
 orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
 feedbacks = json.load(open(FEEDBACK_FILE)) if os.path.exists(FEEDBACK_FILE) else []
 
-# App config
+# Hide sidebar
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
+hide_sidebar = """
+    <style>
+        [data-testid="stSidebar"] {display: none;}
+    </style>
+"""
+st.markdown(hide_sidebar, unsafe_allow_html=True)
+
 st.title("🍽️ Smart Table Ordering System")
 
-# Select Table Number
-table_number = st.selectbox("Select your Table Number:", ["1", "2", "3", "4", "5"], index=0)
+# --- Table Selection ---
+ALL_TABLES = ["1", "2", "3", "4", "5"]
+occupied_tables = set(o["table"] for o in orders if o["status"] != "Completed")
+available_tables = [t for t in ALL_TABLES if t not in occupied_tables]
 
-# Cart dictionary
-cart = {}
+if available_tables:
+    table_number = st.selectbox("Select your Table Number:", available_tables, index=0)
+else:
+    st.error("🚫 All tables are currently in use. Please wait.")
+    st.stop()
 
 # --- Menu Display ---
 st.header("📋 Menu")
 categories = sorted(set(item['category'] for item in menu if 'category' in item))
 selected_category = st.selectbox("Select Category", categories)
+
+cart = {}
 
 for item in menu:
     if item.get("category") == selected_category:
@@ -49,29 +63,26 @@ for item in menu:
             if qty > 0:
                 cart[item['id']] = qty
 
-# --- Cart Section at Bottom ---
-st.markdown("---")
-st.header("🛒 Cart Summary")
+# --- Cart Section ---
 if cart:
-    cart_items = []
+    st.markdown("---")
+    st.subheader("🛒 Your Cart")
+    item_data = []
     total_amt = 0
-    for id_, qty in cart.items():
-        item = next((i for i in menu if i["id"] == id_), {"name": "Unknown", "price": 0})
-        line_total = item["price"] * qty
-        total_amt += line_total
-        cart_items.append({
+    for item_id, qty in cart.items():
+        item = next((i for i in menu if i["id"] == item_id), {"name": "Unknown", "price": 0})
+        total = item["price"] * qty
+        total_amt += total
+        item_data.append({
             "Item": item["name"],
-            "Qty": qty,
+            "Quantity": qty,
             "Price": item["price"],
-            "Total": line_total
+            "Total": total
         })
-    df_cart = pd.DataFrame(cart_items)
-    st.dataframe(df_cart, use_container_width=True)
-    st.subheader(f"💰 Total: Rs. {total_amt}")
-else:
-    st.info("No items selected in cart.")
+    st.dataframe(pd.DataFrame(item_data), use_container_width=True)
+    st.markdown(f"### 🧾 Total Amount: Rs. {total_amt}")
 
-# Payment method
+# --- Payment Selection ---
 payment_method = st.selectbox("💳 Choose Payment Method", ["Cash", "Card", "Online"])
 
 # --- Place Order ---
@@ -85,13 +96,11 @@ if st.button("✅ Place Order"):
             "items": cart,
             "status": "Preparing",
             "timestamp": timestamp,
-            "payment": payment_method  # Make sure it matches admin.py
+            "payment_method": payment_method
         }
-
         orders.append(new_order)
         with open(ORDERS_FILE, "w", encoding="utf-8") as f:
             json.dump(orders, f, indent=2)
-
         st.success("✅ Order placed successfully!")
         st.rerun()
 
@@ -106,7 +115,7 @@ else:
         st.markdown("---")
         st.markdown(f"### 🪑 Table: {order['table']} | ⏰ {order['timestamp']}")
         st.markdown(f"**Status:** `{order['status']}`")
-        st.markdown(f"**Payment Method:** `{order.get('payment', 'N/A')}`")
+        st.markdown(f"**Payment Method:** `{order.get('payment_method', 'N/A')}`")
 
         item_data = []
         for item_id, qty in order["items"].items():
@@ -118,8 +127,7 @@ else:
                 "Total": qty * item["price"]
             })
 
-        df = pd.DataFrame(item_data)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(pd.DataFrame(item_data), use_container_width=True)
 
         # Invoice download if Completed
         if order["status"] == "Completed":
@@ -132,7 +140,7 @@ else:
                 pdf.set_font("Arial", size=12)
                 pdf.cell(200, 10, txt="Smart Table Invoice", ln=True, align="C")
                 pdf.cell(200, 10, txt=f"Table: {order['table']} | Time: {order['timestamp']}", ln=True)
-                pdf.cell(200, 10, txt=f"Payment Method: {order.get('payment', 'N/A')}", ln=True)
+                pdf.cell(200, 10, txt=f"Payment Method: {order.get('payment_method', 'N/A')}", ln=True)
 
                 pdf.ln(10)
                 total = 0
@@ -142,7 +150,6 @@ else:
                     total += row['Total']
                 pdf.ln(5)
                 pdf.cell(200, 10, txt=f"Total Amount: Rs. {total}", ln=True)
-
                 pdf.output(invoice_path)
 
             with open(invoice_path, "rb") as f:
@@ -164,7 +171,7 @@ if st.button("📝 Submit Feedback"):
     else:
         feedbacks.append({
             "table": table_number,
-            "message": feedback_text.strip(),
+            "feedback": feedback_text.strip(),
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
         with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
