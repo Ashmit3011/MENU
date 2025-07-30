@@ -42,38 +42,28 @@ status_colors = {
 }
 
 # Function to generate invoice PDF
-def generate_invoice(order, items_data, file_path):
+def generate_invoice(order, item_data, invoice_file):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(200, 10, f"🧾 Invoice - Table {order['table']}", ln=True, align="C")
-    pdf.set_font("Arial", "", 12)
-    pdf.cell(200, 10, f"Timestamp: {order['timestamp']}", ln=True, align="C")
-    pdf.ln(10)
-    
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(60, 10, "Item", 1)
-    pdf.cell(30, 10, "Qty", 1)
-    pdf.cell(40, 10, "Price", 1)
-    pdf.cell(60, 10, "Total", 1)
-    pdf.ln()
+    pdf.set_font("Arial", size=12)
 
-    total_amount = 0
-    for row in items_data:
-        pdf.set_font("Arial", "", 12)
-        pdf.cell(60, 10, row["Item"], 1)
-        pdf.cell(30, 10, str(row["Quantity"]), 1)
-        pdf.cell(40, 10, f"{row['Price']:.2f}", 1)
-        total = row["Quantity"] * row["Price"]
-        total_amount += total
-        pdf.cell(60, 10, f"{total:.2f}", 1)
-        pdf.ln()
-    
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(130, 10, "Grand Total", 1)
-    pdf.cell(60, 10, f"{total_amount:.2f}", 1)
-    
-    pdf.output(file_path)
+    pdf.cell(200, 10, f"Invoice - Table {order['table']}", ln=True, align="C")
+    pdf.cell(200, 10, f"Date & Time: {order['timestamp']}", ln=True, align="C")
+    pdf.ln(10)
+
+    total = 0
+    for row in item_data:
+        line = f"{row['Item']} x {row['Quantity']} = Rs. {row['Total']}"
+        pdf.cell(200, 10, txt=line, ln=True)
+        total += row["Total"]
+
+    pdf.ln(5)
+    pdf.cell(200, 10, txt=f"Total Amount: Rs. {total}", ln=True)
+
+    if "payment" in order:
+        pdf.cell(200, 10, txt=f"Payment Method: {order['payment']}", ln=True)
+
+    pdf.output(invoice_file)
 
 # Admin order management
 if not orders:
