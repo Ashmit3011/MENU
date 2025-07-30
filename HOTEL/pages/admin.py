@@ -151,11 +151,12 @@ else:
         table = order.get("table", "?")
         timestamp = order.get("timestamp", "N/A")
         status = order.get("status", "Pending")
+        payment = order.get("payment", "Not Selected")
         items = order.get("items", {})
 
         st.markdown(f"<div class='order-card'>", unsafe_allow_html=True)
         st.markdown(f"<div class='order-header'>🪑 Table {table} <span class='status {status}'>{status}</span></div>", unsafe_allow_html=True)
-        st.caption(f"🕒 {timestamp}")
+        st.caption(f"🕒 {timestamp} | 💳 Payment: {payment}")
         status_progress(status)
         st.markdown("#### 🧾 Ordered Items")
 
@@ -169,7 +170,7 @@ else:
 
         st.markdown(f"**💰 Total: ₹{total}**")
 
-        # Status change buttons (removed duplicate row)
+        # Status change buttons
         st.markdown("---")
         col_buttons = st.columns(4)
         statuses = ["Pending", "Preparing", "Ready", "Completed"]
@@ -202,6 +203,7 @@ if st.button("📥 Download Daily Report (CSV)"):
         "Table": o["table"],
         "Time": o["timestamp"],
         "Status": o["status"],
+        "Payment": o.get("payment", "Not Selected"),
         "Total": sum(item["price"] * item["quantity"] for item in o["items"].values())
     } for o in orders])
     st.download_button("📄 Download CSV", df.to_csv(index=False), "orders_report.csv", "text/csv")
