@@ -6,26 +6,16 @@ import pandas as pd
 from fpdf import FPDF
 from streamlit_autorefresh import st_autorefresh
 
+# === Auto-refresh enabled always ===
+st_autorefresh(interval=10000, key="customer_refresh")
+
 # === File paths ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
-
 os.makedirs(INVOICE_DIR, exist_ok=True)
-
-# === Session State Setup for Refresh Control ===
-if "order_just_placed" not in st.session_state:
-    st.session_state.order_just_placed = False
-
-# 🚫 Skip autorefresh only once after placing order
-if not st.session_state.order_just_placed:
-    st_autorefresh(interval=10000, key="customer_refresh")
-
-# === Reset trigger after rerun ===
-if st.session_state.order_just_placed:
-    st.session_state.order_just_placed = False
 
 # === Utility Functions ===
 def load_json(file_path, default=[]):
@@ -106,6 +96,10 @@ if cart:
 # --- Payment Selection ---
 payment_method = st.selectbox("💳 Choose Payment Method", ["Cash", "Card", "Online"])
 
+# === Save Order Trigger Flag ===
+if "order_placed" not in st.session_state:
+    st.session_state.order_placed = False
+
 # --- Place Order ---
 if st.button("✅ Place Order"):
     if not cart:
@@ -120,20 +114,14 @@ if st.button("✅ Place Order"):
             "payment_method": payment_method
         }
 
-        orders = load_json(ORDERS_FILE)
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
-
-        # ✅ Prevent autorefresh once
-        st.session_state.order_just_placed = True
-
+        st.session_state.order_placed = True
         st.success("✅ Order placed successfully!")
-        st.rerun()
 
 # --- Your Orders ---
 st.header("📦 Your Orders")
 
-# ✅ Reload orders to get latest data
 orders = load_json(ORDERS_FILE)
 user_orders = [o for o in orders if str(o["table"]) == str(table_number)]
 
@@ -198,7 +186,6 @@ if st.button("📝 Submit Feedback"):
     if not feedback_text.strip():
         st.warning("Feedback cannot be empty.")
     else:
-        feedbacks = load_json(FEEDBACK_FILE)
         feedbacks.append({
             "table": str(table_number),
             "feedback": feedback_text.strip(),
