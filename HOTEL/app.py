@@ -6,14 +6,24 @@ import pandas as pd
 from fpdf import FPDF
 from streamlit_autorefresh import st_autorefresh
 
-# === Auto-refresh every 10 seconds (DO NOT REMOVE) ===
-st_autorefresh(interval=10000, key="customer_refresh")
+# === Session State Setup for Refresh Control ===
+if "disable_autorefresh" not in st.session_state:
+    st.session_state.disable_autorefresh = False
 
-# === File paths (use relative to avoid write errors) ===
-MENU_FILE = "menu.json"
-ORDERS_FILE = "orders.json"
-FEEDBACK_FILE = "feedback.json"
-INVOICE_DIR = "invoices"
+if not st.session_state.disable_autorefresh:
+    st_autorefresh(interval=10000, key="customer_refresh")
+
+# === Reset after rerun ===
+if st.session_state.get("disable_autorefresh", False):
+    st.session_state.disable_autorefresh = False
+
+# === File paths ===
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+MENU_FILE = os.path.join(BASE_DIR, "menu.json")
+ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
+INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
+
 os.makedirs(INVOICE_DIR, exist_ok=True)
 
 # === Utility Functions ===
@@ -27,11 +37,8 @@ def load_json(file_path, default=[]):
     return default
 
 def save_json(file_path, data):
-    try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-    except Exception as e:
-        st.error(f"Failed to save {file_path}: {e}")
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
 
 # === Load Data ===
 menu = load_json(MENU_FILE)
@@ -61,6 +68,11 @@ else:
 
 # --- Menu Display ---
 st.header("📋 Menu")
+
+if not menu:
+    st.warning("⚠️ Menu is currently empty. Please check your menu.json file.")
+    st.stop()
+
 categories = sorted(set(item['category'] for item in menu if 'category' in item))
 selected_category = st.selectbox("Select Category", categories)
 
@@ -116,13 +128,12 @@ if st.button("✅ Place Order"):
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
 
+        st.session_state.disable_autorefresh = True
         st.success("✅ Order placed successfully!")
         st.rerun()
 
 # --- Your Orders ---
 st.header("📦 Your Orders")
-
-# Reload orders again to get any updates
 orders = load_json(ORDERS_FILE)
 user_orders = [o for o in orders if str(o["table"]) == str(table_number)]
 
@@ -147,6 +158,7 @@ else:
 
         st.dataframe(pd.DataFrame(item_data), use_container_width=True)
 
+        # Invoice download if Completed
         if order["status"] == "Completed":
             invoice_name = f"invoice_table{order['table']}_{idx}.pdf"
             invoice_path = os.path.join(INVOICE_DIR, invoice_name)
