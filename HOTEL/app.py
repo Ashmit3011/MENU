@@ -6,17 +6,6 @@ import pandas as pd
 from fpdf import FPDF
 from streamlit_autorefresh import st_autorefresh
 
-# === Session State Setup for Refresh Control ===
-if "disable_autorefresh" not in st.session_state:
-    st.session_state.disable_autorefresh = False
-
-if not st.session_state.disable_autorefresh:
-    st_autorefresh(interval=10000, key="customer_refresh")
-
-# === Reset after rerun ===
-if st.session_state.get("disable_autorefresh", False):
-    st.session_state.disable_autorefresh = False
-
 # === File paths ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
@@ -25,6 +14,18 @@ FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
 
 os.makedirs(INVOICE_DIR, exist_ok=True)
+
+# === Session State Setup for Refresh Control ===
+if "order_just_placed" not in st.session_state:
+    st.session_state.order_just_placed = False
+
+# 🚫 Skip autorefresh only once after placing order
+if not st.session_state.order_just_placed:
+    st_autorefresh(interval=10000, key="customer_refresh")
+
+# === Reset trigger after rerun ===
+if st.session_state.order_just_placed:
+    st.session_state.order_just_placed = False
 
 # === Utility Functions ===
 def load_json(file_path, default=[]):
@@ -123,8 +124,9 @@ if st.button("✅ Place Order"):
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
 
-        # Disable autorefresh once, and rerun to reflect new order
-        st.session_state.disable_autorefresh = True
+        # ✅ Prevent autorefresh once
+        st.session_state.order_just_placed = True
+
         st.success("✅ Order placed successfully!")
         st.rerun()
 
