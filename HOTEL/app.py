@@ -19,25 +19,38 @@ INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
 # Create invoice directory if not exists
 os.makedirs(INVOICE_DIR, exist_ok=True)
 
+# Utility Functions
+def load_json(file_path, default=[]):
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return default
+    return default
+
+def save_json(file_path, data):
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
 # Load data
-menu = json.load(open(MENU_FILE)) if os.path.exists(MENU_FILE) else []
-orders = json.load(open(ORDERS_FILE)) if os.path.exists(ORDERS_FILE) else []
-feedbacks = json.load(open(FEEDBACK_FILE)) if os.path.exists(FEEDBACK_FILE) else []
+menu = load_json(MENU_FILE)
+orders = load_json(ORDERS_FILE)
+feedbacks = load_json(FEEDBACK_FILE)
 
 # Hide sidebar
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
-hide_sidebar = """
+st.markdown("""
     <style>
         [data-testid="stSidebar"] {display: none;}
     </style>
-"""
-st.markdown(hide_sidebar, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 st.title("🍽️ Smart Table Ordering System")
 
 # --- Table Selection ---
 ALL_TABLES = ["1", "2", "3", "4", "5"]
-occupied_tables = set(o["table"] for o in orders if o["status"] != "Completed")
+occupied_tables = set(str(o["table"]) for o in orders if o["status"] != "Completed")
 available_tables = [t for t in ALL_TABLES if t not in occupied_tables]
 
 if available_tables:
@@ -92,21 +105,25 @@ if st.button("✅ Place Order"):
     else:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         new_order = {
-            "table": table_number,
+            "table": str(table_number),
             "items": cart,
             "status": "Preparing",
             "timestamp": timestamp,
             "payment_method": payment_method
         }
+
+        # Reload orders before saving
+        orders = load_json(ORDERS_FILE)
         orders.append(new_order)
-        with open(ORDERS_FILE, "w", encoding="utf-8") as f:
-            json.dump(orders, f, indent=2)
+        save_json(ORDERS_FILE, orders)
+
         st.success("✅ Order placed successfully!")
         st.rerun()
 
 # --- Your Orders ---
 st.header("📦 Your Orders")
-user_orders = [o for o in orders if o["table"] == table_number]
+orders = load_json(ORDERS_FILE)
+user_orders = [o for o in orders if str(o["table"]) == str(table_number)]
 
 if not user_orders:
     st.info("You haven't placed any orders yet.")
@@ -169,12 +186,12 @@ if st.button("📝 Submit Feedback"):
     if not feedback_text.strip():
         st.warning("Feedback cannot be empty.")
     else:
+        feedbacks = load_json(FEEDBACK_FILE)
         feedbacks.append({
-            "table": table_number,
+            "table": str(table_number),
             "feedback": feedback_text.strip(),
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
-        with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
-            json.dump(feedbacks, f, indent=2)
+        save_json(FEEDBACK_FILE, feedbacks)
         st.success("🙏 Thanks for your feedback!")
         st.rerun()
