@@ -1,50 +1,68 @@
 [
   {
-    "id": "1",
-    "name": "Margherita Pizza",
-    "price": 250,
-    "category": "Pizza"
-  },
-  {
-    "id": "2",
-    "name": "Farmhouse Pizza",
-    "price": 320,
-    "category": "Pizza"
-  },
-  {
-    "id": "3",
-    "name": "Paneer Tikka",
+    "id": "101",
+    "name": "Paneer Butter Masala",
     "price": 180,
-    "category": "Starter"
+    "category": "Main Course"
   },
   {
-    "id": "4",
-    "name": "Veg Manchurian",
+    "id": "102",
+    "name": "Chicken Biryani",
+    "price": 220,
+    "category": "Main Course"
+  },
+  {
+    "id": "103",
+    "name": "Veg Pulao",
     "price": 150,
-    "category": "Starter"
+    "category": "Main Course"
   },
   {
-    "id": "5",
-    "name": "Masala Dosa",
-    "price": 100,
-    "category": "South Indian"
+    "id": "201",
+    "name": "Tomato Soup",
+    "price": 70,
+    "category": "Starters"
   },
   {
-    "id": "6",
-    "name": "Idli Sambhar",
-    "price": 80,
-    "category": "South Indian"
+    "id": "202",
+    "name": "Spring Rolls",
+    "price": 90,
+    "category": "Starters"
   },
   {
-    "id": "7",
-    "name": "Coke",
+    "id": "301",
+    "name": "Butter Naan",
+    "price": 35,
+    "category": "Breads"
+  },
+  {
+    "id": "302",
+    "name": "Tandoori Roti",
+    "price": 20,
+    "category": "Breads"
+  },
+  {
+    "id": "401",
+    "name": "Gulab Jamun",
     "price": 50,
+    "category": "Desserts"
+  },
+  {
+    "id": "402",
+    "name": "Ice Cream",
+    "price": 60,
+    "category": "Desserts"
+  },
+  {
+    "id": "501",
+    "name": "Masala Chai",
+    "price": 25,
     "category": "Beverages"
   },
   {
-    "id": "8",
-    "name": "Lassi",
-    "price": 60,
+    "id": "502",
+    "name": "Cold Coffee",
+    "price": 70,
     "category": "Beverages"
   }
 ]
