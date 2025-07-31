@@ -7,15 +7,15 @@ from fpdf import FPDF
 from streamlit_autorefresh import st_autorefresh
 
 # === Session State Setup for Refresh Control ===
-if "disable_autorefresh" not in st.session_state:
-    st.session_state.disable_autorefresh = False
+if "order_just_placed" not in st.session_state:
+    st.session_state.order_just_placed = False
 
-if not st.session_state.disable_autorefresh:
+if not st.session_state.order_just_placed:
     st_autorefresh(interval=10000, key="customer_refresh")
 
-# === Reset after rerun ===
-if st.session_state.get("disable_autorefresh", False):
-    st.session_state.disable_autorefresh = False
+# === Reset the flag after rerun ===
+if st.session_state.get("order_just_placed", False):
+    st.session_state.order_just_placed = False
 
 # === File paths ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -23,17 +23,16 @@ MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
-
 os.makedirs(INVOICE_DIR, exist_ok=True)
 
 # === Utility Functions ===
 def load_json(file_path, default=[]):
     try:
         if os.path.exists(file_path):
-            with open(file_path, "r") as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
     except json.JSONDecodeError:
-        st.error(f"[ERROR] Failed to parse {file_path}")
+        print(f"[ERROR] Failed to parse {file_path}")
     return default
 
 def save_json(file_path, data):
@@ -70,7 +69,7 @@ else:
 st.header("📋 Menu")
 
 if not menu:
-    st.warning("⚠️ Menu is currently empty. Please check your menu.json file.")
+    st.warning("🚫 No menu items available.")
     st.stop()
 
 categories = sorted(set(item['category'] for item in menu if 'category' in item))
@@ -128,7 +127,7 @@ if st.button("✅ Place Order"):
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
 
-        st.session_state.disable_autorefresh = True
+        st.session_state.order_just_placed = True  # Skip autorefresh once
         st.success("✅ Order placed successfully!")
         st.rerun()
 
@@ -192,7 +191,6 @@ else:
 # --- Feedback Section ---
 st.markdown("---")
 st.header("💬 Submit Feedback")
-
 feedback_text = st.text_area("Your feedback:")
 if st.button("📝 Submit Feedback"):
     if not feedback_text.strip():
