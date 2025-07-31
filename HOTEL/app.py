@@ -127,7 +127,10 @@ if st.button("✅ Place Order"):
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
 
-        st.session_state.order_just_placed = True  # Skip autorefresh once
+        # Debug print
+        st.write("📤 Saving Order:", new_order)
+
+        st.session_state.order_just_placed = True
         st.success("✅ Order placed successfully!")
         st.rerun()
 
