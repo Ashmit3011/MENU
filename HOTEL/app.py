@@ -6,15 +6,14 @@ import pandas as pd
 from fpdf import FPDF
 from streamlit_autorefresh import st_autorefresh
 
-# === Auto-refresh enabled always ===
+# === Auto-refresh every 10 seconds (DO NOT REMOVE) ===
 st_autorefresh(interval=10000, key="customer_refresh")
 
-# === File paths ===
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-MENU_FILE = os.path.join(BASE_DIR, "menu.json")
-ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
-FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
-INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
+# === File paths (use relative to avoid write errors) ===
+MENU_FILE = "menu.json"
+ORDERS_FILE = "orders.json"
+FEEDBACK_FILE = "feedback.json"
+INVOICE_DIR = "invoices"
 os.makedirs(INVOICE_DIR, exist_ok=True)
 
 # === Utility Functions ===
@@ -24,12 +23,15 @@ def load_json(file_path, default=[]):
             with open(file_path, "r") as f:
                 return json.load(f)
     except json.JSONDecodeError:
-        print(f"[ERROR] Failed to parse {file_path}")
+        st.error(f"[ERROR] Failed to parse {file_path}")
     return default
 
 def save_json(file_path, data):
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        st.error(f"Failed to save {file_path}: {e}")
 
 # === Load Data ===
 menu = load_json(MENU_FILE)
@@ -96,10 +98,6 @@ if cart:
 # --- Payment Selection ---
 payment_method = st.selectbox("💳 Choose Payment Method", ["Cash", "Card", "Online"])
 
-# === Save Order Trigger Flag ===
-if "order_placed" not in st.session_state:
-    st.session_state.order_placed = False
-
 # --- Place Order ---
 if st.button("✅ Place Order"):
     if not cart:
@@ -114,14 +112,17 @@ if st.button("✅ Place Order"):
             "payment_method": payment_method
         }
 
+        orders = load_json(ORDERS_FILE)
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
-        st.session_state.order_placed = True
+
         st.success("✅ Order placed successfully!")
+        st.rerun()
 
 # --- Your Orders ---
 st.header("📦 Your Orders")
 
+# Reload orders again to get any updates
 orders = load_json(ORDERS_FILE)
 user_orders = [o for o in orders if str(o["table"]) == str(table_number)]
 
@@ -146,7 +147,6 @@ else:
 
         st.dataframe(pd.DataFrame(item_data), use_container_width=True)
 
-        # Invoice download if Completed
         if order["status"] == "Completed":
             invoice_name = f"invoice_table{order['table']}_{idx}.pdf"
             invoice_path = os.path.join(INVOICE_DIR, invoice_name)
@@ -186,6 +186,7 @@ if st.button("📝 Submit Feedback"):
     if not feedback_text.strip():
         st.warning("Feedback cannot be empty.")
     else:
+        feedbacks = load_json(FEEDBACK_FILE)
         feedbacks.append({
             "table": str(table_number),
             "feedback": feedback_text.strip(),
