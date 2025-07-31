@@ -4,10 +4,10 @@ import os
 from datetime import datetime
 import pandas as pd
 from fpdf import FPDF
-from streamlit_autorefresh import st_autorefresh
+# from streamlit_autorefresh import st_autorefresh  # Temporarily disabled for debug
 
-# Auto-refresh every 10 seconds
-st_autorefresh(interval=10000, key="customer_refresh")
+# Optional: Auto-refresh every 10 seconds
+# st_autorefresh(interval=10000, key="customer_refresh")
 
 # File paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -21,12 +21,12 @@ os.makedirs(INVOICE_DIR, exist_ok=True)
 
 # Utility Functions
 def load_json(file_path, default=[]):
-    if os.path.exists(file_path):
-        try:
+    try:
+        if os.path.exists(file_path):
             with open(file_path, "r") as f:
                 return json.load(f)
-        except json.JSONDecodeError:
-            return default
+    except json.JSONDecodeError:
+        print(f"[ERROR] Failed to parse {file_path}")
     return default
 
 def save_json(file_path, data):
@@ -112,10 +112,11 @@ if st.button("✅ Place Order"):
             "payment_method": payment_method
         }
 
-        # Reload orders before saving
         orders = load_json(ORDERS_FILE)
         orders.append(new_order)
+        print("[INFO] New order appended:", new_order)
         save_json(ORDERS_FILE, orders)
+        print("[INFO] All orders saved:", orders)
 
         st.success("✅ Order placed successfully!")
         st.rerun()
