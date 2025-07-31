@@ -4,22 +4,29 @@ import os
 from datetime import datetime
 import pandas as pd
 from fpdf import FPDF
-# from streamlit_autorefresh import st_autorefresh  # Temporarily disabled for debug
+from streamlit_autorefresh import st_autorefresh
 
-# Optional: Auto-refresh every 10 seconds
-# st_autorefresh(interval=10000, key="customer_refresh")
+# === Session State Setup for Refresh Control ===
+if "disable_autorefresh" not in st.session_state:
+    st.session_state.disable_autorefresh = False
 
-# File paths
+if not st.session_state.disable_autorefresh:
+    st_autorefresh(interval=10000, key="customer_refresh")
+
+# === Reset after rerun ===
+if st.session_state.get("disable_autorefresh", False):
+    st.session_state.disable_autorefresh = False
+
+# === File paths ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 MENU_FILE = os.path.join(BASE_DIR, "menu.json")
 ORDERS_FILE = os.path.join(BASE_DIR, "orders.json")
 FEEDBACK_FILE = os.path.join(BASE_DIR, "feedback.json")
 INVOICE_DIR = os.path.join(BASE_DIR, "invoices")
 
-# Create invoice directory if not exists
 os.makedirs(INVOICE_DIR, exist_ok=True)
 
-# Utility Functions
+# === Utility Functions ===
 def load_json(file_path, default=[]):
     try:
         if os.path.exists(file_path):
@@ -33,12 +40,12 @@ def save_json(file_path, data):
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-# Load data
+# === Load Data ===
 menu = load_json(MENU_FILE)
 orders = load_json(ORDERS_FILE)
 feedbacks = load_json(FEEDBACK_FILE)
 
-# Hide sidebar
+# === UI Setup ===
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 st.markdown("""
     <style>
@@ -114,15 +121,17 @@ if st.button("✅ Place Order"):
 
         orders = load_json(ORDERS_FILE)
         orders.append(new_order)
-        print("[INFO] New order appended:", new_order)
         save_json(ORDERS_FILE, orders)
-        print("[INFO] All orders saved:", orders)
 
+        # Disable autorefresh once, and rerun to reflect new order
+        st.session_state.disable_autorefresh = True
         st.success("✅ Order placed successfully!")
         st.rerun()
 
 # --- Your Orders ---
 st.header("📦 Your Orders")
+
+# ✅ Reload orders to get latest data
 orders = load_json(ORDERS_FILE)
 user_orders = [o for o in orders if str(o["table"]) == str(table_number)]
 
