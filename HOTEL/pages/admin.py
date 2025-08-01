@@ -13,6 +13,7 @@ st_autorefresh(interval=5000, key="admin_autorefresh")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ORDERS_FILE = os.path.join(BASE_DIR, "..", "orders.json")
 MENU_FILE = os.path.join(BASE_DIR, "..", "menu.json")
+FEEDBACK_FILE = os.path.join(BASE_DIR, "..", "feedback.json")
 
 # Load JSON
 def load_json(file_path):
@@ -61,9 +62,9 @@ def generate_invoice_pdf(order, save_dir="invoices"):
     c.save()
     return filepath
 
-# Toast notification
-def toast(message):
-    st.toast(message, icon="✅")
+# Toast notification (new orders)
+if 'last_order_count' not in st.session_state:
+    st.session_state.last_order_count = 0
 
 # App title
 st.set_page_config(page_title="Admin Panel", layout="wide")
@@ -72,6 +73,11 @@ st.title("🛠️ Admin Panel")
 # Load orders and menu
 orders = load_json(ORDERS_FILE)
 menu = load_json(MENU_FILE)
+
+# Notify on new order
+if len(orders) > st.session_state.last_order_count:
+    st.toast("📥 New order received!", icon="✅")
+st.session_state.last_order_count = len(orders)
 
 # Display current orders
 st.subheader("📦 Current Orders")
@@ -110,14 +116,14 @@ else:
                     if st.button("✅ Mark as Completed", key=f"complete_{idx}"):
                         orders[len(orders) - 1 - idx]["status"] = "Completed"
                         save_json(ORDERS_FILE, orders)
-                        toast(f"Order from Table {table} marked as Completed")
+                        st.success(f"Order from Table {table} marked as Completed")
                         st.rerun()
 
                 with col2:
                     if st.button("🗑️ Delete", key=f"delete_{idx}"):
                         orders.pop(len(orders) - 1 - idx)
                         save_json(ORDERS_FILE, orders)
-                        toast("Order deleted")
+                        st.warning("Order deleted")
                         st.rerun()
 
 # Divider
@@ -158,5 +164,24 @@ else:
                 if st.button("🗑️ Delete", key=f"delete_history_{idx}"):
                     orders.remove(order)
                     save_json(ORDERS_FILE, orders)
-                    toast("🗑️ Order deleted from history")
+                    st.warning("🗑️ Order deleted from history")
                     st.rerun()
+
+# Divider
+st.markdown("---")
+st.subheader("💬 Customer Feedback")
+
+feedback = load_json(FEEDBACK_FILE)
+if not feedback:
+    st.info("No feedback received yet.")
+else:
+    for fb in reversed(feedback):
+        table = fb.get("table", "?")
+        message = fb.get("message", "No message")
+        rating = fb.get("rating", "N/A")
+        time = fb.get("timestamp", "Unknown time")
+
+        with st.chat_message("user"):
+            st.markdown(f"**🪑 Table {table}** — 🕒 {time}")
+            st.write(f"⭐ Rating: {rating}")
+            st.write(f"💬 {message}")
