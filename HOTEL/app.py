@@ -9,10 +9,8 @@ from streamlit_autorefresh import st_autorefresh
 # === Session State Setup for Refresh Control ===
 if "order_just_placed" not in st.session_state:
     st.session_state.order_just_placed = False
-
-# Refresh only if order not just placed
-if not st.session_state.order_just_placed:
-    st_autorefresh(interval=5000, key="customer_refresh")
+if "order_cooldown" not in st.session_state:
+    st.session_state.order_cooldown = 0
 
 # === File paths ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -41,7 +39,7 @@ menu = load_json(MENU_FILE)
 orders = load_json(ORDERS_FILE)
 feedbacks = load_json(FEEDBACK_FILE)
 
-# === UI Setup ===
+# === Page Config ===
 st.set_page_config(page_title="Smart Table Ordering", layout="wide")
 st.markdown("""
     <style>
@@ -49,7 +47,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("\U0001F37D️ Smart Table Ordering System")
+# === Real-Time Refresh ===
+if not st.session_state.order_just_placed:
+    st_autorefresh(interval=5000, key="realtime_refresh")  # 5s for real-time updates
+
+if st.session_state.order_just_placed:
+    if st.session_state.order_cooldown < 3:
+        st.session_state.order_cooldown += 1
+    else:
+        st.session_state.order_just_placed = False
+        st.session_state.order_cooldown = 0
+
+# === UI ===
+st.title("🍽️ Smart Table Ordering System")
 
 # --- Table Selection ---
 ALL_TABLES = ["1", "2", "3", "4", "5"]
@@ -59,52 +69,45 @@ available_tables = [t for t in ALL_TABLES if t not in occupied_tables]
 if available_tables:
     table_number = st.selectbox("Select your Table Number:", available_tables, index=0)
 else:
-    st.error("\U0001F6AB All tables are currently in use. Please wait.")
+    st.error("🚫 All tables are currently in use. Please wait.")
     st.stop()
 
-# --- Menu Display ---
-st.header("\U0001F4CB Menu")
-
+# --- Menu ---
+st.header("📋 Menu")
 if not menu:
-    st.warning("\U0001F6AB No menu items available.")
+    st.warning("🚫 No menu items available.")
     st.stop()
 
 categories = sorted(set(item['category'] for item in menu if 'category' in item))
 selected_category = st.selectbox("Select Category", categories)
 
 cart = {}
-
 for item in menu:
     if item.get("category") == selected_category:
         col1, col2 = st.columns([4, 1])
         with col1:
-            st.markdown(f"**{item['name']}**  \n\U0001FA75 Rs. {item['price']}")
+            st.markdown(f"**{item['name']}**  \n💵 Rs. {item['price']}")
         with col2:
             qty = st.number_input(f"Qty - {item['name']}", min_value=0, step=1, key=f"qty_{item['id']}")
             if qty > 0:
                 cart[item['id']] = qty
 
-# --- Cart Section ---
+# --- Cart ---
 if cart:
     st.markdown("---")
-    st.subheader("\U0001F6D2 Your Cart")
+    st.subheader("🛒 Your Cart")
     item_data = []
     total_amt = 0
     for item_id, qty in cart.items():
         item = next((i for i in menu if i["id"] == item_id), {"name": "Unknown", "price": 0})
         total = item["price"] * qty
         total_amt += total
-        item_data.append({
-            "Item": item["name"],
-            "Quantity": qty,
-            "Price": item["price"],
-            "Total": total
-        })
+        item_data.append({"Item": item["name"], "Quantity": qty, "Price": item["price"], "Total": total})
     st.dataframe(pd.DataFrame(item_data), use_container_width=True)
-    st.markdown(f"### \U0001F9BE Total Amount: Rs. {total_amt}")
+    st.markdown(f"### 🧾 Total Amount: Rs. {total_amt}")
 
-# --- Payment Selection ---
-payment_method = st.selectbox("\U0001F4B3 Choose Payment Method", ["Cash", "Card", "Online"])
+# --- Payment ---
+payment_method = st.selectbox("💳 Choose Payment Method", ["Cash", "Card", "Online"])
 
 # --- Place Order ---
 if st.button("✅ Place Order"):
@@ -119,16 +122,15 @@ if st.button("✅ Place Order"):
             "timestamp": timestamp,
             "payment_method": payment_method
         }
-
         orders = load_json(ORDERS_FILE)
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
-
         st.session_state.order_just_placed = True
+        st.session_state.order_cooldown = 0
         st.success("✅ Order placed successfully!")
 
 # --- Your Orders ---
-st.header("\U0001F4E6 Your Orders")
+st.header("📦 Your Orders")
 orders = load_json(ORDERS_FILE)
 user_orders = [o for o in orders if str(o["table"]) == str(table_number)]
 
@@ -137,7 +139,7 @@ if not user_orders:
 else:
     for idx, order in enumerate(reversed(user_orders)):
         st.markdown("---")
-        st.markdown(f"### \U0001FA91 Table: {order['table']} | ⏰ {order['timestamp']}")
+        st.markdown(f"### 🪑 Table: {order['table']} | ⏰ {order['timestamp']}")
         st.markdown(f"**Status:** `{order['status']}`")
         st.markdown(f"**Payment Method:** `{order.get('payment_method', 'N/A')}`")
 
@@ -153,7 +155,6 @@ else:
 
         st.dataframe(pd.DataFrame(item_data), use_container_width=True)
 
-        # Invoice download if Completed
         if order["status"] == "Completed":
             invoice_name = f"invoice_table{order['table']}_{idx}.pdf"
             invoice_path = os.path.join(INVOICE_DIR, invoice_name)
@@ -177,17 +178,17 @@ else:
 
             with open(invoice_path, "rb") as f:
                 st.download_button(
-                    label="\U0001F4C4 Download Invoice",
+                    label="📄 Download Invoice",
                     data=f.read(),
                     file_name=invoice_name,
                     mime="application/pdf"
                 )
 
-# --- Feedback Section ---
+# --- Feedback ---
 st.markdown("---")
-st.header("\U0001F4AC Submit Feedback")
+st.header("💬 Submit Feedback")
 feedback_text = st.text_area("Your feedback:")
-if st.button("\U0001F4DD Submit Feedback"):
+if st.button("📝 Submit Feedback"):
     if not feedback_text.strip():
         st.warning("Feedback cannot be empty.")
     else:
@@ -198,5 +199,5 @@ if st.button("\U0001F4DD Submit Feedback"):
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
         save_json(FEEDBACK_FILE, feedbacks)
-        st.success("\U0001F64F Thanks for your feedback!")
+        st.success("🙏 Thanks for your feedback!")
         st.rerun()
