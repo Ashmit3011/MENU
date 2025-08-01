@@ -175,7 +175,8 @@ feedback = load_json(FEEDBACK_FILE)
 if not feedback:
     st.info("No feedback received yet.")
 else:
-    for fb in reversed(feedback):
+    for idx, fb in enumerate(reversed(feedback)):
+        actual_index = len(feedback) - 1 - idx  # Index in the original list
         table = fb.get("table", "?")
         message = fb.get("message", "No message")
         rating = fb.get("rating", "N/A")
@@ -185,3 +186,9 @@ else:
             st.markdown(f"**🪑 Table {table}** — 🕒 {time}")
             st.write(f"⭐ Rating: {rating}")
             st.write(f"💬 {message}")
+
+            if st.button("🗑️ Delete Feedback", key=f"delete_feedback_{idx}"):
+                feedback.pop(actual_index)
+                save_json(FEEDBACK_FILE, feedback)
+                st.warning("Feedback deleted.")
+                st.rerun()
