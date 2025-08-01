@@ -9,20 +9,10 @@ from streamlit_autorefresh import st_autorefresh
 # === Session State Setup for Refresh Control ===
 if "order_just_placed" not in st.session_state:
     st.session_state.order_just_placed = False
-if "order_cooldown" not in st.session_state:
-    st.session_state.order_cooldown = 0
 
-# Cooldown-based auto-refresh control
+# Refresh only if order not just placed
 if not st.session_state.order_just_placed:
-    st_autorefresh(interval=1000000, key="customer_refresh")  # 10 seconds
-
-# If an order was just placed, pause refresh for 3 cycles
-if st.session_state.order_just_placed:
-    if st.session_state.order_cooldown < 3:
-        st.session_state.order_cooldown += 1
-    else:
-        st.session_state.order_just_placed = False
-        st.session_state.order_cooldown = 0
+    st_autorefresh(interval=5000, key="customer_refresh")
 
 # === File paths ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -59,7 +49,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🍽️ Smart Table Ordering System")
+st.title("\U0001F37D️ Smart Table Ordering System")
 
 # --- Table Selection ---
 ALL_TABLES = ["1", "2", "3", "4", "5"]
@@ -69,14 +59,14 @@ available_tables = [t for t in ALL_TABLES if t not in occupied_tables]
 if available_tables:
     table_number = st.selectbox("Select your Table Number:", available_tables, index=0)
 else:
-    st.error("🚫 All tables are currently in use. Please wait.")
+    st.error("\U0001F6AB All tables are currently in use. Please wait.")
     st.stop()
 
 # --- Menu Display ---
-st.header("📋 Menu")
+st.header("\U0001F4CB Menu")
 
 if not menu:
-    st.warning("🚫 No menu items available.")
+    st.warning("\U0001F6AB No menu items available.")
     st.stop()
 
 categories = sorted(set(item['category'] for item in menu if 'category' in item))
@@ -88,7 +78,7 @@ for item in menu:
     if item.get("category") == selected_category:
         col1, col2 = st.columns([4, 1])
         with col1:
-            st.markdown(f"**{item['name']}**  \n💵 Rs. {item['price']}")
+            st.markdown(f"**{item['name']}**  \n\U0001FA75 Rs. {item['price']}")
         with col2:
             qty = st.number_input(f"Qty - {item['name']}", min_value=0, step=1, key=f"qty_{item['id']}")
             if qty > 0:
@@ -97,7 +87,7 @@ for item in menu:
 # --- Cart Section ---
 if cart:
     st.markdown("---")
-    st.subheader("🛒 Your Cart")
+    st.subheader("\U0001F6D2 Your Cart")
     item_data = []
     total_amt = 0
     for item_id, qty in cart.items():
@@ -111,10 +101,10 @@ if cart:
             "Total": total
         })
     st.dataframe(pd.DataFrame(item_data), use_container_width=True)
-    st.markdown(f"### 🧾 Total Amount: Rs. {total_amt}")
+    st.markdown(f"### \U0001F9BE Total Amount: Rs. {total_amt}")
 
 # --- Payment Selection ---
-payment_method = st.selectbox("💳 Choose Payment Method", ["Cash", "Card", "Online"])
+payment_method = st.selectbox("\U0001F4B3 Choose Payment Method", ["Cash", "Card", "Online"])
 
 # --- Place Order ---
 if st.button("✅ Place Order"):
@@ -135,11 +125,10 @@ if st.button("✅ Place Order"):
         save_json(ORDERS_FILE, orders)
 
         st.session_state.order_just_placed = True
-        st.session_state.order_cooldown = 0
         st.success("✅ Order placed successfully!")
 
 # --- Your Orders ---
-st.header("📦 Your Orders")
+st.header("\U0001F4E6 Your Orders")
 orders = load_json(ORDERS_FILE)
 user_orders = [o for o in orders if str(o["table"]) == str(table_number)]
 
@@ -148,7 +137,7 @@ if not user_orders:
 else:
     for idx, order in enumerate(reversed(user_orders)):
         st.markdown("---")
-        st.markdown(f"### 🪑 Table: {order['table']} | ⏰ {order['timestamp']}")
+        st.markdown(f"### \U0001FA91 Table: {order['table']} | ⏰ {order['timestamp']}")
         st.markdown(f"**Status:** `{order['status']}`")
         st.markdown(f"**Payment Method:** `{order.get('payment_method', 'N/A')}`")
 
@@ -176,7 +165,6 @@ else:
                 pdf.cell(200, 10, txt="Smart Table Invoice", ln=True, align="C")
                 pdf.cell(200, 10, txt=f"Table: {order['table']} | Time: {order['timestamp']}", ln=True)
                 pdf.cell(200, 10, txt=f"Payment Method: {order.get('payment_method', 'N/A')}", ln=True)
-
                 pdf.ln(10)
                 total = 0
                 for row in item_data:
@@ -189,7 +177,7 @@ else:
 
             with open(invoice_path, "rb") as f:
                 st.download_button(
-                    label="📄 Download Invoice",
+                    label="\U0001F4C4 Download Invoice",
                     data=f.read(),
                     file_name=invoice_name,
                     mime="application/pdf"
@@ -197,9 +185,9 @@ else:
 
 # --- Feedback Section ---
 st.markdown("---")
-st.header("💬 Submit Feedback")
+st.header("\U0001F4AC Submit Feedback")
 feedback_text = st.text_area("Your feedback:")
-if st.button("📝 Submit Feedback"):
+if st.button("\U0001F4DD Submit Feedback"):
     if not feedback_text.strip():
         st.warning("Feedback cannot be empty.")
     else:
@@ -210,5 +198,5 @@ if st.button("📝 Submit Feedback"):
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
         save_json(FEEDBACK_FILE, feedbacks)
-        st.success("🙏 Thanks for your feedback!")
+        st.success("\U0001F64F Thanks for your feedback!")
         st.rerun()
