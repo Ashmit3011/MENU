@@ -9,13 +9,20 @@ from streamlit_autorefresh import st_autorefresh
 # === Session State Setup for Refresh Control ===
 if "order_just_placed" not in st.session_state:
     st.session_state.order_just_placed = False
+if "order_cooldown" not in st.session_state:
+    st.session_state.order_cooldown = 0
 
+# Cooldown-based auto-refresh control
 if not st.session_state.order_just_placed:
-    st_autorefresh(interval=10000, key="customer_refresh")
+    st_autorefresh(interval=10000, key="customer_refresh")  # 10 seconds
 
-# === Reset the flag after rerun ===
-if st.session_state.get("order_just_placed", False):
-    st.session_state.order_just_placed = False
+# If an order was just placed, pause refresh for 3 cycles
+if st.session_state.order_just_placed:
+    if st.session_state.order_cooldown < 3:
+        st.session_state.order_cooldown += 1
+    else:
+        st.session_state.order_just_placed = False
+        st.session_state.order_cooldown = 0
 
 # === File paths ===
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -127,12 +134,9 @@ if st.button("✅ Place Order"):
         orders.append(new_order)
         save_json(ORDERS_FILE, orders)
 
-        # Debug print
-        st.write("📤 Saving Order:", new_order)
-
         st.session_state.order_just_placed = True
+        st.session_state.order_cooldown = 0
         st.success("✅ Order placed successfully!")
-        st.rerun()
 
 # --- Your Orders ---
 st.header("📦 Your Orders")
