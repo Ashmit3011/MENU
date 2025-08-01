@@ -1,68 +1,59 @@
-[
-  {
-    "id": "101",
-    "name": "Paneer Butter Masala",
-    "price": 180,
-    "category": "Main Course"
-  },
-  {
-    "id": "102",
-    "name": "Chicken Biryani",
-    "price": 220,
-    "category": "Main Course"
-  },
-  {
-    "id": "103",
-    "name": "Veg Pulao",
-    "price": 150,
-    "category": "Main Course"
-  },
-  {
-    "id": "201",
-    "name": "Tomato Soup",
-    "price": 70,
-    "category": "Starters"
-  },
-  {
-    "id": "202",
-    "name": "Spring Rolls",
-    "price": 90,
-    "category": "Starters"
-  },
-  {
-    "id": "301",
-    "name": "Butter Naan",
-    "price": 35,
-    "category": "Breads"
-  },
-  {
-    "id": "302",
-    "name": "Tandoori Roti",
-    "price": 20,
-    "category": "Breads"
-  },
-  {
-    "id": "401",
-    "name": "Gulab Jamun",
-    "price": 50,
-    "category": "Desserts"
-  },
-  {
-    "id": "402",
-    "name": "Ice Cream",
-    "price": 60,
-    "category": "Desserts"
-  },
-  {
-    "id": "501",
-    "name": "Masala Chai",
-    "price": 25,
-    "category": "Beverages"
-  },
-  {
-    "id": "502",
-    "name": "Cold Coffee",
-    "price": 70,
-    "category": "Beverages"
-  }
-]
+{
+  "Starters": [
+    {"name": "Paneer Tikka", "price": 180},
+    {"name": "Veg Spring Rolls", "price": 160},
+    {"name": "Chicken Lollipop", "price": 220},
+    {"name": "Crispy Corn", "price": 150},
+    {"name": "Hara Bhara Kebab", "price": 170},
+    {"name": "Tandoori Mushroom", "price": 190},
+    {"name": "Fish Fingers", "price": 250}
+  ],
+  "Main Course": [
+    {"name": "Butter Chicken", "price": 280},
+    {"name": "Chicken Tikka Masala", "price": 290},
+    {"name": "Paneer Butter Masala", "price": 240},
+    {"name": "Kadhai Paneer", "price": 230},
+    {"name": "Dal Makhani", "price": 180},
+    {"name": "Mix Veg Curry", "price": 190},
+    {"name": "Chana Masala", "price": 170},
+    {"name": "Veg Biryani", "price": 190},
+    {"name": "Chicken Biryani", "price": 240},
+    {"name": "Mutton Rogan Josh", "price": 320},
+    {"name": "Egg Curry", "price": 160}
+  ],
+  "Breads": [
+    {"name": "Butter Naan", "price": 40},
+    {"name": "Garlic Naan", "price": 50},
+    {"name": "Tandoori Roti", "price": 25},
+    {"name": "Lachha Paratha", "price": 45},
+    {"name": "Plain Roti", "price": 20},
+    {"name": "Stuffed Kulcha", "price": 60}
+  ],
+  "Rice & Sides": [
+    {"name": "Steamed Rice", "price": 80},
+    {"name": "Jeera Rice", "price": 100},
+    {"name": "Fried Rice (Veg)", "price": 130},
+    {"name": "Fried Rice (Egg)", "price": 140},
+    {"name": "Fried Rice (Chicken)", "price": 160},
+    {"name": "Curd", "price": 40},
+    {"name": "Raita (Mix Veg)", "price": 60}
+  ],
+  "Desserts": [
+    {"name": "Gulab Jamun (2 pcs)", "price": 60},
+    {"name": "Rasgulla (2 pcs)", "price": 60},
+    {"name": "Ice Cream (Vanilla)", "price": 80},
+    {"name": "Ice Cream (Chocolate)", "price": 90},
+    {"name": "Brownie with Ice Cream", "price": 120},
+    {"name": "Fruit Salad with Cream", "price": 100}
+  ],
+  "Beverages": [
+    {"name": "Masala Chai", "price": 30},
+    {"name": "Filter Coffee", "price": 35},
+    {"name": "Cold Coffee", "price": 90},
+    {"name": "Fresh Lime Soda", "price": 60},
+    {"name": "Sweet Lassi", "price": 70},
+    {"name": "Salted Lassi", "price": 70},
+    {"name": "Mineral Water Bottle", "price": 20},
+    {"name": "Soft Drink (Can)", "price": 40}
+  ]
+}
