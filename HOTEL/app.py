@@ -91,16 +91,35 @@ menu = json.load(open(MENU_FILE, encoding="utf-8")) if os.path.exists(MENU_FILE)
 orders = json.load(open(ORDERS_FILE, encoding="utf-8")) if os.path.exists(ORDERS_FILE) else []
 feedback = json.load(open(FEEDBACK_FILE, encoding="utf-8")) if os.path.exists(FEEDBACK_FILE) else []
 
-# -------------- Table Number Session --------------
+# -------------- Table Number Session with Availability Check --------------
 if "table_number" not in st.session_state:
     st.title("🍽️ Smart Table Ordering System")
-    table_number = st.text_input("🔢 Enter your Table Number")
-    if table_number:
-        st.session_state.table_number = table_number
+
+    TOTAL_TABLES = 10  # You can increase this to any number you want
+    all_tables = [str(i) for i in range(1, TOTAL_TABLES + 1)]
+
+    # Get tables that are occupied (pending or preparing orders)
+    occupied_tables = set()
+    for order in orders:
+        if order["status"] in ["pending", "preparing"]:
+            occupied_tables.add(order["table"])
+
+    # Available tables are those not in occupied list
+    available_tables = [t for t in all_tables if t not in occupied_tables]
+
+    if not available_tables:
+        st.warning("🚫 No tables are currently available. Please wait or check back later.")
+        st.stop()
+
+    selected_table = st.selectbox("🔢 Select an Available Table", available_tables)
+
+    if st.button("✅ Confirm Table"):
+        st.session_state.table_number = selected_table
         st.session_state.cart = {}
         st.rerun()
-    st.stop()
 
+    st.stop()
+    
 st.title(f"🍽️ Smart Ordering — Table {st.session_state.table_number}")
 if "cart" not in st.session_state:
     st.session_state.cart = {}
