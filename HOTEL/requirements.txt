@@ -4,3 +4,4 @@ streamlit-extras
 fpdf2
 pillow
 fpdf
+reportlab
