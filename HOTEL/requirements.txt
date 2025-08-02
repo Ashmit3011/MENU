@@ -1,6 +1,7 @@
 streamlit>=1.10.0
 streamlit-autorefresh
 streamlit-extras
+streamlit-lottie
 fpdf2
 pillow
 fpdf
