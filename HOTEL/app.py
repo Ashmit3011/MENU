@@ -13,8 +13,10 @@ st.markdown("""
     [data-testid="stSidebar"] { display: none; }
     #MainMenu, footer {visibility: hidden;}
 
-    /* Click-effect only (no idle animation) */
+    /* Button base style */
     .stButton > button {
+        position: relative;
+        overflow: hidden;
         padding: 0.5rem 1rem;
         font-size: 0.95rem;
         font-weight: bold;
@@ -22,13 +24,8 @@ st.markdown("""
         background: linear-gradient(145deg, #f6b93b, #e58e26);
         color: white;
         border: none;
-        transition: transform 0.08s ease-in-out, box-shadow 0.2s;
+        transition: transform 0.1s ease-in-out, box-shadow 0.2s;
         box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-    }
-
-    .stButton > button:active {
-        transform: scale(0.95);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
     .stButton > button:hover {
@@ -36,6 +33,39 @@ st.markdown("""
         box-shadow: 0 6px 10px rgba(0,0,0,0.3);
     }
 
+    .stButton > button:active {
+        transform: scale(0.96);
+    }
+
+    /* Ripple effect */
+    .stButton > button::after {
+        content: "";
+        position: absolute;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .stButton > button:active::after {
+        width: 200%;
+        height: 200%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    @keyframes ripple {
+        to {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(2);
+        }
+    }
+
+    /* Download button style */
     .stDownloadButton > button {
         background-color: #1e3d59 !important;
         color: white !important;
@@ -45,7 +75,7 @@ st.markdown("""
         font-size: 0.85rem;
         height: 2.2rem;
     }
-</style>
+    </style>
 """, unsafe_allow_html=True)
 
 # -------------- Paths --------------
