@@ -13,14 +13,28 @@ st.markdown("""
         [data-testid="stSidebar"] { display: none; }
         #MainMenu, footer {visibility: hidden;}
         .css-1aumxhk {padding-top: 1rem;}
+
+        /* Animated Streamlit Buttons */
         .stButton > button {
-            padding: 0.2rem 0.5rem;
-            font-size: 0.75rem;
-            height: 2rem;
-            border-radius: 6px;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+            height: 2.2rem;
+            border-radius: 8px;
             background-color: #a8dadc !important;
             color: #1d3557 !important;
+            font-weight: bold;
+            animation: bounce 1.8s infinite;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 10px rgba(168, 218, 220, 0.3);
         }
+
+        .stButton > button:hover {
+            transform: scale(1.05);
+            background-color: #76c8cc !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 12px rgba(118, 200, 204, 0.8);
+        }
+
         .stDownloadButton > button {
             background-color: #457b9d !important;
             color: white !important;
@@ -29,6 +43,15 @@ st.markdown("""
             font-size: 0.8rem;
             height: 2.2rem;
             border-radius: 6px;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-3px);
+            }
         }
     </style>
 """, unsafe_allow_html=True)
