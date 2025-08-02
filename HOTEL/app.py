@@ -190,9 +190,8 @@ if st.session_state.cart:
     st.markdown(f"### 🧾 Total: ₹{total}")
 
     payment_method = st.selectbox("💳 Select Payment Method", ["Cash", "Card", "Online"], key="payment_select")
-
-    if st.button("✅ Place Order"):
-        if payment_method:
+        if st.button("✅ Place Order"):
+            if payment_method:
             orders = [o for o in orders if o["table"] != st.session_state.table_number]
             new_order = {
                 "table": st.session_state.table_number,
@@ -209,7 +208,41 @@ if st.session_state.cart:
                 st.warning(f"🚨 Admin Alert: Table {st.session_state.table_number} selected **CASH** payment.")
                 st.audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg", format="audio/ogg")
 
-            st.success("✅ Order Placed!")
+            # ✅ Fancy animation popup on order placement
+            st.markdown("""
+                <div id="popup" style="
+                    position: fixed;
+                    top: 30%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #00bcd4;
+                    color: white;
+                    padding: 30px 50px;
+                    border-radius: 20px;
+                    font-size: 24px;
+                    font-weight: bold;
+                    box-shadow: 0 0 30px rgba(0,188,212,0.7);
+                    z-index: 9999;
+                    text-align: center;
+                    animation: fadeout 3s ease-in-out forwards;
+                ">
+                    ✅ Order Placed!
+                </div>
+                <script>
+                    setTimeout(function(){
+                        var popup = document.getElementById("popup");
+                        if (popup) popup.style.display = "none";
+                    }, 3000);
+                </script>
+                <style>
+                    @keyframes fadeout {
+                        0% {opacity: 1;}
+                        80% {opacity: 1;}
+                        100% {opacity: 0;}
+                    }
+                </style>
+            """, unsafe_allow_html=True)
+
             del st.session_state.cart
             st.rerun()
         else:
