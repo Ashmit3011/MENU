@@ -1,7 +1,7 @@
 [theme]
-base = "light"
-primaryColor = "#6F4E37"         # Coffee brown for buttons and accents
-backgroundColor = "#FFF8F0"      # Light latte background
-secondaryBackgroundColor = "#C49E85"  # Caramel beige for containers
-textColor = "#3B3B3B"            # Dark gray text
-font = "sans serif"              # You can change to "monospace", "serif", etc.
+base = "light"  # Required, but we override the feel with warm custom colors
+primaryColor = "#6F4E37"            # Coffee brown (buttons, highlights)
+backgroundColor = "#FFF8F0"         # Latte beige (full background)
+secondaryBackgroundColor = "#D7B49E" # Soft caramel (containers, sidebar)
+textColor = "#3B3B3B"               # Charcoal grey (text)
+font = "sans serif"
