@@ -237,8 +237,8 @@ if st.session_state.cart:
                 <style>
                     @keyframes fadeout {
                         0% {opacity: 1;}
-                        80% {opacity: 1;}
-                        100% {opacity: 0;}
+                        50% {opacity: 1;}
+                        80% {opacity: 0;}
                     }
                 </style>
             """, unsafe_allow_html=True)
