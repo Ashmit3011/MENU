@@ -221,7 +221,7 @@ if st.session_state.cart:
                     border-radius: 20px;
                     font-size: 24px;
                     font-weight: bold;
-                    box-shadow: 0 0 30px rgba(0,188,212,0.7);
+                    box-shadow: 0 0 30px rgba(0,188,212,0.5);
                     z-index: 9999;
                     text-align: center;
                     animation: fadeout 3s ease-in-out forwards;
