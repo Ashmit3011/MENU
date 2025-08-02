@@ -1,7 +1,7 @@
 [theme]
-base = "light"  # Required, but we override the visual with warm orange tones
-primaryColor = "#E76F51"            # Vibrant orange-red (buttons, accents)
-backgroundColor = "#FFF3E0"         # Light peach-orange background (like blur + sun)
-secondaryBackgroundColor = "#FAD7B5" # Creamy light orange (cards, containers)
-textColor = "#3B3B3B"               # Charcoal gray (for contrast)
+base = "dark"
+primaryColor = "#E76F51"             # Vibrant orange-red (for buttons/highlights)
+backgroundColor = "#2E1F1A"          # Dark cocoa brown background
+secondaryBackgroundColor = "#4B2E2B" # Mocha brown (containers, sidebar)
+textColor = "#FFD7B5"                # Creamy latte (warm text)
 font = "sans serif"
