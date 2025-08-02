@@ -1,7 +1,7 @@
 [theme]
 base = "dark"
-primaryColor = "#E76F51"             # Vibrant orange-red (for buttons/highlights)
-backgroundColor = "#2E1F1A"          # Dark cocoa brown background
-secondaryBackgroundColor = "#4B2E2B" # Mocha brown (containers, sidebar)
-textColor = "#FFD7B5"                # Creamy latte (warm text)
+primaryColor = "#FF7F50"             # Coral orange (eye-catching buttons)
+backgroundColor = "#1E1410"          # Deep espresso brown
+secondaryBackgroundColor = "#3B2F2A" # Dark roasted mocha
+textColor = "#FBE9D0"                # Soft cream (warm, readable)
 font = "sans serif"
