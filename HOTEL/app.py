@@ -190,8 +190,8 @@ if st.session_state.cart:
     st.markdown(f"### 🧾 Total: ₹{total}")
 
     payment_method = st.selectbox("💳 Select Payment Method", ["Cash", "Card", "Online"], key="payment_select")
-        if st.button("✅ Place Order"):
-            if payment_method:
+    if st.button("✅ Place Order"):
+        if payment_method:
             orders = [o for o in orders if o["table"] != st.session_state.table_number]
             new_order = {
                 "table": st.session_state.table_number,
