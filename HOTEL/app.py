@@ -10,50 +10,42 @@ from PIL import Image
 st.set_page_config(page_title="Smart Table Order", layout="wide")
 st.markdown("""
     <style>
-        [data-testid="stSidebar"] { display: none; }
-        #MainMenu, footer {visibility: hidden;}
-        .css-1aumxhk {padding-top: 1rem;}
+    [data-testid="stSidebar"] { display: none; }
+    #MainMenu, footer {visibility: hidden;}
 
-        /* Animated Streamlit Buttons */
-        .stButton > button {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.9rem;
-            height: 2.2rem;
-            border-radius: 8px;
-            background-color: #a8dadc !important;
-            color: #1d3557 !important;
-            font-weight: bold;
-            animation: bounce 1.8s infinite;
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 0 10px rgba(168, 218, 220, 0.3);
-        }
+    /* Click-effect only (no idle animation) */
+    .stButton > button {
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        font-weight: bold;
+        border-radius: 10px;
+        background: linear-gradient(145deg, #f6b93b, #e58e26);
+        color: white;
+        border: none;
+        transition: transform 0.08s ease-in-out, box-shadow 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    }
 
-        .stButton > button:hover {
-            transform: scale(1.05);
-            background-color: #76c8cc !important;
-            color: #ffffff !important;
-            box-shadow: 0 0 12px rgba(118, 200, 204, 0.8);
-        }
+    .stButton > button:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
 
-        .stDownloadButton > button {
-            background-color: #457b9d !important;
-            color: white !important;
-            font-weight: bold;
-            padding: 0.3rem 0.6rem;
-            font-size: 0.8rem;
-            height: 2.2rem;
-            border-radius: 6px;
-        }
+    .stButton > button:hover {
+        background: linear-gradient(145deg, #f8c471, #e5983f);
+        box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+    }
 
-        @keyframes bounce {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-3px);
-            }
-        }
-    </style>
+    .stDownloadButton > button {
+        background-color: #1e3d59 !important;
+        color: white !important;
+        font-weight: bold;
+        border-radius: 6px;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        height: 2.2rem;
+    }
+</style>
 """, unsafe_allow_html=True)
 
 # -------------- Paths --------------
