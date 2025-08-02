@@ -12,68 +12,53 @@ st.markdown("""
     <style>
     [data-testid="stSidebar"] { display: none; }
     #MainMenu, footer {visibility: hidden;}
+    body {
+        background-color: #0f0f0f;
+    }
 
-    /* Button base style */
+    /* Global font color */
+    .css-18ni7ap, .css-10trblm, .css-qbe2hs, .css-hxt7ib {
+        color: #f1f1f1 !important;
+    }
+
+    /* Sky blue styled buttons */
     .stButton > button {
-        position: relative;
-        overflow: hidden;
-        padding: 0.5rem 1rem;
-        font-size: 0.95rem;
+        background-color: #00bcd4;
+        color: #ffffff;
         font-weight: bold;
-        border-radius: 10px;
-        background: linear-gradient(145deg, #f6b93b, #e58e26);
-        color: white;
+        font-size: 0.95rem;
         border: none;
-        transition: transform 0.1s ease-in-out, box-shadow 0.2s;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+        box-shadow: 0 4px 8px rgba(0, 188, 212, 0.3);
+        transition: background-color 0.3s, transform 0.1s;
     }
 
     .stButton > button:hover {
-        background: linear-gradient(145deg, #f8c471, #e5983f);
-        box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        background-color: #019ab0;
+        transform: scale(1.02);
+        box-shadow: 0 6px 12px rgba(0, 188, 212, 0.4);
     }
 
     .stButton > button:active {
         transform: scale(0.96);
+        box-shadow: 0 3px 6px rgba(0, 188, 212, 0.2);
     }
 
-    /* Ripple effect */
-    .stButton > button::after {
-        content: "";
-        position: absolute;
-        background: rgba(255, 255, 255, 0.5);
-        border-radius: 50%;
-        transform: scale(0);
-        animation: ripple 0.6s linear;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .stButton > button:active::after {
-        width: 200%;
-        height: 200%;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-
-    @keyframes ripple {
-        to {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(2);
-        }
-    }
-
-    /* Download button style */
+    /* Download button specific */
     .stDownloadButton > button {
-        background-color: #1e3d59 !important;
+        background-color: #019ab0 !important;
         color: white !important;
         font-weight: bold;
-        border-radius: 6px;
+        border-radius: 8px;
         padding: 0.4rem 0.8rem;
         font-size: 0.85rem;
-        height: 2.2rem;
+    }
+
+    /* Optional container border color */
+    .block-container {
+        border-left: 1px solid #2e2e2e;
+        border-right: 1px solid #2e2e2e;
     }
     </style>
 """, unsafe_allow_html=True)
