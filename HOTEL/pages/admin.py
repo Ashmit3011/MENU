@@ -5,6 +5,8 @@ from datetime import datetime
 from streamlit_autorefresh import st_autorefresh
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib import colors
 
 # Auto-refresh every 5 seconds
 st_autorefresh(interval=5000, key="admin_autorefresh")
@@ -35,31 +37,86 @@ def generate_invoice_pdf(order, save_dir="invoices"):
 
     c = canvas.Canvas(filepath, pagesize=letter)
     width, height = letter
+    margin = 50
+    line_height = 20
 
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(200, height - 50, "Customer Invoice")
+    # Title Section
+    c.setFont("Helvetica-Bold", 20)
+    c.drawString(margin, height - 60, "📋 Customer Invoice")
 
     c.setFont("Helvetica", 12)
-    c.drawString(50, height - 100, f"Table No: {order['table']}")
-    c.drawString(50, height - 120, f"Date & Time: {order['timestamp']}")
-    c.drawString(50, height - 140, f"Payment Method: {order.get('payment', 'N/A')}")
+    c.drawString(margin, height - 90, "Café XYZ")  # Replace with your brand name
+    c.drawString(margin, height - 105, "123 Main Street, City, Country")
+    c.drawString(margin, height - 120, "Phone: +91-9876543210")
 
-    c.drawString(50, height - 180, "Items Ordered:")
-    y = height - 200
+    # Invoice Details
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(margin, height - 160, f"Table No:")
+    c.drawString(margin + 100, height - 160, f"{order['table']}")
+
+    c.drawString(margin, height - 180, f"Date & Time:")
+    c.drawString(margin + 100, height - 180, f"{order['timestamp']}")
+
+    c.drawString(margin, height - 200, f"Payment Method:")
+    c.drawString(margin + 100, height - 200, f"{order.get('payment', 'N/A')}")
+
+    # Line separator
+    c.setLineWidth(0.5)
+    c.line(margin, height - 215, width - margin, height - 215)
+
+    # Table Headers
+    c.setFont("Helvetica-Bold", 12)
+    y = height - 240
+    c.drawString(margin, y, "Item")
+    c.drawString(margin + 250, y, "Qty")
+    c.drawString(margin + 300, y, "Price")
+    c.drawString(margin + 370, y, "Subtotal")
+
+    y -= line_height
+    c.setLineWidth(0.3)
+    c.line(margin, y + 10, width - margin, y + 10)
+
+    # Table Content
     total = 0
+    c.setFont("Helvetica", 11)
 
     for name, item in order["items"].items():
         qty = item["quantity"]
         price = item["price"]
         subtotal = qty * price
         total += subtotal
-        c.drawString(60, y, f"{name} x {qty} = ₹{subtotal}")
-        y -= 20
 
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(50, y - 20, f"Total Amount: ₹{total}")
+        c.drawString(margin, y, name)
+        c.drawRightString(margin + 290, y, str(qty))
+        c.drawRightString(margin + 360, y, f"₹{price}")
+        c.drawRightString(margin + 440, y, f"₹{subtotal}")
+        y -= line_height
+
+        # Check for page overflow
+        if y < 100:
+            c.showPage()
+            y = height - 60
+            c.setFont("Helvetica", 11)
+
+    # Line before total
+    c.line(margin, y + 10, width - margin, y + 10)
+    y -= 10
+
+    # Total Amount
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(margin, y, "Total Amount")
+    c.drawRightString(width - margin, y, f"₹{total}")
+
+    # Footer
+    y -= 40
+    c.setFont("Helvetica-Oblique", 10)
+    c.drawString(margin, y, "Thank you for dining with us!")
+    y -= 15
+    c.drawString(margin, y, "Visit Again - Café XYZ")
+
     c.showPage()
     c.save()
+
     return filepath
 
 # Toast notification (new orders)
